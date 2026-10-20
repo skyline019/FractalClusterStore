@@ -18,7 +18,7 @@ make ci       # 本地对齐严格 CI（不含 sanitizers）
 make asan     # ASan + UBSan + TSan
 ```
 
-入口文档：[`README.md`](../../README.md) · 评估主文：[`EVAL17.md`](EVAL17.md) · 设计：[`DESIGN3.md`](../10-design/DESIGN3.md)
+入口：[`README.md`](../../README.md) · 详情：[`DETAIL.md`](DETAIL.md) · 评估：[`EVAL17.md`](EVAL17.md) · 设计：[`DESIGN3.md`](../10-design/DESIGN3.md)
 
 ## Known gaps
 

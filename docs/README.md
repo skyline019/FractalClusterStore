@@ -5,7 +5,8 @@
 ```
 docs/
 ├── README.md              ← 本索引
-├── 00-entry/              ← 从这里读（评估 / 升格）
+├── DETAIL.md              ← stub → 00-entry/DETAIL.md
+├── 00-entry/              ← 从这里读（DETAIL / EVAL / 升格 / 发布说明）
 ├── 10-design/             ← 设计真相与规格
 ├── 20-rounds/             ← 各轮执行记录（时间序）
 ├── 30-discuss/            ← 讨论稿（已落地或待拍板）
@@ -19,10 +20,13 @@ docs/
 
 | 路径 | 用途 |
 |---|---|
+| [`../README.md`](../README.md) | **产品介绍**（定位 / 对比 / 上手） |
+| [`00-entry/DETAIL.md`](00-entry/DETAIL.md) | **详情手册**（原根 README：API / 基准 / 轮次 / 测试） |
 | [`00-entry/EVAL17.md`](00-entry/EVAL17.md) | **冻结全量评估**（滚动结论；含 Soft peers） |
 | [`00-entry/BATTLE.md`](00-entry/BATTLE.md) | 包 A/B/L 对照与升格说明 |
+| [`00-entry/RELEASE_NOTES_v0.1.0.md`](00-entry/RELEASE_NOTES_v0.1.0.md) | v0.1.0 发布说明 |
 
-仓库根 [`../README.md`](../README.md) = 产品用法 + 部署旋钮；数字细节以 EVAL17 / DESIGN3 为准。
+数字细节以 EVAL17 / DESIGN3 / DETAIL 为准；对外叙事以根 README 为准。
 
 ---
 
