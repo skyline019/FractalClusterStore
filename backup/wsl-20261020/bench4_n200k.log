@@ -1,0 +1,30 @@
+# FCS vs SQLite   N=200000 B=2000 val=32B 读=50000 区间=2000×100  kidx=0 async=1 group=1 lvl_t=8 key=随机
+# 单位: µs/op（越小越好） | 写字节 = 引擎自计 / 块层实测 / 逻辑值字节
+# fcs insert: max commit = 45990 µs  mem high-water = 2772000 B
+# fcs 收缩: rc=0  文件 8847360 B (2160 页)  top=2160 活页=1988 空闲块=0/最大0  合计 85.1 ms
+# fcs reads: 0.03 页/get  probes/get=1.00  hits=50000
+# fcs range cache: hits/scan=1.08 misses/scan=0.000 sp_skips/scan=0.00
+# fcs io jobs=726  async=1
+# fcs range cursors/scan=1.00
+# fcs range: 0.92 µs/scan  rows=2000  (0.92 µs/row)
+# fcs space: file=8880128 B hw=8880128 B (live_pages=8142848 free=20480 largest_free=5 pg extents=1)  live_recs=200000  bytes/rec=44.4  runs=1 cells=384  hw_reclaims=0 pending=0
+# sqlite range: 2.21 µs/scan rows=2000 (2.21 µs/row)
+# sqlite space: file=9355264 B live_recs=200000 bytes/rec=46.8
+
+phase                 us/op       block B/op     logical B/op
+fcs insert            0.460             44.2             44.1
+sqlite insert         1.293             93.0              0.0
+fcs update            0.765              0.0             38.0
+sqlite update         9.451              0.0              0.0
+fcs get               0.501              0.0              0.0
+sqlite get            2.038              0.0              0.0
+fcs range             0.921              0.0              0.0
+sqlite range          2.213              0.0              0.0
+
+                        fcs       sqlite   fcs/sqlite
+insert us/op          0.460        1.293         0.36
+update us/op          0.765        9.451         0.08
+get us/op             0.501        2.038         0.25
+range us/scan         0.921        2.213         0.42
+space bytes         8880128      9355264
+block write B       8830976     18604032

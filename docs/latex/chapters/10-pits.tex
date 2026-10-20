@@ -1,0 +1,290 @@
+\section{各大踩坑：前后对比详解}
+\label{sec:pits}
+
+本章选取对正确性、延迟、峰值影响最大的坑，统一用四段式叙述：
+\textbf{现象} $\to$ \textbf{根因} $\to$ \textbf{修前/修后对照}（伪代码或盘面）$\to$ \textbf{验证}。
+完整 100+ 条见 \texttt{fcs-pits.html} / DESIGN3 §12。
+
+% ---------- 坑 1 ----------
+\subsection{坑 1：幽灵段（切分后 live 翻倍）}
+\paragraph{现象}
+\texttt{split} 后再合并/recount，同一条记录被计两次；压实产物出现重复副本。
+
+\paragraph{根因}
+切分时把父单元段表整份复制给左右子单元；某 run 在一侧键域内\textbf{零记录}仍留下段壳，键域未收窄。
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[font=\scriptsize,box/.style={draw,rounded corners=1pt,inner sep=3pt,align=center}]
+\node[box,fill=oldbg] (o) {修前 R 侧\\Seg(A) 空壳\\键域仍 $[0,100)$};
+\node[box,fill=newbg,right=2.5cm of o] (n) {修后 R 侧\\无 Seg(A)\\仅 Seg(B)};
+\draw[-{Latex}] (o) -- (n);
+\end{tikzpicture}
+\caption{幽灵段：空壳把邻居区间记录再次圈入。}
+\end{figure}
+
+\begin{fixold}
+伪代码（修前）
+\begin{lstlisting}[language=pseudo]
+function split(C, mid):
+  L,R = new cells
+  L.segs = C.segs;  R.segs = C.segs   // 整表复制
+  // R 上 Seg(A) 可能零记录 → 幽灵
+\end{lstlisting}
+\end{fixold}
+
+\begin{fixnew}
+伪代码（修后）
+\begin{lstlisting}[language=pseudo]
+function split(C, mid):
+  for each seg S in C.segs:
+    (klo,khi) = keys_within(S, C.lo, mid)
+    if klo < khi: L.add(S narrowed)
+    (klo,khi) = keys_within(S, mid, C.hi)
+    if klo < khi: R.add(S narrowed)   // 空则丢弃
+  retighten(L); retighten(R)          // 坑 20：页区间同步
+\end{lstlisting}
+\end{fixnew}
+
+\paragraph{验证}
+切分 $\to$ 合并 $\to$ verify live $=$ recount；无重复副本。
+
+% ---------- 坑 86 ----------
+\subsection{坑 86：写者饥饿（shared\_mutex）}
+\paragraph{现象}
+\texttt{g7 3 6000 4}：4 读者共享读时写者十几分钟不结束，CPU 近 200\%。
+
+\paragraph{根因}
+glibc \texttt{std::shared\_mutex} 读者优先；读者叠加时写者饿死。
+
+\begin{fixold}
+\texttt{shared\_lock} 可重入叠加；写者在 \texttt{lock} 上无限等。
+\end{fixold}
+
+\begin{fixnew}
+自研 \texttt{XLock}：写者优先；读者队列在写者等待时「让一手」；独占持有者重入为空操作。
+\end{fixnew}
+
+\paragraph{验证}
+g7 多读者 + TSan；写者完成时间回到秒级。
+
+% ---------- 坑 92 ----------
+\subsection{坑 92：悬空点墓碑卡住退休}
+\paragraph{现象}
+全死 run（如 188 页）永不退休；\texttt{exact\_live\_recs} 校准回 live$=1$；verify 报 live 不一致。
+
+\paragraph{根因}
+可见性由\textbf{段}定义，但老 \texttt{exact\_live\_recs} 整 run 扫页，把「无更新版本的点墓碑」算成 live。
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[font=\small,node distance=0.4cm]
+\node[draw,fill=oldbg,align=left,inner sep=4pt] (a) {修前：扫全部页\\点墓碑 $\Rightarrow$ live=1\\永不 retire};
+\node[draw,fill=newbg,align=left,inner sep=4pt,right=1.8cm of a] (b) {修后：先收集\\仍引用该 run 的 span\\spans$=\emptyset$ $\Rightarrow$ 0};
+\end{tikzpicture}
+\end{figure}
+
+\begin{fixold}
+\begin{lstlisting}[language=pseudo]
+exact_live_recs(R):
+  n = 0
+  for page in R:          // 整条
+    for rec in page:
+      if not newer_has(rec.key): n++   // 悬空墓碑也算
+  return n   // 全死仍可能 = 1
+\end{lstlisting}
+\end{fixold}
+
+\begin{fixnew}
+\begin{lstlisting}[language=pseudo]
+exact_live_recs(R):
+  spans = segs in cells that reference R
+  if spans empty: return 0            // 按定义全死
+  count winners only inside spans
+\end{lstlisting}
+\end{fixnew}
+
+\paragraph{验证}
+storm / g9：死 run 退休；verify 干净。
+
+% ---------- 坑 99 / 104 ----------
+\subsection{坑 99 / 104：页复用闸与 shrink 提交点}
+\paragraph{现象（99）}
+NOSPACE / 异步路径下「一页两主」；挂载 CORRUPT。
+
+\paragraph{现象（104）}
+\texttt{shrink} 在非提交点截断，掉电丢失\textbf{已提交}数据。
+
+\paragraph{根因}
+释放页过早复用（未等 SB 持久）；或维护后 shrink 未先落提交点。ROUND17 起闸比较 \texttt{sb\_synced\_} 而非「已抓载荷」。
+
+\begin{fixold}
+pending 释放后，下一次 alloc 即可复用（在飞 SB 未落盘）。\\
+\texttt{shrink()} 可在任意维护尾声调用。
+\end{fixold}
+
+\begin{fixnew}
+\begin{lstlisting}[language=pseudo]
+promote_pending:
+  only free pages with need_gen <= sb_synced_
+
+shrink:
+  require last op was commit point   // maint_commit 先
+  then truncate unused high pages
+\end{lstlisting}
+\end{fixnew}
+
+\paragraph{验证}
+g11 t\_nospace；g6 掉电；g14/g15 高水位。
+
+% ---------- 坑 102 ----------
+\subsection{坑 102：逻辑版本 u16 回绕}
+\paragraph{现象}
+第 65536 次逻辑提交后：快照看见「未来」写；钉住 run 暴涨；verify 误报。
+
+\paragraph{根因}
+内存 \texttt{Vers=u16} 回绕；盘上本为 32 位。
+
+\begin{fixold}
+\texttt{++vers\_} 模 $2^{16}$；快照 view$=65535$ 看见 ver$=0$。
+\end{fixold}
+
+\begin{fixnew}
+引擎内版本一律 \texttt{u32}（后随 P2 升 u64 盘格式）。
+\end{fixnew}
+
+\paragraph{验证}
+边界探针 / g12。
+
+% ---------- 坑 112 ----------
+\subsection{坑 112：同 seq 家族墓碑复活（ROUND16）}
+\paragraph{现象}
+键 52000/52002/52004 复活；墓碑与裁过的源同组同 seq。
+
+\paragraph{根因}
+老规则假设组内 seq 连续 $\Rightarrow$ $\mathrm{SegKey}<\mathrm{minkey}$ 即更老；同 seq 片打破假设，误丢墓碑。
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[font=\scriptsize,box/.style={draw,inner sep=3pt,align=left}]
+\node[box,fill=oldbg] (o) {T 与 S 同 seq\\older\_may\_contain\\判「下面无副本」\\丢 T $\Rightarrow$ 旧值可见};
+\node[box,fill=newbg,right=1.6cm of o] (n) {older\_may\_contain\_grp\\扫 seq$\le$max 且非本组源\\保留 T $\Rightarrow$ 正确删除};
+\end{tikzpicture}
+\end{figure}
+
+\begin{fixold}
+\begin{lstlisting}[language=pseudo]
+// 假定组内 seq 连续
+if segkey < minkey: return false
+\end{lstlisting}
+\end{fixold}
+
+\begin{fixnew}
+\begin{lstlisting}[language=pseudo]
+older_may_contain_grp(k, maxseq):
+  for R in runs where R.seq <= maxseq and R not in src_group:
+    if key_range_may_contain(R,k) and bloom(R,k): return true
+  return false
+\end{lstlisting}
+\end{fixnew}
+
+\paragraph{验证}
+实验头复活 3 键；正式头 0；g16 tomb。
+
+% ---------- r17-1 ----------
+\subsection{R17：fsync 出锁（读者 79\,ms $\to$ 0.01\,ms）}
+\paragraph{现象}
+慢 sync 设备上，提交持锁双 sync 期间 \texttt{get} 平均 $\approx 79\,\mathrm{ms}$。
+
+\paragraph{根因}
+可见性本不依赖「已持久」，却把 fsync 放在 XLock 内。
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[
+  font=\scriptsize,
+  bar/.style={minimum height=0.45cm,inner sep=1pt,font=\tiny},
+  arr/.style={}
+]
+\node[anchor=west] at (0,1.2) {\textbf{修前}};
+\fill[red!40] (1.2,1.1) rectangle (7.2,1.45);
+\node at (4.2,1.275) {XLock：flush + sync + SB + sync};
+\fill[orange!50] (1.5,0.55) rectangle (7.0,0.9);
+\node at (4.25,0.725) {读者 get 等待 $\approx$ 79ms};
+
+\node[anchor=west] at (0,-0.2) {\textbf{修后}};
+\fill[orange!30] (1.2,-0.3) rectangle (2.4,0.05);
+\node at (1.8,-0.125) {p1};
+\fill[violet!35] (2.4,-0.3) rectangle (6.2,0.05);
+\node at (4.3,-0.125) {p2 锁外 sync};
+\fill[teal!35] (6.2,-0.3) rectangle (7.2,0.05);
+\node at (6.7,-0.125) {p3};
+\fill[green!40] (2.5,-0.95) rectangle (6.0,-0.6);
+\node at (4.25,-0.775) {读者 get $\approx$ 0.01ms};
+\end{tikzpicture}
+\caption{时间线对照：出锁后读者与阶段二重叠。}
+\end{figure}
+
+\paragraph{验证}
+\texttt{fsync\_block}；stall；g17；TSan。
+
+% ---------- r17-2 / r18 ----------
+\subsection{峰值三刀：hole\_fit / 碎片 A / 并洞 B}
+\begin{table}[H]
+\centering
+\small
+\begin{tabular}{@{}llp{5.8cm}@{}}
+\toprule
+刀 & det200k & 前后要点 \\
+\midrule
+hole\_fit & $1.96\to\sim1.78\times$ & 中等产物进洞，不再无故落尾 \\
+碎片 A & $1.82\to\mathbf{1.71}\times$ & 洞 $<part\_lo$ 时降片下限 \\
+护洞 & $\approx$ 不动 & skips$>0$；非 200k KPI \\
+并洞 B & $1.71\to1.74$ & 搬挡路抬峰；\textbf{默认关} \\
+\bottomrule
+\end{tabular}
+\caption{养洞相关峰值决策摘要（ROUND17/18 实测）。}
+\end{table}
+
+\begin{fixold}
+中等产物（$<1024$ 页）一律 append 尾；片下限固定；L0 可吃中部大洞；无并洞。
+\end{fixold}
+
+\begin{fixnew}
+\begin{lstlisting}[language=pseudo]
+alloc_user: if protect and hole>=64 and mid: skip
+choose_part:
+  if hole_fit or pages>=1024: place in hole
+  if frag and hole < part_lo but hole >= floor: lower cap
+coalesce: OFF by default   // 1.71→1.74
+\end{lstlisting}
+\end{fixnew}
+
+% ---------- 家族游标 ----------
+\subsection{R17：家族虚拟源游标（CORRUPT 851 $\to$ 0）}
+\paragraph{现象}
+源片 $>64$ 时 live 账漂移，verify 报数百处 CORRUPT。
+
+\paragraph{根因}
+源下标掩码/上限按 64；P2b 片化后同源家族可远超 64。
+
+\begin{fixold}
+\texttt{1ull << src\_index} 在 index$\ge$64 未定义；游标数$=$片数。
+\end{fixold}
+
+\begin{fixnew}
+同 seq 且键域不相交 $\Rightarrow$ 一链一游标（\texttt{open\_chain}/\texttt{next\_run}）；游标数$=$家族数（例 151$\to$8）。
+\end{fixnew}
+
+\paragraph{验证}
+famw / g17 \texttt{t\_wide\_family}。
+
+% ---------- 小结 ----------
+\subsection{对照方法论（可迁移）}
+\begin{enumerate}[leftmargin=1.6em]
+  \item \textbf{主口径唯一}：读路径、退休、verify 必须共用可见性定义（坑 92/95）。
+  \item \textbf{持久点分明}：页复用与 shrink 只能看见已 sync 的 SB（坑 99/104/R17）。
+  \item \textbf{假设写进测试}：同 seq 片打破「连续 seq」就要改探测并加判别力用例（坑 112）。
+  \item \textbf{KPI 用 A/B 证伪}：护洞叙事正确但 200k 峰不动；并洞机制对但默认关（R18）。
+  \item \textbf{锁内只留 CPU}：IO 等待出锁（R17），别用「再加锁」治延迟。
+\end{enumerate}

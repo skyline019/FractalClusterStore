@@ -1,0 +1,7 @@
+  h2 v2 small      20 页 runs=6：当前视图 627 键 verify=OK  ok
+  h2 v2 bigval    120 页 runs=5：当前视图 129 键 verify=OK  ok
+  h2 v2 tomb_snap  19 页 runs=5：当前视图 637 键 verify=OK  ok
+  h2 v1 small      20 页：只读 627 键 → 升级（v1→v2）→ 重开 runs=7 verify=OK  ok
+  h2 v1 bigval    120 页：只读 129 键 → 升级（v1→v2）→ 重开 runs=6 verify=OK  ok
+  h2 v1 tomb_snap  19 页：只读 637 键 → 升级（v1→v2）→ 重开 runs=6 verify=OK  ok
+h2 golden 镜像兼容（v2 三件套 + v1 老库只读/升级/重开）: PASS

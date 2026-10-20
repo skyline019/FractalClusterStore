@@ -1,0 +1,134 @@
+% FCS 详细技术文档 — XeLaTeX
+% 编译：cd docs/latex && make
+\documentclass[UTF8,a4paper,11pt,fancyhdr,oneside]{ctexart}
+
+\usepackage{geometry}
+\geometry{margin=2.2cm,headheight=14pt}
+\usepackage{fontspec}
+\setCJKmainfont{Noto Serif CJK SC}
+\setCJKsansfont{Noto Sans CJK SC}
+\setCJKmonofont{Noto Sans Mono CJK SC}
+\setmainfont{DejaVu Serif}
+\setsansfont{DejaVu Sans}
+\setmonofont{DejaVu Sans Mono}
+
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{tabularx}
+\usepackage{multirow}
+\usepackage{array}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{colortbl}
+\usepackage{hyperref}
+\usepackage{enumitem}
+\usepackage{amsmath,amssymb}
+\usepackage{listings}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning,fit,calc,shapes.geometric,shapes.multipart,chains,matrix,decorations.pathreplacing}
+\usepackage{fancyhdr}
+\usepackage{microtype}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage{float}
+\usepackage{mdframed}
+
+\definecolor{oldbg}{RGB}{255,240,240}
+\definecolor{newbg}{RGB}{240,255,245}
+\definecolor{boxline}{RGB}{100,116,139}
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=teal!60!black,
+  citecolor=teal!60!black,
+  urlcolor=blue!50!black,
+  pdftitle={FCS 嵌入式有序 KV 内核详细技术文档},
+  pdfauthor={FCS / embdb/x}
+}
+
+\lstset{
+  basicstyle=\ttfamily\footnotesize,
+  keywordstyle=\bfseries\color{teal!70!black},
+  commentstyle=\itshape\color{gray!55!black},
+  stringstyle=\color{purple!55!black},
+  breaklines=true,
+  frame=single,
+  rulecolor=\color{black!20},
+  backgroundcolor=\color{black!3},
+  columns=fullflexible,
+  keepspaces=true,
+  showstringspaces=false,
+  aboveskip=0.6em,
+  belowskip=0.5em,
+  xleftmargin=0.4em
+}
+\lstdefinelanguage{pseudo}{
+  morekeywords={function,procedure,end,if,then,else,elseif,while,for,do,return,true,false,and,or,not,in,nil,lock,unlock,atomic},
+  morecomment=[l]{//},
+  sensitive=false
+}
+\lstdefinelanguage{fcsapi}{
+  morekeywords={Store,RC,TidyPolicy,Soft,Hard,Periodic,MORE,OK,open,configure_deploy,polish,set_tidy_policy,maybe_tidy,tidy_snap},
+  morecomment=[l]{//},
+  sensitive=true
+}
+
+\algrenewcommand\algorithmicrequire{\textbf{输入:}}
+\algrenewcommand\algorithmicensure{\textbf{输出:}}
+\renewcommand{\algorithmiccomment}[1]{\hfill\textit{// #1}}
+
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small FCS 详细技术文档}
+\fancyhead[R]{\small\nouppercase{\leftmark}}
+\fancyfoot[C]{\thepage}
+\renewcommand{\headrulewidth}{0.3pt}
+
+% 用环境而非宏参数：lstlisting 不能进 \newcommand 参数
+\newenvironment{fixold}{%
+\begin{mdframed}[backgroundcolor=oldbg,linecolor=red!40!black,linewidth=0.6pt,innertopmargin=4pt,innerbottommargin=4pt]
+\textbf{\color{red!60!black}修前 / 老路径}\\[0.3em]\ignorespaces
+}{\end{mdframed}}
+\newenvironment{fixnew}{%
+\begin{mdframed}[backgroundcolor=newbg,linecolor=teal!50!black,linewidth=0.6pt,innertopmargin=4pt,innerbottommargin=4pt]
+\textbf{\color{teal!50!black}修后 / 新路径}\\[0.3em]\ignorespaces
+}{\end{mdframed}}
+
+\title{\textbf{FCS：Fractal Cluster Store}\\[0.35em]
+\large 嵌入式有序 KV 内核\\详细技术文档\\[0.25em]
+\normalsize 代码详解 · 伪代码 · 流程图 · 踩坑对照\\[0.15em]
+\footnotesize 冻结至 ROUND18 / 产品树 \texttt{embdb/x}}
+\author{基于 DESIGN3 · EVAL17 · ROUND13--18 · g15--g18}
+\date{2026-10-21}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+\noindent
+本文面向两类读者：\textbf{（1）}仅有基础数据库知识、需要自底向上读懂实现的工程师——见第~\ref{sec:code-deep}~章（图解 + 手算示例 + API 剧本）；\textbf{（2）}已熟悉架构、需要伪代码/流程图与踩坑修前修后对照的维护者。
+配套：\texttt{fcs-pits.html}、\texttt{include/fcs.h}。标注「实测」的数字来自 ROUND/EVAL，非本编译复测。
+\end{abstract}
+
+\tableofcontents
+\newpage
+
+\input{chapters/01-overview}
+\input{chapters/11-code-deep}
+\input{chapters/02-architecture}
+\input{chapters/03-format}
+\input{chapters/04-paths}
+\input{chapters/05-merge-p2}
+\input{chapters/06-fsync-tidy}
+\input{chapters/09-diagrams}
+\input{chapters/10-pits}
+\input{chapters/07-evaluation}
+\input{chapters/08-engineering}
+
+\appendix
+\input{chapters/A-api}
+\input{chapters/B-repro}
+
+\end{document}

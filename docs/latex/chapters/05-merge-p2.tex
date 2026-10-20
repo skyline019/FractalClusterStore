@@ -1,0 +1,67 @@
+\section{分层合并与 P2b 养洞}
+\label{sec:merge}
+
+\subsection{层规则（摘要）}
+层合并在「读放大 / 垃圾 / 悬崖」等条件下触发（ROUND13/17 有 (a)(c)(d)(e) 与 $4t$ 悬崖等旋钮）。
+ROUND17 对「拧时机旋钮压峰」给出\textbf{否定结论}：简单改悬崖/脏度门槛在 layout 上往往更差；
+真正能动峰值的是\textbf{分配侧}——中等产物是否进洞、片是否适配碎片洞。
+
+\subsection{P2b：分片 + \texttt{M\_RUN\_TRIM}}
+问题：整组合并先完整写出再释放源 $\Rightarrow$ 峰值接近 $2\times$ 活数据，且洞来得太晚。
+
+做法：
+\begin{enumerate}[leftmargin=1.8em]
+  \item \texttt{choose\_part} 按可用洞挑选有界键区间「片」。
+  \item 片封口后写 \texttt{M\_RUN\_TRIM}：推进源 run 的逻辑起点；\textbf{第~0~页永留作身份锚}。
+  \item 跨重开重放 TRIM；abort/rollback/快照作废规则由 g16 覆盖。
+\end{enumerate}
+
+代价：run/片数量上升；家族同 seq 语义更复杂（见上章墓碑）。
+
+\subsection{hole\_fit（ROUND17）}
+旧逻辑仅对「大产物」（$\ge 1024$ 页）按洞分片；\textbf{中等产物}常直接落尾，错过合并刚释放的大洞。
+\texttt{set\_part\_hole\_fit(true)}（部署 Soft 默认开）让中等产物也可按洞切。
+
+\begin{table}[ht]
+\centering
+\small
+\begin{tabular}{@{}lcc@{}}
+\toprule
+场景 & 大约峰值（活倍数） & 备注 \\
+\midrule
+修前 layout 200k & $1.96$--$2.00\times$ & 归档 \\
+hole\_fit 后 & $1.75$--$1.81\times$ & 零写放大量级 \\
+800k & $1.40\to\sim1.36\times$ & 同轮 \\
+\bottomrule
+\end{tabular}
+\caption{hole\_fit 对 layout 峰值的影响（ROUND17 实测摘要）。}
+\end{table}
+
+\subsection{碎片感知切片 A（ROUND18）}
+当最大洞 $< \texttt{part\_lo}$，但空闲总量足够且最大洞 $\ge \texttt{frag\_floor}$（默认 16）时，
+临时在 $[\texttt{frag\_floor},\texttt{part\_lo})$ 按洞挑片（\texttt{part\_frags++}）。
+
+\begin{table}[ht]
+\centering
+\small
+\begin{tabular}{@{}lccc@{}}
+\toprule
+配置 & 峰值$\times$ & \texttt{part\_frags} & 写 \\
+\midrule
+frag=0 det200k & $1.82$ & 0 & $41.8\,\mathrm{MB}$ \\
+frag=1 det200k & $\mathbf{1.71}$ & 2 & $41.8\,\mathrm{MB}$ \\
+\bottomrule
+\end{tabular}
+\caption{碎片 A：$-0.11\times$，写字节齐平（ROUND18）。}
+\end{table}
+
+\subsection{有界并洞 B（ROUND18，默认关）}
+先搬挡路 run 再合并空洞；机制正确（g18 \texttt{t\_coal}），但 det200k 峰 $1.71\to1.74$（写放大抬峰）。
+\textbf{产品默认关闭}；Soft/\texttt{configure\_deploy} 不启用。需要时显式 \texttt{set\_part\_coalesce(true)}。
+
+\subsection{护洞（ROUND18）}
+用户路径 \texttt{alloc\_pages} 跳过 $\ge\texttt{hole\_protect\_pages}$（默认 64）的中部大洞；
+维护/流式仍可进洞；NOSPACE 回退。
+
+A/B 表明：skips 计数生效，但\textbf{200k 峰值几乎不动}（峰主因仍是养洞长尾等）；
+800k 约 $-0.04\times$。故护洞作 Soft 默认（零写放大、机制正确），\textbf{不当作 200k KPI}。

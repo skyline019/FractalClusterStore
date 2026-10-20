@@ -1,0 +1,50 @@
+\section{fsync 出锁与整理状态机}
+\label{sec:fsync-tidy}
+
+\subsection{fsync 出锁（ROUND17 / DISCUSS15）}
+\subsubsection{动机}
+提交者在 XLock 内做两次 \texttt{sync} 时，共享读被挡住的时间 $\approx$ 设备 fsync 墙钟。
+慢盘注入（sync 睡 $40\,\mathrm{ms}\times 2$）上，读者 \texttt{get} 平均约 $79\,\mathrm{ms}$；出锁后约 $0.01\,\mathrm{ms}$。
+
+\subsubsection{三段式提交}
+\begin{center}
+\begin{tabular}{@{}clp{7.8cm}@{}}
+\toprule
+阶段 & 锁 & 工作 \\
+\midrule
+phase1 & 内 & 就绪检查、\texttt{flush\_mem}、清单更新、抓 SB 载荷、发票号 \\
+phase2 & \textbf{外} & 按票号串行：\texttt{wait\_io} / sync / 写 SB / sync；失败粘性 \\
+phase3 & 内 & 发布 \texttt{sb\_synced\_}、\texttt{durable\_vers\_}、\texttt{promote\_pending} \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+持锁调用方（维护提交、abort、snapshot 等）走 \texttt{commit\_locked} 内联三段，不放锁。
+\texttt{durable\_vers()} 为跨线程持久进度的权威接口。
+
+\subsubsection{已修坑（节选）}
+阶段二失败后空提交短路、\texttt{cfail\_} 粘性、空票发布版本、\texttt{open}/\texttt{reload} 与顺序器交互等——均有 g17 段覆盖。
+\textbf{未做}：组提交流水线、双 MemTable（锁内 \texttt{flush\_mem} 仍在）。
+
+\subsection{整理状态机（ROUND18）}
+部署侧需要「日常读友好」与「对外服务前重锤」的一等公民策略，避免漏开 hole\_fit/护洞等旋钮。
+
+\begin{description}[style=nextline,leftmargin=1.6em]
+  \item[\texttt{TidyPolicy::Off}] 不自动整理。
+  \item[\texttt{Soft}] 调用 \texttt{configure\_deploy}：async + cheap 合并 + hole\_fit + 碎片 A + 护洞 + 可选 hw\_reclaim；组提交仍由应用拼。
+  \item[\texttt{Hard}] 压力下 \texttt{maybe\_tidy}$\to$\texttt{consolidate\_step}。
+  \item[\texttt{Periodic}] \texttt{maybe\_tidy}$\to$\texttt{compact\_file\_step}。
+  \item[\texttt{polish()}] \texttt{consolidate(0)} + \texttt{shrink()}：发布前重锤。
+\end{description}
+
+观测：\texttt{tidy\_snap()} 返回 policy、runs、used/live、layout 百分比、阈值、\texttt{protect} 等。
+
+\begin{lstlisting}[language=fcsapi,caption={部署侧最小用法示意}]
+Store s;
+s.open(dev);
+s.configure_deploy();              // Soft 常驻
+// ... 业务写入与组提交 ...
+s.polish();                        // 对外读服务前
+// 或：s.set_tidy_policy(TidyPolicy::Periodic);
+// while (s.maybe_tidy() == RC::MORE) { }
+\end{lstlisting}

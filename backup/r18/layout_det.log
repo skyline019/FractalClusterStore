@@ -1,0 +1,303 @@
+=== protect=0 det budget0 units8 rep=1 ===
+== after insert: tail=2328 live_pages=1778 used=2328 runs=8 grows=23 grown=2326
+== after update: tail=3495 peak_tail=3495 live_pages=1925 used=3495 runs=23 grows=27 grown=3493  hw 13.7 MB live 7.5 MB (1.82x) peak 1.82x  stream runs=5 moves=0 extends=0 reclaims=0 blockers=0  dev writes 41.8 MB
+== merge width: src_max=8 cur_max=8  (第 17 轮 ③：一次归并最多的源 run 数 / 游标数)  hole_fits=1  hole_protect_skips=0 protect=0
+== runs by address (page0 npages lvl seq):
+   [hole 84 pg]
+        86     40 L1 seq=683
+       126     41 L1 seq=692
+       167     41 L1 seq=701
+   [hole 48 pg]
+       256     85 L3 seq=581
+       341     30 L2 seq=672
+   [hole 10 pg]
+       381     73 L3 seq=581
+       454    139 L3 seq=581
+   [hole 99 pg]
+       692     73 L3 seq=581
+       765     70 L3 seq=581
+   [hole 209 pg]
+      1044     74 L3 seq=581
+   [hole 237 pg]
+      1355     76 L3 seq=581
+      1431    261 L2 seq=672
+   [hole 15 pg]
+      1707    127 L3 seq=581
+   [hole 184 pg]
+      2018    127 L3 seq=581
+   [hole 184 pg]
+      2329    126 L3 seq=581
+   [hole 163 pg]
+      2618    127 L3 seq=581
+   [hole 160 pg]
+      2905     91 L3 seq=581
+      2996     92 L3 seq=581
+      3088     93 L3 seq=581
+   [hole 32 pg]
+      3213     72 L3 seq=581
+      3285     72 L3 seq=581
+      3357     69 L3 seq=581
+      3426     69 L3 seq=581
+== free holes by size class: [1,2):1 [4,8):2 [8,16):4 [16,32):1 [32,64):3 [64,128):1 [128,256):6
+=== protect=0 det budget0 units8 rep=2 ===
+== after insert: tail=2328 live_pages=1778 used=2328 runs=8 grows=23 grown=2326
+== after update: tail=3495 peak_tail=3495 live_pages=1925 used=3495 runs=23 grows=27 grown=3493  hw 13.7 MB live 7.5 MB (1.82x) peak 1.82x  stream runs=5 moves=0 extends=0 reclaims=0 blockers=0  dev writes 41.8 MB
+== merge width: src_max=8 cur_max=8  (第 17 轮 ③：一次归并最多的源 run 数 / 游标数)  hole_fits=1  hole_protect_skips=0 protect=0
+== runs by address (page0 npages lvl seq):
+   [hole 84 pg]
+        86     40 L1 seq=683
+       126     41 L1 seq=692
+       167     41 L1 seq=701
+   [hole 48 pg]
+       256     85 L3 seq=581
+       341     30 L2 seq=672
+   [hole 10 pg]
+       381     73 L3 seq=581
+       454    139 L3 seq=581
+   [hole 99 pg]
+       692     73 L3 seq=581
+       765     70 L3 seq=581
+   [hole 209 pg]
+      1044     74 L3 seq=581
+   [hole 237 pg]
+      1355     76 L3 seq=581
+      1431    261 L2 seq=672
+   [hole 15 pg]
+      1707    127 L3 seq=581
+   [hole 184 pg]
+      2018    127 L3 seq=581
+   [hole 184 pg]
+      2329    126 L3 seq=581
+   [hole 163 pg]
+      2618    127 L3 seq=581
+   [hole 160 pg]
+      2905     91 L3 seq=581
+      2996     92 L3 seq=581
+      3088     93 L3 seq=581
+   [hole 32 pg]
+      3213     72 L3 seq=581
+      3285     72 L3 seq=581
+      3357     69 L3 seq=581
+      3426     69 L3 seq=581
+== free holes by size class: [1,2):1 [4,8):2 [8,16):4 [16,32):1 [32,64):3 [64,128):1 [128,256):6
+=== protect=1 det budget0 units8 rep=1 ===
+== after insert: tail=2287 live_pages=1778 used=2287 runs=8 grows=29 grown=2320
+== after update: tail=3487 peak_tail=3487 live_pages=1924 used=3487 runs=22 grows=33 grown=3520  hw 13.6 MB live 7.5 MB (1.81x) peak 1.81x  stream runs=5 moves=0 extends=0 reclaims=0 blockers=0  dev writes 41.8 MB
+== merge width: src_max=8 cur_max=8  (第 17 轮 ③：一次归并最多的源 run 数 / 游标数)  hole_fits=1  hole_protect_skips=15 protect=1
+== runs by address (page0 npages lvl seq):
+   [hole 79 pg]
+        81     40 L1 seq=682
+       121     41 L1 seq=691
+   [hole 39 pg]
+       201     32 L3 seq=581
+   [hole 13 pg]
+       246     94 L3 seq=581
+       340     36 L2 seq=671
+   [hole 5 pg]
+       381     81 L3 seq=581
+       462     41 L1 seq=700
+   [hole 189 pg]
+       692     81 L3 seq=581
+       773    256 L2 seq=671
+   [hole 15 pg]
+      1044     84 L3 seq=581
+   [hole 227 pg]
+      1355     80 L3 seq=581
+   [hole 231 pg]
+      1666    140 L3 seq=581
+   [hole 171 pg]
+      1977    139 L3 seq=581
+   [hole 172 pg]
+      2288    138 L3 seq=581
+   [hole 151 pg]
+      2577    194 L3 seq=581
+   [hole 93 pg]
+      2864    103 L3 seq=581
+      2967    102 L3 seq=581
+      3069    101 L3 seq=581
+   [hole 32 pg]
+      3202     72 L3 seq=581
+      3274     72 L3 seq=581
+      3346     70 L3 seq=581
+      3416     71 L3 seq=581
+== free holes by size class: [1,2):2 [2,4):1 [8,16):2 [16,32):2 [32,64):2 [64,128):1 [128,256):6
+=== protect=1 det budget0 units8 rep=2 ===
+== after insert: tail=2287 live_pages=1778 used=2287 runs=8 grows=29 grown=2320
+== after update: tail=3487 peak_tail=3487 live_pages=1924 used=3487 runs=22 grows=33 grown=3520  hw 13.6 MB live 7.5 MB (1.81x) peak 1.81x  stream runs=5 moves=0 extends=0 reclaims=0 blockers=0  dev writes 41.8 MB
+== merge width: src_max=8 cur_max=8  (第 17 轮 ③：一次归并最多的源 run 数 / 游标数)  hole_fits=1  hole_protect_skips=15 protect=1
+== runs by address (page0 npages lvl seq):
+   [hole 79 pg]
+        81     40 L1 seq=682
+       121     41 L1 seq=691
+   [hole 39 pg]
+       201     32 L3 seq=581
+   [hole 13 pg]
+       246     94 L3 seq=581
+       340     36 L2 seq=671
+   [hole 5 pg]
+       381     81 L3 seq=581
+       462     41 L1 seq=700
+   [hole 189 pg]
+       692     81 L3 seq=581
+       773    256 L2 seq=671
+   [hole 15 pg]
+      1044     84 L3 seq=581
+   [hole 227 pg]
+      1355     80 L3 seq=581
+   [hole 231 pg]
+      1666    140 L3 seq=581
+   [hole 171 pg]
+      1977    139 L3 seq=581
+   [hole 172 pg]
+      2288    138 L3 seq=581
+   [hole 151 pg]
+      2577    194 L3 seq=581
+   [hole 93 pg]
+      2864    103 L3 seq=581
+      2967    102 L3 seq=581
+      3069    101 L3 seq=581
+   [hole 32 pg]
+      3202     72 L3 seq=581
+      3274     72 L3 seq=581
+      3346     70 L3 seq=581
+      3416     71 L3 seq=581
+== free holes by size class: [1,2):2 [2,4):1 [8,16):2 [16,32):2 [32,64):2 [64,128):1 [128,256):6
+=== protect=0 800k pct0 ===
+== after insert: tail=8063 live_pages=7208 used=8063 runs=32 grows=44 grown=8061
+== after update: tail=11960 peak_tail=11960 live_pages=7822 used=11960 runs=44 grows=60 grown=12194  hw 46.7 MB live 30.6 MB (1.53x) peak 1.53x  stream runs=16 moves=0 extends=0 reclaims=0 blockers=0  dev writes 171.0 MB
+== merge width: src_max=9 cur_max=8  (第 17 轮 ③：一次归并最多的源 run 数 / 游标数)  hole_fits=1  hole_protect_skips=0 protect=0
+== runs by address (page0 npages lvl seq):
+   [hole 100 pg]
+       102     41 L1 seq=2761
+   [hole 41 pg]
+       184    135 L3 seq=581
+   [hole 61 pg]
+       380     18 L3 seq=1165
+   [hole 18 pg]
+       416     81 L3 seq=581
+       497     41 L1 seq=2771
+   [hole 157 pg]
+       695     15 L3 seq=581
+   [hole 27 pg]
+       737     83 L3 seq=581
+   [hole 81 pg]
+       901     41 L1 seq=2739
+       942     41 L1 seq=2747
+   [hole 69 pg]
+      1052     70 L3 seq=581
+      1122    205 L3 seq=1165
+   [hole 40 pg]
+      1367     83 L3 seq=581
+      1450    206 L3 seq=1165
+   [hole 26 pg]
+      1682     83 L3 seq=581
+   [hole 273 pg]
+      2038     82 L3 seq=581
+      2120    211 L3 seq=1165
+   [hole 22 pg]
+      2353     82 L3 seq=581
+      2435    209 L3 seq=1165
+   [hole 24 pg]
+      2668     82 L3 seq=581
+      2750    205 L3 seq=1165
+      2955   1188 L3 seq=1749
+      4143    594 L3 seq=1749
+      4737    305 L2 seq=2436
+      5042    308 L2 seq=2513
+      5350    309 L2 seq=2586
+      5659    309 L2 seq=2659
+      5968   1186 L3 seq=2355
+      7154    554 L3 seq=2355
+      7708    305 L2 seq=2731
+   [hole 2248 pg]
+     10261     74 L3 seq=581
+   [hole 32 pg]
+     10367     70 L3 seq=581
+   [hole 32 pg]
+     10469     70 L3 seq=581
+   [hole 32 pg]
+     10571     70 L3 seq=581
+   [hole 32 pg]
+     10673     70 L3 seq=581
+   [hole 32 pg]
+     10775     69 L3 seq=581
+   [hole 32 pg]
+     10876     69 L3 seq=581
+     10945     82 L3 seq=581
+     11027     83 L3 seq=581
+     11110     81 L3 seq=581
+     11191     81 L3 seq=581
+     11272     81 L3 seq=581
+     11353    204 L3 seq=1165
+     11557    202 L3 seq=1165
+     11759    201 L3 seq=1165
+== free holes by size class: [2,4):2 [4,8):5 [8,16):2 [16,32):6 [32,64):9 [64,128):2 [128,256):1 [256,512):1 [2048,4096):1
+=== protect=1 800k pct0 ===
+== after insert: tail=8027 live_pages=7208 used=8027 runs=32 grows=53 grown=8075
+== after update: tail=11682 peak_tail=11682 live_pages=7830 used=11682 runs=42 grows=70 grown=11966  hw 45.6 MB live 30.6 MB (1.49x) peak 1.49x  stream runs=16 moves=0 extends=0 reclaims=0 blockers=0  dev writes 171.0 MB
+== merge width: src_max=9 cur_max=8  (第 17 轮 ③：一次归并最多的源 run 数 / 游标数)  hole_fits=1  hole_protect_skips=839 protect=1
+== runs by address (page0 npages lvl seq):
+   [hole 46 pg]
+        48     41 L1 seq=2759
+   [hole 31 pg]
+       120    165 L3 seq=581
+   [hole 96 pg]
+       381     89 L3 seq=581
+       470    191 L3 seq=1165
+   [hole 40 pg]
+       701     89 L3 seq=581
+       790     41 L1 seq=2769
+       831     41 L1 seq=2737
+       872     41 L1 seq=2745
+   [hole 144 pg]
+      1057     75 L3 seq=581
+   [hole 123 pg]
+      1255     85 L3 seq=1165
+   [hole 32 pg]
+      1372     89 L3 seq=581
+      1461    200 L3 seq=1165
+   [hole 26 pg]
+      1687     89 L3 seq=581
+      1776    199 L3 seq=1165
+   [hole 27 pg]
+      2002     88 L3 seq=581
+      2090    204 L3 seq=1165
+   [hole 23 pg]
+      2317     88 L3 seq=581
+      2405    202 L3 seq=1165
+   [hole 25 pg]
+      2632     88 L3 seq=581
+      2720    198 L3 seq=1165
+   [hole 123 pg]
+      3041   1188 L3 seq=1749
+      4229    594 L3 seq=1749
+   [hole 197 pg]
+      5020    305 L2 seq=2434
+      5325    308 L2 seq=2511
+      5633    309 L2 seq=2584
+      5942    309 L2 seq=2657
+      6251   1186 L3 seq=2353
+      7437    556 L3 seq=2353
+      7993    305 L2 seq=2729
+   [hole 1969 pg]
+     10267     75 L3 seq=581
+   [hole 32 pg]
+     10374     70 L3 seq=581
+   [hole 32 pg]
+     10476     70 L3 seq=581
+   [hole 32 pg]
+     10578     70 L3 seq=581
+   [hole 32 pg]
+     10680     69 L3 seq=581
+   [hole 32 pg]
+     10781     69 L3 seq=581
+   [hole 32 pg]
+     10882     69 L3 seq=581
+     10951     88 L3 seq=581
+     11039     87 L3 seq=581
+     11126     87 L3 seq=581
+     11213     77 L3 seq=581
+     11290    197 L3 seq=1165
+     11487    195 L3 seq=1165
+== free holes by size class: [1,2):1 [2,4):1 [4,8):1 [8,16):1 [16,32):7 [32,64):10 [64,128):2 [128,256):2 [1024,2048):1
+DONE

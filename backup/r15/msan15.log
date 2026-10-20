@@ -1,0 +1,21 @@
+  fmt: disk_fmt=2 MENT=48 ok
+  trim_unit: drop=2 trims=1 ok
+  trim_replay: ok
+  job_peak: trims=0 runs=2 ok
+  snap: pinned no-trim ok
+  bad_trim: bad_man=1 ok
+g15 P2 fmt+TRIM: PASS
+scan=1
+round 0: bad=0 verify=OK cells=1 segs=3 runs=3 recs=466 bytes=9742 err=0(-)
+round 1: bad=0 verify=OK cells=1 segs=4 runs=4 recs=932 bytes=19238 err=0(-)
+round 2: bad=0 verify=OK cells=1 segs=5 runs=5 recs=1388 bytes=28606 err=0(-)
+round 3: bad=0 verify=OK cells=2 segs=10 runs=6 recs=1851 bytes=37860 err=0(-)
+round 4: bad=0 verify=OK cells=2 segs=11 runs=6 recs=2313 bytes=47156 err=0(-)
+round 5: bad=0 verify=OK cells=2 segs=12 runs=6 recs=2770 bytes=56448 err=0(-)
+reopen OK
+after reopen bad=0 scan=1668
+PASS
+  键空间 2000 / 每轮 4000 次 / 每 200 次提交：60 次提交，1994 键，bad=0，used 77 页
+  键空间 300 / 每轮 3000 次 / 每 100 次提交：120 次提交，300 键，bad=0，used 23 页
+  键空间 20000 / 每轮 4000 次 / 每 400 次提交：20 次提交，6569 键，bad=0，used 78 页
+PASS

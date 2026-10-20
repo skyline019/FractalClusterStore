@@ -1,0 +1,40 @@
+\section{持久化格式（FCS2）}
+
+\subsection{从 FCSB 到 FCS2}
+第~16~轮完成 \textbf{P2 格式 v2}（设计稿 \texttt{P2\_DESIGN.md}）：
+\begin{itemize}[leftmargin=1.6em]
+  \item 超级块魔数 \texttt{'FCS2'}，头扩至约 $48\,\mathrm{B}$ 量级字段布局（实现以头文件为准）。
+  \item 清单项 $48\,\mathrm{B}$：\texttt{seq}/\texttt{ver} 升为 \textbf{64~位}，消除坑~102/103 类回绕静默错误的格式根因。
+  \item 老库挂载可只读打开 v1，写路径触发升级；golden 镜像分 \texttt{tests/golden}（v2）与 \texttt{golden/v1}。
+\end{itemize}
+
+\subsection{超级块（双槽）}
+\begin{itemize}[leftmargin=1.6em]
+  \item 两槽交替；CRC 覆盖头 + 内联增量。
+  \item 提交点语义：有效槽的状态字单次对齐写；挂载择优。
+  \item ROUND17 起区分代数：\texttt{sb\_built\_}（锁内抓载荷）与 \texttt{sb\_synced\_}（锁外已持久）；页复用闸比较后者。
+\end{itemize}
+
+\subsection{清单操作码（节选）}
+\begin{center}
+\begin{tabular}{@{}clp{8.2cm}@{}}
+\toprule
+码 & 名 & 含义 \\
+\midrule
+1--5 & ADD/DEL/\ldots & run / split / seg 增减 \\
+6 & \texttt{M\_RANGE} & 范围墓碑（只活在清单，不占键空间） \\
+7 & \texttt{M\_RUN\_TRIM} & P2b：源 run 前缀释放；第~0~页为身份锚 \\
+8 & \texttt{M\_RUN\_HOLE} & P2c 预留：run 内部释页（本冻结轮\textbf{未实现}） \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{页与记录}
+\begin{itemize}[leftmargin=1.6em]
+  \item 页大小 \texttt{PAGE}（与 XDB 共用布局常数）；数据页含 used、首末键、可选页内前缀（\texttt{pfx}/\texttt{fmt}）。
+  \item 记录头瘦身：键 $8\,\mathrm{B}$ + 长度 $2\,\mathrm{B}$；版本是 run 属性；页 CRC 覆盖载荷。
+  \item 大值：\texttt{len = OVFL\_MARK}，体为 $16\,\mathrm{B}$ 描述符，值在溢出链；\texttt{put} 时可先落链。
+\end{itemize}
+
+\subsection{身份与复用}
+页号会复用，故段身份必须带 \texttt{seq}（及 rid）。提交失败前释放的页进 \texttt{pending\_free\_}，须待对应 SB 代数持久后才可复用——否则崩溃会破坏「完整旧态」。

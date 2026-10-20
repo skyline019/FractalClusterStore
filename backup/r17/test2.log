@@ -1,0 +1,976 @@
+In file included from tests/t2.cpp:1:
+include/store.h: In member function 'xdb::RC xdb::Engine::find_leaf(xdb::u64, xdb::u16&)':
+include/store.h:1093:35: warning: comparison of integer expressions of different signedness: 'int' and 'unsigned int' [-Wsign-compare]
+ 1093 |         for (int depth = 0; depth < MAX_LEVEL * 4; ++depth) {
+      |                             ~~~~~~^~~~~~~~~~~~~~~
+include/store.h: In member function 'xdb::RC xdb::Engine::parent_update(xdb::u16)':
+include/store.h:1270:35: warning: comparison of integer expressions of different signedness: 'int' and 'unsigned int' [-Wsign-compare]
+ 1270 |         for (int depth = 0; depth < MAX_LEVEL + 2; ++depth) {
+      |                             ~~~~~~^~~~~~~~~~~~~~~
+include/store.h: In member function 'void xdb::Engine::verify_node(xdb::u16, int, std::vector<unsigned char>&, VerifyReport&, int)':
+include/store.h:1654:46: warning: comparison of integer expressions of different signedness: 'int' and 'unsigned int' [-Wsign-compare]
+ 1654 |         if (pid >= dev_->capacity() || depth > MAX_LEVEL + 2) { rerr(r, pid, "page range/depth"); return; }
+      |                                        ~~~~~~^~~~~~~~~~~~~~~
+In file included from tests/t1.cpp:1:
+include/store.h: In member function 'xdb::RC xdb::Engine::find_leaf(xdb::u64, xdb::u16&)':
+include/store.h:1093:35: warning: comparison of integer expressions of different signedness: 'int' and 'unsigned int' [-Wsign-compare]
+ 1093 |         for (int depth = 0; depth < MAX_LEVEL * 4; ++depth) {
+      |                             ~~~~~~^~~~~~~~~~~~~~~
+include/store.h: In member function 'xdb::RC xdb::Engine::parent_update(xdb::u16)':
+include/store.h:1270:35: warning: comparison of integer expressions of different signedness: 'int' and 'unsigned int' [-Wsign-compare]
+ 1270 |         for (int depth = 0; depth < MAX_LEVEL + 2; ++depth) {
+      |                             ~~~~~~^~~~~~~~~~~~~~~
+include/store.h: In member function 'void xdb::Engine::verify_node(xdb::u16, int, std::vector<unsigned char>&, VerifyReport&, int)':
+include/store.h:1654:46: warning: comparison of integer expressions of different signedness: 'int' and 'unsigned int' [-Wsign-compare]
+ 1654 |         if (pid >= dev_->capacity() || depth > MAX_LEVEL + 2) { rerr(r, pid, "page range/depth"); return; }
+      |                                        ~~~~~~^~~~~~~~~~~~~~~
+include/store.h: In instantiation of 'xdb::RC xdb::Engine::walk_rec(xdb::u16, std::vector<unsigned char>&, F&, int) [with F = xdb::Engine::refresh_free()::<lambda(xdb::u16)>; xdb::u16 = short unsigned int]':
+include/store.h:1729:24:   required from 'xdb::RC xdb::Engine::walk_pages(xdb::u16, F&&) [with F = xdb::Engine::refresh_free()::<lambda(xdb::u16)>; xdb::u16 = short unsigned int]'
+ 1729 |         return walk_rec(root, seen, fn, 0);
+      |                ~~~~~~~~^~~~~~~~~~~~~~~~~~~
+include/store.h:213:19:   required from here
+  213 |         walk_pages(root_, [&](u16 pid) { if (pid < used_.size()) used_[pid] = 1; return true; });
+      |         ~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+include/store.h:1733:78: warning: comparison of integer expressions of different signedness: 'int' and 'unsigned int' [-Wsign-compare]
+ 1733 |         if (pid == NIL_PAGE || pid >= dev_->capacity() || seen[pid] || depth > MAX_LEVEL + 2) return RC::OK;
+      |                                                                        ~~~~~~^~~~~~~~~~~~~~~
+include/store.h: In instantiation of 'xdb::RC xdb::Engine::walk_rec(xdb::u16, std::vector<unsigned char>&, F&, int) [with F = xdb::Engine::snapshot()::<lambda(xdb::u16)>; xdb::u16 = short unsigned int]':
+include/store.h:1729:24:   required from 'xdb::RC xdb::Engine::walk_pages(xdb::u16, F&&) [with F = xdb::Engine::snapshot()::<lambda(xdb::u16)>; xdb::u16 = short unsigned int]'
+ 1729 |         return walk_rec(root, seen, fn, 0);
+      |                ~~~~~~~~^~~~~~~~~~~~~~~~~~~
+include/store.h:268:27:   required from here
+  268 |         RC rc = walk_pages(root_, [&](u16 pid) {
+      |                 ~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~
+  269 |             if (s.npages < MAX_PIN) { s.pages[s.npages++] = pid; pin_[pid]++; }
+      |             ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  270 |             else overflow = true;
+      |             ~~~~~~~~~~~~~~~~~~~~~
+  271 |             return true;
+      |             ~~~~~~~~~~~~   
+  272 |         });
+      |         ~~                 
+include/store.h:1733:78: warning: comparison of integer expressions of different signedness: 'int' and 'unsigned int' [-Wsign-compare]
+ 1733 |         if (pid == NIL_PAGE || pid >= dev_->capacity() || seen[pid] || depth > MAX_LEVEL + 2) return RC::OK;
+      |                                                                        ~~~~~~^~~~~~~~~~~~~~~
+include/store.h: In instantiation of 'xdb::RC xdb::Engine::walk_rec(xdb::u16, std::vector<unsigned char>&, F&, int) [with F = xdb::Engine::debug_chain_tree(std::vector<short unsigned int>&, std::vector<short unsigned int>&)::<lambda(xdb::u16)>; xdb::u16 = short unsigned int]':
+include/store.h:1729:24:   required from 'xdb::RC xdb::Engine::walk_pages(xdb::u16, F&&) [with F = xdb::Engine::debug_chain_tree(std::vector<short unsigned int>&, std::vector<short unsigned int>&)::<lambda(xdb::u16)>; xdb::u16 = short unsigned int]'
+ 1729 |         return walk_rec(root, seen, fn, 0);
+      |                ~~~~~~~~^~~~~~~~~~~~~~~~~~~
+include/store.h:322:19:   required from here
+  322 |         walk_pages(root_, [&](u16 pid) {
+      |         ~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~
+  323 |             Entry* e = load(pid);
+      |             ~~~~~~~~~~~~~~~~~~~~~
+  324 |             if (e && page_kind(e->b) == PK_LEAF && pid < reach.size()) reach[pid] = 1;
+      |             ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  325 |             return true;
+      |             ~~~~~~~~~~~~
+  326 |         });
+      |         ~~         
+include/store.h:1733:78: warning: comparison of integer expressions of different signedness: 'int' and 'unsigned int' [-Wsign-compare]
+ 1733 |         if (pid == NIL_PAGE || pid >= dev_->capacity() || seen[pid] || depth > MAX_LEVEL + 2) return RC::OK;
+      |                                                                        ~~~~~~^~~~~~~~~~~~~~~
+include/store.h: In instantiation of 'xdb::RC xdb::Engine::walk_rec(xdb::u16, std::vector<unsigned char>&, F&, int) [with F = xdb::Engine::debug_leaks(std::vector<short unsigned int>&)::<lambda(xdb::u16)>; xdb::u16 = short unsigned int]':
+include/store.h:1729:24:   required from 'xdb::RC xdb::Engine::walk_pages(xdb::u16, F&&) [with F = xdb::Engine::debug_leaks(std::vector<short unsigned int>&)::<lambda(xdb::u16)>; xdb::u16 = short unsigned int]'
+ 1729 |         return walk_rec(root, seen, fn, 0);
+      |                ~~~~~~~~^~~~~~~~~~~~~~~~~~~
+include/store.h:350:19:   required from here
+  350 |         walk_pages(root_, [&](u16 pid) { if (pid < mark.size()) mark[pid] = 1; return true; });
+      |         ~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+include/store.h:1733:78: warning: comparison of integer expressions of different signedness: 'int' and 'unsigned int' [-Wsign-compare]
+ 1733 |         if (pid == NIL_PAGE || pid >= dev_->capacity() || seen[pid] || depth > MAX_LEVEL + 2) return RC::OK;
+      |                                                                        ~~~~~~^~~~~~~~~~~~~~~
+include/store.h: In instantiation of 'xdb::RC xdb::Engine::walk_rec(xdb::u16, std::vector<unsigned char>&, F&, int) [with F = xdb::Engine::mount()::<lambda(xdb::u16)>; xdb::u16 = short unsigned int]':
+include/store.h:1729:24:   required from 'xdb::RC xdb::Engine::walk_pages(xdb::u16, F&&) [with F = xdb::Engine::mount()::<lambda(xdb::u16)>; xdb::u16 = short unsigned int]'
+ 1729 |         return walk_rec(root, seen, fn, 0);
+      |                ~~~~~~~~^~~~~~~~~~~~~~~~~~~
+include/store.h:690:19:   required from here
+  690 |         walk_pages(root_, [&](u16 pid) { if (pid < reach.size()) reach[pid] = 1; return true; });
+      |         ~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+include/store.h:1733:78: warning: comparison of integer expressions of different signedness: 'int' and 'unsigned int' [-Wsign-compare]
+ 1733 |         if (pid == NIL_PAGE || pid >= dev_->capacity() || seen[pid] || depth > MAX_LEVEL + 2) return RC::OK;
+      |                                                                        ~~~~~~^~~~~~~~~~~~~~~
+include/store.h: In instantiation of 'xdb::RC xdb::Engine::walk_rec(xdb::u16, std::vector<unsigned char>&, F&, int) [with F = xdb::Engine::refresh_free()::<lambda(xdb::u16)>; xdb::u16 = short unsigned int]':
+include/store.h:1729:24:   required from 'xdb::RC xdb::Engine::walk_pages(xdb::u16, F&&) [with F = xdb::Engine::refresh_free()::<lambda(xdb::u16)>; xdb::u16 = short unsigned int]'
+ 1729 |         return walk_rec(root, seen, fn, 0);
+      |                ~~~~~~~~^~~~~~~~~~~~~~~~~~~
+include/store.h:213:19:   required from here
+  213 |         walk_pages(root_, [&](u16 pid) { if (pid < used_.size()) used_[pid] = 1; return true; });
+      |         ~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+include/store.h:1733:78: warning: comparison of integer expressions of different signedness: 'int' and 'unsigned int' [-Wsign-compare]
+ 1733 |         if (pid == NIL_PAGE || pid >= dev_->capacity() || seen[pid] || depth > MAX_LEVEL + 2) return RC::OK;
+      |                                                                        ~~~~~~^~~~~~~~~~~~~~~
+include/store.h: In instantiation of 'xdb::RC xdb::Engine::walk_rec(xdb::u16, std::vector<unsigned char>&, F&, int) [with F = xdb::Engine::snapshot()::<lambda(xdb::u16)>; xdb::u16 = short unsigned int]':
+include/store.h:1729:24:   required from 'xdb::RC xdb::Engine::walk_pages(xdb::u16, F&&) [with F = xdb::Engine::snapshot()::<lambda(xdb::u16)>; xdb::u16 = short unsigned int]'
+ 1729 |         return walk_rec(root, seen, fn, 0);
+      |                ~~~~~~~~^~~~~~~~~~~~~~~~~~~
+include/store.h:268:27:   required from here
+  268 |         RC rc = walk_pages(root_, [&](u16 pid) {
+      |                 ~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~
+  269 |             if (s.npages < MAX_PIN) { s.pages[s.npages++] = pid; pin_[pid]++; }
+      |             ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  270 |             else overflow = true;
+      |             ~~~~~~~~~~~~~~~~~~~~~
+  271 |             return true;
+      |             ~~~~~~~~~~~~   
+  272 |         });
+      |         ~~                 
+include/store.h:1733:78: warning: comparison of integer expressions of different signedness: 'int' and 'unsigned int' [-Wsign-compare]
+ 1733 |         if (pid == NIL_PAGE || pid >= dev_->capacity() || seen[pid] || depth > MAX_LEVEL + 2) return RC::OK;
+      |                                                                        ~~~~~~^~~~~~~~~~~~~~~
+include/store.h: In instantiation of 'xdb::RC xdb::Engine::walk_rec(xdb::u16, std::vector<unsigned char>&, F&, int) [with F = xdb::Engine::debug_chain_tree(std::vector<short unsigned int>&, std::vector<short unsigned int>&)::<lambda(xdb::u16)>; xdb::u16 = short unsigned int]':
+include/store.h:1729:24:   required from 'xdb::RC xdb::Engine::walk_pages(xdb::u16, F&&) [with F = xdb::Engine::debug_chain_tree(std::vector<short unsigned int>&, std::vector<short unsigned int>&)::<lambda(xdb::u16)>; xdb::u16 = short unsigned int]'
+ 1729 |         return walk_rec(root, seen, fn, 0);
+      |                ~~~~~~~~^~~~~~~~~~~~~~~~~~~
+include/store.h:322:19:   required from here
+  322 |         walk_pages(root_, [&](u16 pid) {
+      |         ~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~
+  323 |             Entry* e = load(pid);
+      |             ~~~~~~~~~~~~~~~~~~~~~
+  324 |             if (e && page_kind(e->b) == PK_LEAF && pid < reach.size()) reach[pid] = 1;
+      |             ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  325 |             return true;
+      |             ~~~~~~~~~~~~
+  326 |         });
+      |         ~~         
+include/store.h:1733:78: warning: comparison of integer expressions of different signedness: 'int' and 'unsigned int' [-Wsign-compare]
+ 1733 |         if (pid == NIL_PAGE || pid >= dev_->capacity() || seen[pid] || depth > MAX_LEVEL + 2) return RC::OK;
+      |                                                                        ~~~~~~^~~~~~~~~~~~~~~
+include/store.h: In instantiation of 'xdb::RC xdb::Engine::walk_rec(xdb::u16, std::vector<unsigned char>&, F&, int) [with F = xdb::Engine::debug_leaks(std::vector<short unsigned int>&)::<lambda(xdb::u16)>; xdb::u16 = short unsigned int]':
+include/store.h:1729:24:   required from 'xdb::RC xdb::Engine::walk_pages(xdb::u16, F&&) [with F = xdb::Engine::debug_leaks(std::vector<short unsigned int>&)::<lambda(xdb::u16)>; xdb::u16 = short unsigned int]'
+ 1729 |         return walk_rec(root, seen, fn, 0);
+      |                ~~~~~~~~^~~~~~~~~~~~~~~~~~~
+include/store.h:350:19:   required from here
+  350 |         walk_pages(root_, [&](u16 pid) { if (pid < mark.size()) mark[pid] = 1; return true; });
+      |         ~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+include/store.h:1733:78: warning: comparison of integer expressions of different signedness: 'int' and 'unsigned int' [-Wsign-compare]
+ 1733 |         if (pid == NIL_PAGE || pid >= dev_->capacity() || seen[pid] || depth > MAX_LEVEL + 2) return RC::OK;
+      |                                                                        ~~~~~~^~~~~~~~~~~~~~~
+include/store.h: In instantiation of 'xdb::RC xdb::Engine::walk_rec(xdb::u16, std::vector<unsigned char>&, F&, int) [with F = xdb::Engine::mount()::<lambda(xdb::u16)>; xdb::u16 = short unsigned int]':
+include/store.h:1729:24:   required from 'xdb::RC xdb::Engine::walk_pages(xdb::u16, F&&) [with F = xdb::Engine::mount()::<lambda(xdb::u16)>; xdb::u16 = short unsigned int]'
+ 1729 |         return walk_rec(root, seen, fn, 0);
+      |                ~~~~~~~~^~~~~~~~~~~~~~~~~~~
+include/store.h:690:19:   required from here
+  690 |         walk_pages(root_, [&](u16 pid) { if (pid < reach.size()) reach[pid] = 1; return true; });
+      |         ~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+include/store.h:1733:78: warning: comparison of integer expressions of different signedness: 'int' and 'unsigned int' [-Wsign-compare]
+ 1733 |         if (pid == NIL_PAGE || pid >= dev_->capacity() || seen[pid] || depth > MAX_LEVEL + 2) return RC::OK;
+      |                                                                        ~~~~~~^~~~~~~~~~~~~~~
+In file included from tests/t3.cpp:2:
+include/store.h: In member function 'xdb::RC xdb::Engine::find_leaf(xdb::u64, xdb::u16&)':
+include/store.h:1093:35: warning: comparison of integer expressions of different signedness: 'int' and 'unsigned int' [-Wsign-compare]
+ 1093 |         for (int depth = 0; depth < MAX_LEVEL * 4; ++depth) {
+      |                             ~~~~~~^~~~~~~~~~~~~~~
+include/store.h: In member function 'xdb::RC xdb::Engine::parent_update(xdb::u16)':
+include/store.h:1270:35: warning: comparison of integer expressions of different signedness: 'int' and 'unsigned int' [-Wsign-compare]
+ 1270 |         for (int depth = 0; depth < MAX_LEVEL + 2; ++depth) {
+      |                             ~~~~~~^~~~~~~~~~~~~~~
+include/store.h: In member function 'void xdb::Engine::verify_node(xdb::u16, int, std::vector<unsigned char>&, VerifyReport&, int)':
+include/store.h:1654:46: warning: comparison of integer expressions of different signedness: 'int' and 'unsigned int' [-Wsign-compare]
+ 1654 |         if (pid >= dev_->capacity() || depth > MAX_LEVEL + 2) { rerr(r, pid, "page range/depth"); return; }
+      |                                        ~~~~~~^~~~~~~~~~~~~~~
+tests/t3.cpp: In lambda function:
+tests/t3.cpp:258:58: warning: format '%u' expects argument of type 'unsigned int', but argument 6 has type 'xdb::u64' {aka 'long unsigned int'} [-Wformat=]
+  258 |             std::fprintf(f, "P%u level=%u nslots=%u nid=%u footvers=?\n", p2, ih.level, ih.nslots, ih.nid);
+      |                                                         ~^                                         ~~~~~~
+      |                                                          |                                            |
+      |                                                          unsigned int                                 xdb::u64 {aka long unsigned int}
+      |                                                         %lu
+include/store.h: In instantiation of 'xdb::RC xdb::Engine::walk_rec(xdb::u16, std::vector<unsigned char>&, F&, int) [with F = xdb::Engine::refresh_free()::<lambda(xdb::u16)>; xdb::u16 = short unsigned int]':
+include/store.h:1729:24:   required from 'xdb::RC xdb::Engine::walk_pages(xdb::u16, F&&) [with F = xdb::Engine::refresh_free()::<lambda(xdb::u16)>; xdb::u16 = short unsigned int]'
+ 1729 |         return walk_rec(root, seen, fn, 0);
+      |                ~~~~~~~~^~~~~~~~~~~~~~~~~~~
+include/store.h:213:19:   required from here
+  213 |         walk_pages(root_, [&](u16 pid) { if (pid < used_.size()) used_[pid] = 1; return true; });
+      |         ~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+include/store.h:1733:78: warning: comparison of integer expressions of different signedness: 'int' and 'unsigned int' [-Wsign-compare]
+ 1733 |         if (pid == NIL_PAGE || pid >= dev_->capacity() || seen[pid] || depth > MAX_LEVEL + 2) return RC::OK;
+      |                                                                        ~~~~~~^~~~~~~~~~~~~~~
+include/store.h: In instantiation of 'xdb::RC xdb::Engine::walk_rec(xdb::u16, std::vector<unsigned char>&, F&, int) [with F = xdb::Engine::snapshot()::<lambda(xdb::u16)>; xdb::u16 = short unsigned int]':
+include/store.h:1729:24:   required from 'xdb::RC xdb::Engine::walk_pages(xdb::u16, F&&) [with F = xdb::Engine::snapshot()::<lambda(xdb::u16)>; xdb::u16 = short unsigned int]'
+ 1729 |         return walk_rec(root, seen, fn, 0);
+      |                ~~~~~~~~^~~~~~~~~~~~~~~~~~~
+include/store.h:268:27:   required from here
+  268 |         RC rc = walk_pages(root_, [&](u16 pid) {
+      |                 ~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~
+  269 |             if (s.npages < MAX_PIN) { s.pages[s.npages++] = pid; pin_[pid]++; }
+      |             ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  270 |             else overflow = true;
+      |             ~~~~~~~~~~~~~~~~~~~~~
+  271 |             return true;
+      |             ~~~~~~~~~~~~   
+  272 |         });
+      |         ~~                 
+include/store.h:1733:78: warning: comparison of integer expressions of different signedness: 'int' and 'unsigned int' [-Wsign-compare]
+ 1733 |         if (pid == NIL_PAGE || pid >= dev_->capacity() || seen[pid] || depth > MAX_LEVEL + 2) return RC::OK;
+      |                                                                        ~~~~~~^~~~~~~~~~~~~~~
+include/store.h: In instantiation of 'xdb::RC xdb::Engine::walk_rec(xdb::u16, std::vector<unsigned char>&, F&, int) [with F = xdb::Engine::debug_chain_tree(std::vector<short unsigned int>&, std::vector<short unsigned int>&)::<lambda(xdb::u16)>; xdb::u16 = short unsigned int]':
+include/store.h:1729:24:   required from 'xdb::RC xdb::Engine::walk_pages(xdb::u16, F&&) [with F = xdb::Engine::debug_chain_tree(std::vector<short unsigned int>&, std::vector<short unsigned int>&)::<lambda(xdb::u16)>; xdb::u16 = short unsigned int]'
+ 1729 |         return walk_rec(root, seen, fn, 0);
+      |                ~~~~~~~~^~~~~~~~~~~~~~~~~~~
+include/store.h:322:19:   required from here
+  322 |         walk_pages(root_, [&](u16 pid) {
+      |         ~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~
+  323 |             Entry* e = load(pid);
+      |             ~~~~~~~~~~~~~~~~~~~~~
+  324 |             if (e && page_kind(e->b) == PK_LEAF && pid < reach.size()) reach[pid] = 1;
+      |             ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  325 |             return true;
+      |             ~~~~~~~~~~~~
+  326 |         });
+      |         ~~         
+include/store.h:1733:78: warning: comparison of integer expressions of different signedness: 'int' and 'unsigned int' [-Wsign-compare]
+ 1733 |         if (pid == NIL_PAGE || pid >= dev_->capacity() || seen[pid] || depth > MAX_LEVEL + 2) return RC::OK;
+      |                                                                        ~~~~~~^~~~~~~~~~~~~~~
+include/store.h: In instantiation of 'xdb::RC xdb::Engine::walk_rec(xdb::u16, std::vector<unsigned char>&, F&, int) [with F = xdb::Engine::debug_leaks(std::vector<short unsigned int>&)::<lambda(xdb::u16)>; xdb::u16 = short unsigned int]':
+include/store.h:1729:24:   required from 'xdb::RC xdb::Engine::walk_pages(xdb::u16, F&&) [with F = xdb::Engine::debug_leaks(std::vector<short unsigned int>&)::<lambda(xdb::u16)>; xdb::u16 = short unsigned int]'
+ 1729 |         return walk_rec(root, seen, fn, 0);
+      |                ~~~~~~~~^~~~~~~~~~~~~~~~~~~
+include/store.h:350:19:   required from here
+  350 |         walk_pages(root_, [&](u16 pid) { if (pid < mark.size()) mark[pid] = 1; return true; });
+      |         ~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+include/store.h:1733:78: warning: comparison of integer expressions of different signedness: 'int' and 'unsigned int' [-Wsign-compare]
+ 1733 |         if (pid == NIL_PAGE || pid >= dev_->capacity() || seen[pid] || depth > MAX_LEVEL + 2) return RC::OK;
+      |                                                                        ~~~~~~^~~~~~~~~~~~~~~
+include/store.h: In instantiation of 'xdb::RC xdb::Engine::walk_rec(xdb::u16, std::vector<unsigned char>&, F&, int) [with F = xdb::Engine::mount()::<lambda(xdb::u16)>; xdb::u16 = short unsigned int]':
+include/store.h:1729:24:   required from 'xdb::RC xdb::Engine::walk_pages(xdb::u16, F&&) [with F = xdb::Engine::mount()::<lambda(xdb::u16)>; xdb::u16 = short unsigned int]'
+ 1729 |         return walk_rec(root, seen, fn, 0);
+      |                ~~~~~~~~^~~~~~~~~~~~~~~~~~~
+include/store.h:690:19:   required from here
+  690 |         walk_pages(root_, [&](u16 pid) { if (pid < reach.size()) reach[pid] = 1; return true; });
+      |         ~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+include/store.h:1733:78: warning: comparison of integer expressions of different signedness: 'int' and 'unsigned int' [-Wsign-compare]
+ 1733 |         if (pid == NIL_PAGE || pid >= dev_->capacity() || seen[pid] || depth > MAX_LEVEL + 2) return RC::OK;
+      |                                                                        ~~~~~~^~~~~~~~~~~~~~~
+In file included from tests/t4.cpp:1:
+include/store.h: In member function 'xdb::RC xdb::Engine::find_leaf(xdb::u64, xdb::u16&)':
+include/store.h:1093:35: warning: comparison of integer expressions of different signedness: 'int' and 'unsigned int' [-Wsign-compare]
+ 1093 |         for (int depth = 0; depth < MAX_LEVEL * 4; ++depth) {
+      |                             ~~~~~~^~~~~~~~~~~~~~~
+include/store.h: In member function 'xdb::RC xdb::Engine::parent_update(xdb::u16)':
+include/store.h:1270:35: warning: comparison of integer expressions of different signedness: 'int' and 'unsigned int' [-Wsign-compare]
+ 1270 |         for (int depth = 0; depth < MAX_LEVEL + 2; ++depth) {
+      |                             ~~~~~~^~~~~~~~~~~~~~~
+include/store.h: In member function 'void xdb::Engine::verify_node(xdb::u16, int, std::vector<unsigned char>&, VerifyReport&, int)':
+include/store.h:1654:46: warning: comparison of integer expressions of different signedness: 'int' and 'unsigned int' [-Wsign-compare]
+ 1654 |         if (pid >= dev_->capacity() || depth > MAX_LEVEL + 2) { rerr(r, pid, "page range/depth"); return; }
+      |                                        ~~~~~~^~~~~~~~~~~~~~~
+include/store.h: In instantiation of 'xdb::RC xdb::Engine::walk_rec(xdb::u16, std::vector<unsigned char>&, F&, int) [with F = xdb::Engine::refresh_free()::<lambda(xdb::u16)>; xdb::u16 = short unsigned int]':
+include/store.h:1729:24:   required from 'xdb::RC xdb::Engine::walk_pages(xdb::u16, F&&) [with F = xdb::Engine::refresh_free()::<lambda(xdb::u16)>; xdb::u16 = short unsigned int]'
+ 1729 |         return walk_rec(root, seen, fn, 0);
+      |                ~~~~~~~~^~~~~~~~~~~~~~~~~~~
+include/store.h:213:19:   required from here
+  213 |         walk_pages(root_, [&](u16 pid) { if (pid < used_.size()) used_[pid] = 1; return true; });
+      |         ~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+include/store.h:1733:78: warning: comparison of integer expressions of different signedness: 'int' and 'unsigned int' [-Wsign-compare]
+ 1733 |         if (pid == NIL_PAGE || pid >= dev_->capacity() || seen[pid] || depth > MAX_LEVEL + 2) return RC::OK;
+      |                                                                        ~~~~~~^~~~~~~~~~~~~~~
+include/store.h: In instantiation of 'xdb::RC xdb::Engine::walk_rec(xdb::u16, std::vector<unsigned char>&, F&, int) [with F = xdb::Engine::snapshot()::<lambda(xdb::u16)>; xdb::u16 = short unsigned int]':
+include/store.h:1729:24:   required from 'xdb::RC xdb::Engine::walk_pages(xdb::u16, F&&) [with F = xdb::Engine::snapshot()::<lambda(xdb::u16)>; xdb::u16 = short unsigned int]'
+ 1729 |         return walk_rec(root, seen, fn, 0);
+      |                ~~~~~~~~^~~~~~~~~~~~~~~~~~~
+include/store.h:268:27:   required from here
+  268 |         RC rc = walk_pages(root_, [&](u16 pid) {
+      |                 ~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~
+  269 |             if (s.npages < MAX_PIN) { s.pages[s.npages++] = pid; pin_[pid]++; }
+      |             ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  270 |             else overflow = true;
+      |             ~~~~~~~~~~~~~~~~~~~~~
+  271 |             return true;
+      |             ~~~~~~~~~~~~   
+  272 |         });
+      |         ~~                 
+include/store.h:1733:78: warning: comparison of integer expressions of different signedness: 'int' and 'unsigned int' [-Wsign-compare]
+ 1733 |         if (pid == NIL_PAGE || pid >= dev_->capacity() || seen[pid] || depth > MAX_LEVEL + 2) return RC::OK;
+      |                                                                        ~~~~~~^~~~~~~~~~~~~~~
+include/store.h: In instantiation of 'xdb::RC xdb::Engine::walk_rec(xdb::u16, std::vector<unsigned char>&, F&, int) [with F = xdb::Engine::debug_chain_tree(std::vector<short unsigned int>&, std::vector<short unsigned int>&)::<lambda(xdb::u16)>; xdb::u16 = short unsigned int]':
+include/store.h:1729:24:   required from 'xdb::RC xdb::Engine::walk_pages(xdb::u16, F&&) [with F = xdb::Engine::debug_chain_tree(std::vector<short unsigned int>&, std::vector<short unsigned int>&)::<lambda(xdb::u16)>; xdb::u16 = short unsigned int]'
+ 1729 |         return walk_rec(root, seen, fn, 0);
+      |                ~~~~~~~~^~~~~~~~~~~~~~~~~~~
+include/store.h:322:19:   required from here
+  322 |         walk_pages(root_, [&](u16 pid) {
+      |         ~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~
+  323 |             Entry* e = load(pid);
+      |             ~~~~~~~~~~~~~~~~~~~~~
+  324 |             if (e && page_kind(e->b) == PK_LEAF && pid < reach.size()) reach[pid] = 1;
+      |             ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  325 |             return true;
+      |             ~~~~~~~~~~~~
+  326 |         });
+      |         ~~         
+include/store.h:1733:78: warning: comparison of integer expressions of different signedness: 'int' and 'unsigned int' [-Wsign-compare]
+ 1733 |         if (pid == NIL_PAGE || pid >= dev_->capacity() || seen[pid] || depth > MAX_LEVEL + 2) return RC::OK;
+      |                                                                        ~~~~~~^~~~~~~~~~~~~~~
+include/store.h: In instantiation of 'xdb::RC xdb::Engine::walk_rec(xdb::u16, std::vector<unsigned char>&, F&, int) [with F = xdb::Engine::debug_leaks(std::vector<short unsigned int>&)::<lambda(xdb::u16)>; xdb::u16 = short unsigned int]':
+include/store.h:1729:24:   required from 'xdb::RC xdb::Engine::walk_pages(xdb::u16, F&&) [with F = xdb::Engine::debug_leaks(std::vector<short unsigned int>&)::<lambda(xdb::u16)>; xdb::u16 = short unsigned int]'
+ 1729 |         return walk_rec(root, seen, fn, 0);
+      |                ~~~~~~~~^~~~~~~~~~~~~~~~~~~
+include/store.h:350:19:   required from here
+  350 |         walk_pages(root_, [&](u16 pid) { if (pid < mark.size()) mark[pid] = 1; return true; });
+      |         ~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+include/store.h:1733:78: warning: comparison of integer expressions of different signedness: 'int' and 'unsigned int' [-Wsign-compare]
+ 1733 |         if (pid == NIL_PAGE || pid >= dev_->capacity() || seen[pid] || depth > MAX_LEVEL + 2) return RC::OK;
+      |                                                                        ~~~~~~^~~~~~~~~~~~~~~
+include/store.h: In instantiation of 'xdb::RC xdb::Engine::walk_rec(xdb::u16, std::vector<unsigned char>&, F&, int) [with F = xdb::Engine::mount()::<lambda(xdb::u16)>; xdb::u16 = short unsigned int]':
+include/store.h:1729:24:   required from 'xdb::RC xdb::Engine::walk_pages(xdb::u16, F&&) [with F = xdb::Engine::mount()::<lambda(xdb::u16)>; xdb::u16 = short unsigned int]'
+ 1729 |         return walk_rec(root, seen, fn, 0);
+      |                ~~~~~~~~^~~~~~~~~~~~~~~~~~~
+include/store.h:690:19:   required from here
+  690 |         walk_pages(root_, [&](u16 pid) { if (pid < reach.size()) reach[pid] = 1; return true; });
+      |         ~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+include/store.h:1733:78: warning: comparison of integer expressions of different signedness: 'int' and 'unsigned int' [-Wsign-compare]
+ 1733 |         if (pid == NIL_PAGE || pid >= dev_->capacity() || seen[pid] || depth > MAX_LEVEL + 2) return RC::OK;
+      |                                                                        ~~~~~~^~~~~~~~~~~~~~~
+In file included from tests/t5.cpp:1:
+include/store.h: In member function 'xdb::RC xdb::Engine::find_leaf(xdb::u64, xdb::u16&)':
+include/store.h:1093:35: warning: comparison of integer expressions of different signedness: 'int' and 'unsigned int' [-Wsign-compare]
+ 1093 |         for (int depth = 0; depth < MAX_LEVEL * 4; ++depth) {
+      |                             ~~~~~~^~~~~~~~~~~~~~~
+include/store.h: In member function 'xdb::RC xdb::Engine::parent_update(xdb::u16)':
+include/store.h:1270:35: warning: comparison of integer expressions of different signedness: 'int' and 'unsigned int' [-Wsign-compare]
+ 1270 |         for (int depth = 0; depth < MAX_LEVEL + 2; ++depth) {
+      |                             ~~~~~~^~~~~~~~~~~~~~~
+include/store.h: In member function 'void xdb::Engine::verify_node(xdb::u16, int, std::vector<unsigned char>&, VerifyReport&, int)':
+include/store.h:1654:46: warning: comparison of integer expressions of different signedness: 'int' and 'unsigned int' [-Wsign-compare]
+ 1654 |         if (pid >= dev_->capacity() || depth > MAX_LEVEL + 2) { rerr(r, pid, "page range/depth"); return; }
+      |                                        ~~~~~~^~~~~~~~~~~~~~~
+include/store.h: In instantiation of 'xdb::RC xdb::Engine::walk_rec(xdb::u16, std::vector<unsigned char>&, F&, int) [with F = xdb::Engine::refresh_free()::<lambda(xdb::u16)>; xdb::u16 = short unsigned int]':
+include/store.h:1729:24:   required from 'xdb::RC xdb::Engine::walk_pages(xdb::u16, F&&) [with F = xdb::Engine::refresh_free()::<lambda(xdb::u16)>; xdb::u16 = short unsigned int]'
+ 1729 |         return walk_rec(root, seen, fn, 0);
+      |                ~~~~~~~~^~~~~~~~~~~~~~~~~~~
+include/store.h:213:19:   required from here
+  213 |         walk_pages(root_, [&](u16 pid) { if (pid < used_.size()) used_[pid] = 1; return true; });
+      |         ~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+include/store.h:1733:78: warning: comparison of integer expressions of different signedness: 'int' and 'unsigned int' [-Wsign-compare]
+ 1733 |         if (pid == NIL_PAGE || pid >= dev_->capacity() || seen[pid] || depth > MAX_LEVEL + 2) return RC::OK;
+      |                                                                        ~~~~~~^~~~~~~~~~~~~~~
+include/store.h: In instantiation of 'xdb::RC xdb::Engine::walk_rec(xdb::u16, std::vector<unsigned char>&, F&, int) [with F = xdb::Engine::snapshot()::<lambda(xdb::u16)>; xdb::u16 = short unsigned int]':
+include/store.h:1729:24:   required from 'xdb::RC xdb::Engine::walk_pages(xdb::u16, F&&) [with F = xdb::Engine::snapshot()::<lambda(xdb::u16)>; xdb::u16 = short unsigned int]'
+ 1729 |         return walk_rec(root, seen, fn, 0);
+      |                ~~~~~~~~^~~~~~~~~~~~~~~~~~~
+include/store.h:268:27:   required from here
+  268 |         RC rc = walk_pages(root_, [&](u16 pid) {
+      |                 ~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~
+  269 |             if (s.npages < MAX_PIN) { s.pages[s.npages++] = pid; pin_[pid]++; }
+      |             ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  270 |             else overflow = true;
+      |             ~~~~~~~~~~~~~~~~~~~~~
+  271 |             return true;
+      |             ~~~~~~~~~~~~   
+  272 |         });
+      |         ~~                 
+include/store.h:1733:78: warning: comparison of integer expressions of different signedness: 'int' and 'unsigned int' [-Wsign-compare]
+ 1733 |         if (pid == NIL_PAGE || pid >= dev_->capacity() || seen[pid] || depth > MAX_LEVEL + 2) return RC::OK;
+      |                                                                        ~~~~~~^~~~~~~~~~~~~~~
+include/store.h: In instantiation of 'xdb::RC xdb::Engine::walk_rec(xdb::u16, std::vector<unsigned char>&, F&, int) [with F = xdb::Engine::debug_chain_tree(std::vector<short unsigned int>&, std::vector<short unsigned int>&)::<lambda(xdb::u16)>; xdb::u16 = short unsigned int]':
+include/store.h:1729:24:   required from 'xdb::RC xdb::Engine::walk_pages(xdb::u16, F&&) [with F = xdb::Engine::debug_chain_tree(std::vector<short unsigned int>&, std::vector<short unsigned int>&)::<lambda(xdb::u16)>; xdb::u16 = short unsigned int]'
+ 1729 |         return walk_rec(root, seen, fn, 0);
+      |                ~~~~~~~~^~~~~~~~~~~~~~~~~~~
+include/store.h:322:19:   required from here
+  322 |         walk_pages(root_, [&](u16 pid) {
+      |         ~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~
+  323 |             Entry* e = load(pid);
+      |             ~~~~~~~~~~~~~~~~~~~~~
+  324 |             if (e && page_kind(e->b) == PK_LEAF && pid < reach.size()) reach[pid] = 1;
+      |             ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  325 |             return true;
+      |             ~~~~~~~~~~~~
+  326 |         });
+      |         ~~         
+include/store.h:1733:78: warning: comparison of integer expressions of different signedness: 'int' and 'unsigned int' [-Wsign-compare]
+ 1733 |         if (pid == NIL_PAGE || pid >= dev_->capacity() || seen[pid] || depth > MAX_LEVEL + 2) return RC::OK;
+      |                                                                        ~~~~~~^~~~~~~~~~~~~~~
+include/store.h: In instantiation of 'xdb::RC xdb::Engine::walk_rec(xdb::u16, std::vector<unsigned char>&, F&, int) [with F = xdb::Engine::debug_leaks(std::vector<short unsigned int>&)::<lambda(xdb::u16)>; xdb::u16 = short unsigned int]':
+include/store.h:1729:24:   required from 'xdb::RC xdb::Engine::walk_pages(xdb::u16, F&&) [with F = xdb::Engine::debug_leaks(std::vector<short unsigned int>&)::<lambda(xdb::u16)>; xdb::u16 = short unsigned int]'
+ 1729 |         return walk_rec(root, seen, fn, 0);
+      |                ~~~~~~~~^~~~~~~~~~~~~~~~~~~
+include/store.h:350:19:   required from here
+  350 |         walk_pages(root_, [&](u16 pid) { if (pid < mark.size()) mark[pid] = 1; return true; });
+      |         ~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+include/store.h:1733:78: warning: comparison of integer expressions of different signedness: 'int' and 'unsigned int' [-Wsign-compare]
+ 1733 |         if (pid == NIL_PAGE || pid >= dev_->capacity() || seen[pid] || depth > MAX_LEVEL + 2) return RC::OK;
+      |                                                                        ~~~~~~^~~~~~~~~~~~~~~
+include/store.h: In instantiation of 'xdb::RC xdb::Engine::walk_rec(xdb::u16, std::vector<unsigned char>&, F&, int) [with F = xdb::Engine::mount()::<lambda(xdb::u16)>; xdb::u16 = short unsigned int]':
+include/store.h:1729:24:   required from 'xdb::RC xdb::Engine::walk_pages(xdb::u16, F&&) [with F = xdb::Engine::mount()::<lambda(xdb::u16)>; xdb::u16 = short unsigned int]'
+ 1729 |         return walk_rec(root, seen, fn, 0);
+      |                ~~~~~~~~^~~~~~~~~~~~~~~~~~~
+include/store.h:690:19:   required from here
+  690 |         walk_pages(root_, [&](u16 pid) { if (pid < reach.size()) reach[pid] = 1; return true; });
+      |         ~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+include/store.h:1733:78: warning: comparison of integer expressions of different signedness: 'int' and 'unsigned int' [-Wsign-compare]
+ 1733 |         if (pid == NIL_PAGE || pid >= dev_->capacity() || seen[pid] || depth > MAX_LEVEL + 2) return RC::OK;
+      |                                                                        ~~~~~~^~~~~~~~~~~~~~~
+In file included from tests/t6.cpp:1:
+include/store.h: In member function 'xdb::RC xdb::Engine::find_leaf(xdb::u64, xdb::u16&)':
+include/store.h:1093:35: warning: comparison of integer expressions of different signedness: 'int' and 'unsigned int' [-Wsign-compare]
+ 1093 |         for (int depth = 0; depth < MAX_LEVEL * 4; ++depth) {
+      |                             ~~~~~~^~~~~~~~~~~~~~~
+include/store.h: In member function 'xdb::RC xdb::Engine::parent_update(xdb::u16)':
+include/store.h:1270:35: warning: comparison of integer expressions of different signedness: 'int' and 'unsigned int' [-Wsign-compare]
+ 1270 |         for (int depth = 0; depth < MAX_LEVEL + 2; ++depth) {
+      |                             ~~~~~~^~~~~~~~~~~~~~~
+include/store.h: In member function 'void xdb::Engine::verify_node(xdb::u16, int, std::vector<unsigned char>&, VerifyReport&, int)':
+include/store.h:1654:46: warning: comparison of integer expressions of different signedness: 'int' and 'unsigned int' [-Wsign-compare]
+ 1654 |         if (pid >= dev_->capacity() || depth > MAX_LEVEL + 2) { rerr(r, pid, "page range/depth"); return; }
+      |                                        ~~~~~~^~~~~~~~~~~~~~~
+tests/t6.cpp: In function 'int main(int, char**)':
+tests/t6.cpp:42:31: warning: unused variable 'sum' [-Wunused-variable]
+   42 |     u32 nleaf = 0, total = 0, sum = 0;
+      |                               ^~~
+include/store.h: In instantiation of 'xdb::RC xdb::Engine::walk_rec(xdb::u16, std::vector<unsigned char>&, F&, int) [with F = xdb::Engine::refresh_free()::<lambda(xdb::u16)>; xdb::u16 = short unsigned int]':
+include/store.h:1729:24:   required from 'xdb::RC xdb::Engine::walk_pages(xdb::u16, F&&) [with F = xdb::Engine::refresh_free()::<lambda(xdb::u16)>; xdb::u16 = short unsigned int]'
+ 1729 |         return walk_rec(root, seen, fn, 0);
+      |                ~~~~~~~~^~~~~~~~~~~~~~~~~~~
+include/store.h:213:19:   required from here
+  213 |         walk_pages(root_, [&](u16 pid) { if (pid < used_.size()) used_[pid] = 1; return true; });
+      |         ~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+include/store.h:1733:78: warning: comparison of integer expressions of different signedness: 'int' and 'unsigned int' [-Wsign-compare]
+ 1733 |         if (pid == NIL_PAGE || pid >= dev_->capacity() || seen[pid] || depth > MAX_LEVEL + 2) return RC::OK;
+      |                                                                        ~~~~~~^~~~~~~~~~~~~~~
+include/store.h: In instantiation of 'xdb::RC xdb::Engine::walk_rec(xdb::u16, std::vector<unsigned char>&, F&, int) [with F = xdb::Engine::snapshot()::<lambda(xdb::u16)>; xdb::u16 = short unsigned int]':
+include/store.h:1729:24:   required from 'xdb::RC xdb::Engine::walk_pages(xdb::u16, F&&) [with F = xdb::Engine::snapshot()::<lambda(xdb::u16)>; xdb::u16 = short unsigned int]'
+ 1729 |         return walk_rec(root, seen, fn, 0);
+      |                ~~~~~~~~^~~~~~~~~~~~~~~~~~~
+include/store.h:268:27:   required from here
+  268 |         RC rc = walk_pages(root_, [&](u16 pid) {
+      |                 ~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~
+  269 |             if (s.npages < MAX_PIN) { s.pages[s.npages++] = pid; pin_[pid]++; }
+      |             ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  270 |             else overflow = true;
+      |             ~~~~~~~~~~~~~~~~~~~~~
+  271 |             return true;
+      |             ~~~~~~~~~~~~   
+  272 |         });
+      |         ~~                 
+include/store.h:1733:78: warning: comparison of integer expressions of different signedness: 'int' and 'unsigned int' [-Wsign-compare]
+ 1733 |         if (pid == NIL_PAGE || pid >= dev_->capacity() || seen[pid] || depth > MAX_LEVEL + 2) return RC::OK;
+      |                                                                        ~~~~~~^~~~~~~~~~~~~~~
+include/store.h: In instantiation of 'xdb::RC xdb::Engine::walk_rec(xdb::u16, std::vector<unsigned char>&, F&, int) [with F = xdb::Engine::debug_chain_tree(std::vector<short unsigned int>&, std::vector<short unsigned int>&)::<lambda(xdb::u16)>; xdb::u16 = short unsigned int]':
+include/store.h:1729:24:   required from 'xdb::RC xdb::Engine::walk_pages(xdb::u16, F&&) [with F = xdb::Engine::debug_chain_tree(std::vector<short unsigned int>&, std::vector<short unsigned int>&)::<lambda(xdb::u16)>; xdb::u16 = short unsigned int]'
+ 1729 |         return walk_rec(root, seen, fn, 0);
+      |                ~~~~~~~~^~~~~~~~~~~~~~~~~~~
+include/store.h:322:19:   required from here
+  322 |         walk_pages(root_, [&](u16 pid) {
+      |         ~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~
+  323 |             Entry* e = load(pid);
+      |             ~~~~~~~~~~~~~~~~~~~~~
+  324 |             if (e && page_kind(e->b) == PK_LEAF && pid < reach.size()) reach[pid] = 1;
+      |             ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  325 |             return true;
+      |             ~~~~~~~~~~~~
+  326 |         });
+      |         ~~         
+include/store.h:1733:78: warning: comparison of integer expressions of different signedness: 'int' and 'unsigned int' [-Wsign-compare]
+ 1733 |         if (pid == NIL_PAGE || pid >= dev_->capacity() || seen[pid] || depth > MAX_LEVEL + 2) return RC::OK;
+      |                                                                        ~~~~~~^~~~~~~~~~~~~~~
+include/store.h: In instantiation of 'xdb::RC xdb::Engine::walk_rec(xdb::u16, std::vector<unsigned char>&, F&, int) [with F = xdb::Engine::debug_leaks(std::vector<short unsigned int>&)::<lambda(xdb::u16)>; xdb::u16 = short unsigned int]':
+include/store.h:1729:24:   required from 'xdb::RC xdb::Engine::walk_pages(xdb::u16, F&&) [with F = xdb::Engine::debug_leaks(std::vector<short unsigned int>&)::<lambda(xdb::u16)>; xdb::u16 = short unsigned int]'
+ 1729 |         return walk_rec(root, seen, fn, 0);
+      |                ~~~~~~~~^~~~~~~~~~~~~~~~~~~
+include/store.h:350:19:   required from here
+  350 |         walk_pages(root_, [&](u16 pid) { if (pid < mark.size()) mark[pid] = 1; return true; });
+      |         ~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+include/store.h:1733:78: warning: comparison of integer expressions of different signedness: 'int' and 'unsigned int' [-Wsign-compare]
+ 1733 |         if (pid == NIL_PAGE || pid >= dev_->capacity() || seen[pid] || depth > MAX_LEVEL + 2) return RC::OK;
+      |                                                                        ~~~~~~^~~~~~~~~~~~~~~
+include/store.h: In instantiation of 'xdb::RC xdb::Engine::walk_rec(xdb::u16, std::vector<unsigned char>&, F&, int) [with F = xdb::Engine::mount()::<lambda(xdb::u16)>; xdb::u16 = short unsigned int]':
+include/store.h:1729:24:   required from 'xdb::RC xdb::Engine::walk_pages(xdb::u16, F&&) [with F = xdb::Engine::mount()::<lambda(xdb::u16)>; xdb::u16 = short unsigned int]'
+ 1729 |         return walk_rec(root, seen, fn, 0);
+      |                ~~~~~~~~^~~~~~~~~~~~~~~~~~~
+include/store.h:690:19:   required from here
+  690 |         walk_pages(root_, [&](u16 pid) { if (pid < reach.size()) reach[pid] = 1; return true; });
+      |         ~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+include/store.h:1733:78: warning: comparison of integer expressions of different signedness: 'int' and 'unsigned int' [-Wsign-compare]
+ 1733 |         if (pid == NIL_PAGE || pid >= dev_->capacity() || seen[pid] || depth > MAX_LEVEL + 2) return RC::OK;
+      |                                                                        ~~~~~~^~~~~~~~~~~~~~~
+In file included from tests/tchk.cpp:2:
+include/store.h: In member function 'xdb::RC xdb::Engine::find_leaf(xdb::u64, xdb::u16&)':
+include/store.h:1093:35: warning: comparison of integer expressions of different signedness: 'int' and 'unsigned int' [-Wsign-compare]
+ 1093 |         for (int depth = 0; depth < MAX_LEVEL * 4; ++depth) {
+      |                             ~~~~~~^~~~~~~~~~~~~~~
+include/store.h: In member function 'xdb::RC xdb::Engine::parent_update(xdb::u16)':
+include/store.h:1270:35: warning: comparison of integer expressions of different signedness: 'int' and 'unsigned int' [-Wsign-compare]
+ 1270 |         for (int depth = 0; depth < MAX_LEVEL + 2; ++depth) {
+      |                             ~~~~~~^~~~~~~~~~~~~~~
+include/store.h: In member function 'void xdb::Engine::verify_node(xdb::u16, int, std::vector<unsigned char>&, VerifyReport&, int)':
+include/store.h:1654:46: warning: comparison of integer expressions of different signedness: 'int' and 'unsigned int' [-Wsign-compare]
+ 1654 |         if (pid >= dev_->capacity() || depth > MAX_LEVEL + 2) { rerr(r, pid, "page range/depth"); return; }
+      |                                        ~~~~~~^~~~~~~~~~~~~~~
+include/store.h: In instantiation of 'xdb::RC xdb::Engine::walk_rec(xdb::u16, std::vector<unsigned char>&, F&, int) [with F = xdb::Engine::refresh_free()::<lambda(xdb::u16)>; xdb::u16 = short unsigned int]':
+include/store.h:1729:24:   required from 'xdb::RC xdb::Engine::walk_pages(xdb::u16, F&&) [with F = xdb::Engine::refresh_free()::<lambda(xdb::u16)>; xdb::u16 = short unsigned int]'
+ 1729 |         return walk_rec(root, seen, fn, 0);
+      |                ~~~~~~~~^~~~~~~~~~~~~~~~~~~
+include/store.h:213:19:   required from here
+  213 |         walk_pages(root_, [&](u16 pid) { if (pid < used_.size()) used_[pid] = 1; return true; });
+      |         ~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+include/store.h:1733:78: warning: comparison of integer expressions of different signedness: 'int' and 'unsigned int' [-Wsign-compare]
+ 1733 |         if (pid == NIL_PAGE || pid >= dev_->capacity() || seen[pid] || depth > MAX_LEVEL + 2) return RC::OK;
+      |                                                                        ~~~~~~^~~~~~~~~~~~~~~
+include/store.h: In instantiation of 'xdb::RC xdb::Engine::walk_rec(xdb::u16, std::vector<unsigned char>&, F&, int) [with F = xdb::Engine::snapshot()::<lambda(xdb::u16)>; xdb::u16 = short unsigned int]':
+include/store.h:1729:24:   required from 'xdb::RC xdb::Engine::walk_pages(xdb::u16, F&&) [with F = xdb::Engine::snapshot()::<lambda(xdb::u16)>; xdb::u16 = short unsigned int]'
+ 1729 |         return walk_rec(root, seen, fn, 0);
+      |                ~~~~~~~~^~~~~~~~~~~~~~~~~~~
+include/store.h:268:27:   required from here
+  268 |         RC rc = walk_pages(root_, [&](u16 pid) {
+      |                 ~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~
+  269 |             if (s.npages < MAX_PIN) { s.pages[s.npages++] = pid; pin_[pid]++; }
+      |             ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  270 |             else overflow = true;
+      |             ~~~~~~~~~~~~~~~~~~~~~
+  271 |             return true;
+      |             ~~~~~~~~~~~~   
+  272 |         });
+      |         ~~                 
+include/store.h:1733:78: warning: comparison of integer expressions of different signedness: 'int' and 'unsigned int' [-Wsign-compare]
+ 1733 |         if (pid == NIL_PAGE || pid >= dev_->capacity() || seen[pid] || depth > MAX_LEVEL + 2) return RC::OK;
+      |                                                                        ~~~~~~^~~~~~~~~~~~~~~
+include/store.h: In instantiation of 'xdb::RC xdb::Engine::walk_rec(xdb::u16, std::vector<unsigned char>&, F&, int) [with F = xdb::Engine::debug_chain_tree(std::vector<short unsigned int>&, std::vector<short unsigned int>&)::<lambda(xdb::u16)>; xdb::u16 = short unsigned int]':
+include/store.h:1729:24:   required from 'xdb::RC xdb::Engine::walk_pages(xdb::u16, F&&) [with F = xdb::Engine::debug_chain_tree(std::vector<short unsigned int>&, std::vector<short unsigned int>&)::<lambda(xdb::u16)>; xdb::u16 = short unsigned int]'
+ 1729 |         return walk_rec(root, seen, fn, 0);
+      |                ~~~~~~~~^~~~~~~~~~~~~~~~~~~
+include/store.h:322:19:   required from here
+  322 |         walk_pages(root_, [&](u16 pid) {
+      |         ~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~
+  323 |             Entry* e = load(pid);
+      |             ~~~~~~~~~~~~~~~~~~~~~
+  324 |             if (e && page_kind(e->b) == PK_LEAF && pid < reach.size()) reach[pid] = 1;
+      |             ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  325 |             return true;
+      |             ~~~~~~~~~~~~
+  326 |         });
+      |         ~~         
+include/store.h:1733:78: warning: comparison of integer expressions of different signedness: 'int' and 'unsigned int' [-Wsign-compare]
+ 1733 |         if (pid == NIL_PAGE || pid >= dev_->capacity() || seen[pid] || depth > MAX_LEVEL + 2) return RC::OK;
+      |                                                                        ~~~~~~^~~~~~~~~~~~~~~
+include/store.h: In instantiation of 'xdb::RC xdb::Engine::walk_rec(xdb::u16, std::vector<unsigned char>&, F&, int) [with F = xdb::Engine::debug_leaks(std::vector<short unsigned int>&)::<lambda(xdb::u16)>; xdb::u16 = short unsigned int]':
+include/store.h:1729:24:   required from 'xdb::RC xdb::Engine::walk_pages(xdb::u16, F&&) [with F = xdb::Engine::debug_leaks(std::vector<short unsigned int>&)::<lambda(xdb::u16)>; xdb::u16 = short unsigned int]'
+ 1729 |         return walk_rec(root, seen, fn, 0);
+      |                ~~~~~~~~^~~~~~~~~~~~~~~~~~~
+include/store.h:350:19:   required from here
+  350 |         walk_pages(root_, [&](u16 pid) { if (pid < mark.size()) mark[pid] = 1; return true; });
+      |         ~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+include/store.h:1733:78: warning: comparison of integer expressions of different signedness: 'int' and 'unsigned int' [-Wsign-compare]
+ 1733 |         if (pid == NIL_PAGE || pid >= dev_->capacity() || seen[pid] || depth > MAX_LEVEL + 2) return RC::OK;
+      |                                                                        ~~~~~~^~~~~~~~~~~~~~~
+include/store.h: In instantiation of 'xdb::RC xdb::Engine::walk_rec(xdb::u16, std::vector<unsigned char>&, F&, int) [with F = xdb::Engine::mount()::<lambda(xdb::u16)>; xdb::u16 = short unsigned int]':
+include/store.h:1729:24:   required from 'xdb::RC xdb::Engine::walk_pages(xdb::u16, F&&) [with F = xdb::Engine::mount()::<lambda(xdb::u16)>; xdb::u16 = short unsigned int]'
+ 1729 |         return walk_rec(root, seen, fn, 0);
+      |                ~~~~~~~~^~~~~~~~~~~~~~~~~~~
+include/store.h:690:19:   required from here
+  690 |         walk_pages(root_, [&](u16 pid) { if (pid < reach.size()) reach[pid] = 1; return true; });
+      |         ~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+include/store.h:1733:78: warning: comparison of integer expressions of different signedness: 'int' and 'unsigned int' [-Wsign-compare]
+ 1733 |         if (pid == NIL_PAGE || pid >= dev_->capacity() || seen[pid] || depth > MAX_LEVEL + 2) return RC::OK;
+      |                                                                        ~~~~~~^~~~~~~~~~~~~~~
+In file included from tests/x1.cpp:2:
+include/store.h: In member function 'xdb::RC xdb::Engine::find_leaf(xdb::u64, xdb::u16&)':
+include/store.h:1093:35: warning: comparison of integer expressions of different signedness: 'int' and 'unsigned int' [-Wsign-compare]
+ 1093 |         for (int depth = 0; depth < MAX_LEVEL * 4; ++depth) {
+      |                             ~~~~~~^~~~~~~~~~~~~~~
+include/store.h: In member function 'xdb::RC xdb::Engine::parent_update(xdb::u16)':
+include/store.h:1270:35: warning: comparison of integer expressions of different signedness: 'int' and 'unsigned int' [-Wsign-compare]
+ 1270 |         for (int depth = 0; depth < MAX_LEVEL + 2; ++depth) {
+      |                             ~~~~~~^~~~~~~~~~~~~~~
+include/store.h: In member function 'void xdb::Engine::verify_node(xdb::u16, int, std::vector<unsigned char>&, VerifyReport&, int)':
+include/store.h:1654:46: warning: comparison of integer expressions of different signedness: 'int' and 'unsigned int' [-Wsign-compare]
+ 1654 |         if (pid >= dev_->capacity() || depth > MAX_LEVEL + 2) { rerr(r, pid, "page range/depth"); return; }
+      |                                        ~~~~~~^~~~~~~~~~~~~~~
+include/store.h: In instantiation of 'xdb::RC xdb::Engine::walk_rec(xdb::u16, std::vector<unsigned char>&, F&, int) [with F = xdb::Engine::refresh_free()::<lambda(xdb::u16)>; xdb::u16 = short unsigned int]':
+include/store.h:1729:24:   required from 'xdb::RC xdb::Engine::walk_pages(xdb::u16, F&&) [with F = xdb::Engine::refresh_free()::<lambda(xdb::u16)>; xdb::u16 = short unsigned int]'
+ 1729 |         return walk_rec(root, seen, fn, 0);
+      |                ~~~~~~~~^~~~~~~~~~~~~~~~~~~
+include/store.h:213:19:   required from here
+  213 |         walk_pages(root_, [&](u16 pid) { if (pid < used_.size()) used_[pid] = 1; return true; });
+      |         ~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+include/store.h:1733:78: warning: comparison of integer expressions of different signedness: 'int' and 'unsigned int' [-Wsign-compare]
+ 1733 |         if (pid == NIL_PAGE || pid >= dev_->capacity() || seen[pid] || depth > MAX_LEVEL + 2) return RC::OK;
+      |                                                                        ~~~~~~^~~~~~~~~~~~~~~
+include/store.h: In instantiation of 'xdb::RC xdb::Engine::walk_rec(xdb::u16, std::vector<unsigned char>&, F&, int) [with F = xdb::Engine::snapshot()::<lambda(xdb::u16)>; xdb::u16 = short unsigned int]':
+include/store.h:1729:24:   required from 'xdb::RC xdb::Engine::walk_pages(xdb::u16, F&&) [with F = xdb::Engine::snapshot()::<lambda(xdb::u16)>; xdb::u16 = short unsigned int]'
+ 1729 |         return walk_rec(root, seen, fn, 0);
+      |                ~~~~~~~~^~~~~~~~~~~~~~~~~~~
+include/store.h:268:27:   required from here
+  268 |         RC rc = walk_pages(root_, [&](u16 pid) {
+      |                 ~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~
+  269 |             if (s.npages < MAX_PIN) { s.pages[s.npages++] = pid; pin_[pid]++; }
+      |             ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  270 |             else overflow = true;
+      |             ~~~~~~~~~~~~~~~~~~~~~
+  271 |             return true;
+      |             ~~~~~~~~~~~~   
+  272 |         });
+      |         ~~                 
+include/store.h:1733:78: warning: comparison of integer expressions of different signedness: 'int' and 'unsigned int' [-Wsign-compare]
+ 1733 |         if (pid == NIL_PAGE || pid >= dev_->capacity() || seen[pid] || depth > MAX_LEVEL + 2) return RC::OK;
+      |                                                                        ~~~~~~^~~~~~~~~~~~~~~
+include/store.h: In instantiation of 'xdb::RC xdb::Engine::walk_rec(xdb::u16, std::vector<unsigned char>&, F&, int) [with F = xdb::Engine::debug_chain_tree(std::vector<short unsigned int>&, std::vector<short unsigned int>&)::<lambda(xdb::u16)>; xdb::u16 = short unsigned int]':
+include/store.h:1729:24:   required from 'xdb::RC xdb::Engine::walk_pages(xdb::u16, F&&) [with F = xdb::Engine::debug_chain_tree(std::vector<short unsigned int>&, std::vector<short unsigned int>&)::<lambda(xdb::u16)>; xdb::u16 = short unsigned int]'
+ 1729 |         return walk_rec(root, seen, fn, 0);
+      |                ~~~~~~~~^~~~~~~~~~~~~~~~~~~
+include/store.h:322:19:   required from here
+  322 |         walk_pages(root_, [&](u16 pid) {
+      |         ~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~
+  323 |             Entry* e = load(pid);
+      |             ~~~~~~~~~~~~~~~~~~~~~
+  324 |             if (e && page_kind(e->b) == PK_LEAF && pid < reach.size()) reach[pid] = 1;
+      |             ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  325 |             return true;
+      |             ~~~~~~~~~~~~
+  326 |         });
+      |         ~~         
+include/store.h:1733:78: warning: comparison of integer expressions of different signedness: 'int' and 'unsigned int' [-Wsign-compare]
+ 1733 |         if (pid == NIL_PAGE || pid >= dev_->capacity() || seen[pid] || depth > MAX_LEVEL + 2) return RC::OK;
+      |                                                                        ~~~~~~^~~~~~~~~~~~~~~
+include/store.h: In instantiation of 'xdb::RC xdb::Engine::walk_rec(xdb::u16, std::vector<unsigned char>&, F&, int) [with F = xdb::Engine::debug_leaks(std::vector<short unsigned int>&)::<lambda(xdb::u16)>; xdb::u16 = short unsigned int]':
+include/store.h:1729:24:   required from 'xdb::RC xdb::Engine::walk_pages(xdb::u16, F&&) [with F = xdb::Engine::debug_leaks(std::vector<short unsigned int>&)::<lambda(xdb::u16)>; xdb::u16 = short unsigned int]'
+ 1729 |         return walk_rec(root, seen, fn, 0);
+      |                ~~~~~~~~^~~~~~~~~~~~~~~~~~~
+include/store.h:350:19:   required from here
+  350 |         walk_pages(root_, [&](u16 pid) { if (pid < mark.size()) mark[pid] = 1; return true; });
+      |         ~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+include/store.h:1733:78: warning: comparison of integer expressions of different signedness: 'int' and 'unsigned int' [-Wsign-compare]
+ 1733 |         if (pid == NIL_PAGE || pid >= dev_->capacity() || seen[pid] || depth > MAX_LEVEL + 2) return RC::OK;
+      |                                                                        ~~~~~~^~~~~~~~~~~~~~~
+include/store.h: In instantiation of 'xdb::RC xdb::Engine::walk_rec(xdb::u16, std::vector<unsigned char>&, F&, int) [with F = xdb::Engine::mount()::<lambda(xdb::u16)>; xdb::u16 = short unsigned int]':
+include/store.h:1729:24:   required from 'xdb::RC xdb::Engine::walk_pages(xdb::u16, F&&) [with F = xdb::Engine::mount()::<lambda(xdb::u16)>; xdb::u16 = short unsigned int]'
+ 1729 |         return walk_rec(root, seen, fn, 0);
+      |                ~~~~~~~~^~~~~~~~~~~~~~~~~~~
+include/store.h:690:19:   required from here
+  690 |         walk_pages(root_, [&](u16 pid) { if (pid < reach.size()) reach[pid] = 1; return true; });
+      |         ~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+include/store.h:1733:78: warning: comparison of integer expressions of different signedness: 'int' and 'unsigned int' [-Wsign-compare]
+ 1733 |         if (pid == NIL_PAGE || pid >= dev_->capacity() || seen[pid] || depth > MAX_LEVEL + 2) return RC::OK;
+      |                                                                        ~~~~~~^~~~~~~~~~~~~~~
+In file included from tests/x2.cpp:2:
+include/store.h: In member function 'xdb::RC xdb::Engine::find_leaf(xdb::u64, xdb::u16&)':
+include/store.h:1093:35: warning: comparison of integer expressions of different signedness: 'int' and 'unsigned int' [-Wsign-compare]
+ 1093 |         for (int depth = 0; depth < MAX_LEVEL * 4; ++depth) {
+      |                             ~~~~~~^~~~~~~~~~~~~~~
+include/store.h: In member function 'xdb::RC xdb::Engine::parent_update(xdb::u16)':
+include/store.h:1270:35: warning: comparison of integer expressions of different signedness: 'int' and 'unsigned int' [-Wsign-compare]
+ 1270 |         for (int depth = 0; depth < MAX_LEVEL + 2; ++depth) {
+      |                             ~~~~~~^~~~~~~~~~~~~~~
+include/store.h: In member function 'void xdb::Engine::verify_node(xdb::u16, int, std::vector<unsigned char>&, VerifyReport&, int)':
+include/store.h:1654:46: warning: comparison of integer expressions of different signedness: 'int' and 'unsigned int' [-Wsign-compare]
+ 1654 |         if (pid >= dev_->capacity() || depth > MAX_LEVEL + 2) { rerr(r, pid, "page range/depth"); return; }
+      |                                        ~~~~~~^~~~~~~~~~~~~~~
+include/store.h: In instantiation of 'xdb::RC xdb::Engine::walk_rec(xdb::u16, std::vector<unsigned char>&, F&, int) [with F = xdb::Engine::refresh_free()::<lambda(xdb::u16)>; xdb::u16 = short unsigned int]':
+include/store.h:1729:24:   required from 'xdb::RC xdb::Engine::walk_pages(xdb::u16, F&&) [with F = xdb::Engine::refresh_free()::<lambda(xdb::u16)>; xdb::u16 = short unsigned int]'
+ 1729 |         return walk_rec(root, seen, fn, 0);
+      |                ~~~~~~~~^~~~~~~~~~~~~~~~~~~
+include/store.h:213:19:   required from here
+  213 |         walk_pages(root_, [&](u16 pid) { if (pid < used_.size()) used_[pid] = 1; return true; });
+      |         ~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+include/store.h:1733:78: warning: comparison of integer expressions of different signedness: 'int' and 'unsigned int' [-Wsign-compare]
+ 1733 |         if (pid == NIL_PAGE || pid >= dev_->capacity() || seen[pid] || depth > MAX_LEVEL + 2) return RC::OK;
+      |                                                                        ~~~~~~^~~~~~~~~~~~~~~
+include/store.h: In instantiation of 'xdb::RC xdb::Engine::walk_rec(xdb::u16, std::vector<unsigned char>&, F&, int) [with F = xdb::Engine::snapshot()::<lambda(xdb::u16)>; xdb::u16 = short unsigned int]':
+include/store.h:1729:24:   required from 'xdb::RC xdb::Engine::walk_pages(xdb::u16, F&&) [with F = xdb::Engine::snapshot()::<lambda(xdb::u16)>; xdb::u16 = short unsigned int]'
+ 1729 |         return walk_rec(root, seen, fn, 0);
+      |                ~~~~~~~~^~~~~~~~~~~~~~~~~~~
+include/store.h:268:27:   required from here
+  268 |         RC rc = walk_pages(root_, [&](u16 pid) {
+      |                 ~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~
+  269 |             if (s.npages < MAX_PIN) { s.pages[s.npages++] = pid; pin_[pid]++; }
+      |             ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  270 |             else overflow = true;
+      |             ~~~~~~~~~~~~~~~~~~~~~
+  271 |             return true;
+      |             ~~~~~~~~~~~~   
+  272 |         });
+      |         ~~                 
+include/store.h:1733:78: warning: comparison of integer expressions of different signedness: 'int' and 'unsigned int' [-Wsign-compare]
+ 1733 |         if (pid == NIL_PAGE || pid >= dev_->capacity() || seen[pid] || depth > MAX_LEVEL + 2) return RC::OK;
+      |                                                                        ~~~~~~^~~~~~~~~~~~~~~
+include/store.h: In instantiation of 'xdb::RC xdb::Engine::walk_rec(xdb::u16, std::vector<unsigned char>&, F&, int) [with F = xdb::Engine::debug_chain_tree(std::vector<short unsigned int>&, std::vector<short unsigned int>&)::<lambda(xdb::u16)>; xdb::u16 = short unsigned int]':
+include/store.h:1729:24:   required from 'xdb::RC xdb::Engine::walk_pages(xdb::u16, F&&) [with F = xdb::Engine::debug_chain_tree(std::vector<short unsigned int>&, std::vector<short unsigned int>&)::<lambda(xdb::u16)>; xdb::u16 = short unsigned int]'
+ 1729 |         return walk_rec(root, seen, fn, 0);
+      |                ~~~~~~~~^~~~~~~~~~~~~~~~~~~
+include/store.h:322:19:   required from here
+  322 |         walk_pages(root_, [&](u16 pid) {
+      |         ~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~
+  323 |             Entry* e = load(pid);
+      |             ~~~~~~~~~~~~~~~~~~~~~
+  324 |             if (e && page_kind(e->b) == PK_LEAF && pid < reach.size()) reach[pid] = 1;
+      |             ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  325 |             return true;
+      |             ~~~~~~~~~~~~
+  326 |         });
+      |         ~~         
+include/store.h:1733:78: warning: comparison of integer expressions of different signedness: 'int' and 'unsigned int' [-Wsign-compare]
+ 1733 |         if (pid == NIL_PAGE || pid >= dev_->capacity() || seen[pid] || depth > MAX_LEVEL + 2) return RC::OK;
+      |                                                                        ~~~~~~^~~~~~~~~~~~~~~
+include/store.h: In instantiation of 'xdb::RC xdb::Engine::walk_rec(xdb::u16, std::vector<unsigned char>&, F&, int) [with F = xdb::Engine::debug_leaks(std::vector<short unsigned int>&)::<lambda(xdb::u16)>; xdb::u16 = short unsigned int]':
+include/store.h:1729:24:   required from 'xdb::RC xdb::Engine::walk_pages(xdb::u16, F&&) [with F = xdb::Engine::debug_leaks(std::vector<short unsigned int>&)::<lambda(xdb::u16)>; xdb::u16 = short unsigned int]'
+ 1729 |         return walk_rec(root, seen, fn, 0);
+      |                ~~~~~~~~^~~~~~~~~~~~~~~~~~~
+include/store.h:350:19:   required from here
+  350 |         walk_pages(root_, [&](u16 pid) { if (pid < mark.size()) mark[pid] = 1; return true; });
+      |         ~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+include/store.h:1733:78: warning: comparison of integer expressions of different signedness: 'int' and 'unsigned int' [-Wsign-compare]
+ 1733 |         if (pid == NIL_PAGE || pid >= dev_->capacity() || seen[pid] || depth > MAX_LEVEL + 2) return RC::OK;
+      |                                                                        ~~~~~~^~~~~~~~~~~~~~~
+include/store.h: In instantiation of 'xdb::RC xdb::Engine::walk_rec(xdb::u16, std::vector<unsigned char>&, F&, int) [with F = xdb::Engine::mount()::<lambda(xdb::u16)>; xdb::u16 = short unsigned int]':
+include/store.h:1729:24:   required from 'xdb::RC xdb::Engine::walk_pages(xdb::u16, F&&) [with F = xdb::Engine::mount()::<lambda(xdb::u16)>; xdb::u16 = short unsigned int]'
+ 1729 |         return walk_rec(root, seen, fn, 0);
+      |                ~~~~~~~~^~~~~~~~~~~~~~~~~~~
+include/store.h:690:19:   required from here
+  690 |         walk_pages(root_, [&](u16 pid) { if (pid < reach.size()) reach[pid] = 1; return true; });
+      |         ~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+include/store.h:1733:78: warning: comparison of integer expressions of different signedness: 'int' and 'unsigned int' [-Wsign-compare]
+ 1733 |         if (pid == NIL_PAGE || pid >= dev_->capacity() || seen[pid] || depth > MAX_LEVEL + 2) return RC::OK;
+      |                                                                        ~~~~~~^~~~~~~~~~~~~~~
+In file included from tests/g9.cpp:11:
+tests/../bench/probe/storm.cpp: In function 'int storm_run(const std::string&, int, xdb::u32, xdb::u32, xdb::u32, xdb::u32)':
+tests/../bench/probe/storm.cpp:175:86: warning: narrowing conversion of 's->fcs::Store::last_commit()' from 'xdb::u64' {aka 'long unsigned int'} to 'xdb::u32' {aka 'unsigned int'} [-Wnarrowing]
+  175 |                 if (s->snapshot() == RC::OK) { snaps.push_back(Snap{m, s->last_commit(), c, 5 + (u32)R(36)}); durable = m; ++n_snap;
+      |                                                                        ~~~~~~~~~~~~~~^~
+In file included from tests/g13.cpp:29:
+tests/g6.cpp:151:12: warning: 'int run(int, int)' defined but not used [-Wunused-function]
+  151 | static int run(int seed, int ops) {
+      |            ^~~
+tests/s3.cpp: In function 'int main()':
+tests/s3.cpp:23:9: warning: unused variable 'snap_id' [-Wunused-variable]
+   23 |     u32 snap_id = 0;
+      |         ^~~~~~~
+== t1 基础
+open rc=OK root=2
+commit rc=OK vers=1
+  verify: pages=1 leaves=1 inners=0 pubs=100 orphans=0 errors=0 first=0()
+basic ok
+== t2 随机事务（5 个种子）
+FAILURES: 0
+FAILURES: 0
+FAILURES: 0
+FAILURES: 0
+FAILURES: 0
+== t3 规模/快照/回退/恢复
+  chain dup pages=0
+  after rollback: err=0() firstpage=0
+  reopen: err=0() pages=230 firstpage=0
+FAILURES: 0
+== t4 只插入
+insert-only ok, pages used=1
+== t5 边界
+ok
+== t6 大量删除
+all ops ok; oracle=4101
+scan=4101
+== tchk 树/链一致
+tree leaves=68 chain=68
+missing=0 extra=0
+scan=4011 oracle=4011
+get-miss=0
+== x1 语义回读
+write_bytes=55540 reads=2
+PASS
+== x2 写路径一致性
+round 1 leaves=7 inners=1 orphans=0 errors=0
+PASS
+== f1 FCS 语义/随机对拍
+PASS
+== f2 FCS 快照/回退
+PASS
+== f3 FCS NOR/掉电
+PASS
+== f4 FCS 规模/重开
+PASS
+== f5 FCS 空间回收/收缩
+收缩: 2886 -> 148 页 (11.3 MB -> 0.6 MB)  bad=0 rows=30000/30000
+重开: bad=0
+PASS
+== f6 FCS 存活账精确性
+  键空间 2000 / 每轮 4000 次 / 每 200 次提交：60 次提交，1994 键，bad=0，used 77 页
+  键空间 300 / 每轮 3000 次 / 每 100 次提交：120 次提交，300 键，bad=0，used 18 页
+  键空间 20000 / 每轮 4000 次 / 每 400 次提交：20 次提交，6569 键，bad=0，used 75 页
+PASS
+== q1 FCS 查询/游标/索引
+PASS
+== p1 FCS 页内前缀压缩
+随机键: 页=411 压缩页=287 pfx=[0,1] 条=40000 41.3 B/条
+随机键: errors=0 记录=53334
+PASS
+== m1 FCS run 元数据页（命中/篡改/老格式/自愈）
+  写入 60000 条：used=538 页 runs=6 cells=80
+  元数据页：70 个
+  重开：meta_hits=6 runs=6
+  篡改 meta 页 324 后：meta_hits=5 runs=6
+  清掉 meta 后：meta_hits=0 runs=6
+  checkpoint 之后：runs=7
+  自愈后重开：meta_hits=6 runs=7
+PASS
+== v1 FCS 溢出值（大 value / 覆盖 / 压实 / 回收）
+故障注入/关开关：OK（used 14）
+大值重开+再写：OK（used=37, ovfl=11）
+PASS
+== g1 FCS 范围墓碑
+归一后重开：OK
+PASS
+== w1 FCS 多写者 + 自动组提交
+4 线程 × 5000 条：82 ms  verify errors=0  回读坏=0  自动组提交省掉的提交=26  runs=16
+PASS
+== s3 FCS 快照期间回收不停摆
+verify errors=0 runs=2
+释放快照后 used=44 runs=1
+PASS
+== g2 FCS 大量范围墓碑 + 存活账
+verify=0()
+归一后：used 143→143 可见=15000 墓碑=5000 verify=0()
+PASS
+== s4 FCS 多版本快照 + 快照感知页复用
+  回退后 A(gen0): n=2000 bad=0
+forget 后：used=142 live=51 runs=1
+compact_file 后：used=27 live=27 runs=1
+PASS
+== g3 FCS 同 lo 墓碑 / 长删循环退休 / 未提交大值 / 链缓存失效
+同 lo 墓碑：visible=15 tomb=1
+长删循环：runs 初始 10 / 峰值 10 / 最终 10，used=892 live=805 tomb=2
+内存表大值：OK（ovfl=1 used=10）
+链缓存：hits=4 misses=86，覆盖/复用/回滚后读值正确
+PASS
+== g4 FCS 异步写×快照回退（预取在飞页 / pend_delta_ 顺序 / 快照含逻辑提交）/ 压实布局
+  round 2: used=160 live=160 gap=0 extents=0 runs=1
+  round 3: used=160 live=160 gap=0 extents=0 runs=1
+  round 4: used=160 live=160 gap=0 extents=0 runs=1
+  round 5: used=160 live=160 gap=0 extents=0 runs=1
+PASS
+== g5 FCS 交错模糊（put/del/del_range/select × commit(false)/snapshot/rollback/维护/scrub/reopen，4 种子）
+seed 1: ops=12000 async=1 io_threads=1 whole=0 arena=128 | put 5775 del 972 rng 252 get 1414 sel 364 | commit 572 lcommit 746 snap 310 rb 69 forget 231 reopen 103 | maint 657 busy 0 scrub 122 verify 302 nospace 0 | used=102 live=78 runs=2 ok
+seed 2: ops=12000 async=0 io_threads=2 whole=1 arena=128 | put 5750 del 945 rng 233 get 1438 sel 347 | commit 587 lcommit 735 snap 305 rb 70 forget 235 reopen 128 | maint 654 busy 0 scrub 121 verify 333 nospace 0 | used=70 live=64 runs=6 ok
+seed 3: ops=12000 async=1 io_threads=2 whole=0 arena=32 | put 5755 del 989 rng 246 get 1443 sel 365 | commit 580 lcommit 681 snap 287 rb 60 forget 230 reopen 112 | maint 696 busy 0 scrub 128 verify 302 nospace 0 | used=71 live=53 runs=6 ok
+seed 4: ops=12000 async=0 io_threads=1 whole=1 arena=128 | put 5796 del 971 rng 245 get 1377 sel 358 | commit 665 lcommit 746 snap 294 rb 58 forget 232 reopen 120 | maint 620 busy 0 scrub 120 verify 282 nospace 0 | used=96 live=70 runs=6 ok
+PASS
+== g6 FCS 掉电注入（易失写缓存 + 随机掉电/撕裂 ⇒ 重开 == 某个提交点 + verify/scrub，4 种子）
+seed 1: ops=12000 async=1 io_threads=1 whole=0 span=300 | put 5865 del 958 rng 227 get 1450 sel 348 | commit 677 lcommit 613 snap 300 rb 66 forget 170 reopen 114 | maint 704 busy 0 scrub 118 verify 283 nospace 0 | cuts 52 (in commit-point ops 50, in open 0) -> before 20 after 32 | pages kept 82 dropped 84 torn 14 | used=88 runs=6 ok
+seed 2: ops=12000 async=0 io_threads=2 whole=1 span=300 | put 5764 del 963 rng 210 get 1465 sel 346 | commit 700 lcommit 538 snap 300 rb 72 forget 189 reopen 143 | maint 754 busy 0 scrub 106 verify 338 nospace 0 | cuts 38 (in commit-point ops 33, in open 0) -> before 23 after 15 | pages kept 47 dropped 57 torn 9 | used=89 runs=2 ok
+seed 3: ops=12000 async=1 io_threads=2 whole=0 span=40 | put 5890 del 913 rng 243 get 1458 sel 363 | commit 708 lcommit 591 snap 314 rb 53 forget 194 reopen 117 | maint 651 busy 0 scrub 106 verify 293 nospace 0 | cuts 339 (in commit-point ops 326, in open 0) -> before 158 after 181 | pages kept 461 dropped 509 torn 111 | used=81 runs=2 ok
+seed 4: ops=12000 async=0 io_threads=1 whole=1 span=300 | put 5794 del 942 rng 245 get 1455 sel 354 | commit 695 lcommit 601 snap 310 rb 67 forget 182 reopen 113 | maint 742 busy 0 scrub 102 verify 305 nospace 0 | cuts 38 (in commit-point ops 35, in open 0) -> before 29 after 9 | pages kept 18 dropped 22 torn 17 | used=98 runs=3 ok
+PASS
+== g7 FCS 读写并发（1 写者 op 流 × 2 读者 get/select 不变量校验，2 种子，共享读模式）
+seed 1: writer ops=6000 async=1 readers=2 shared=1 | put 3077 del 522 rng 143 commit 478 lcommit 491 snap 169 forget 167 maint 683 busy 0 scrub 270 | reader get 547165 (found 186048) select 136629 | used=66 runs=7 ok
+seed 2: writer ops=6000 async=0 readers=2 shared=1 | put 3031 del 445 rng 150 commit 467 lcommit 496 snap 179 forget 208 maint 773 busy 0 scrub 251 | reader get 538045 (found 181376) select 134443 | used=104 runs=9 ok
+PASS
+== g7 独占读模式（set_shared_reads(false)）+ 4 读者共享（坑 86 写者饥饿回归）
+PASS
+PASS
+== g7 40 读者（> 32 线程槽：槽溢出走独占路径，H5）
+PASS
+== g8 FCS 覆盖风暴 × 多单元 × 层合并 × 快照钉住（每次提交全量比对；坑 89/90/91 回归，3 组）
+PASS (fails=0)
+PASS (fails=0)
+PASS (fails=0)
+== g9 FCS 墓碑账目口径（坑 92/93/94/95：快照期同 lo 墓碑 / 悬空点墓碑退休 / 底层点墓碑丢弃 / 整盖快路径）+ 风暴 6 组（每提交全量比对含快照视图）
+storm[r] seed=1 nkeys=3000 commits=120 per=200: rng=242 snaps=0 snapcmps=0 rb=0 reopen=0 maint=0 busy=0 lcommit=0 | runs=11(max 13) cells=85 lvl=5/3/0/2/1 tombs=240 PASS
+storm[rsb] seed=1 nkeys=3000 commits=120 per=200: rng=238 snaps=12 snapcmps=170 rb=2 reopen=0 maint=0 busy=0 lcommit=0 | runs=10(max 26) cells=121 lvl=1/6/1/2/0 tombs=194 PASS
+storm[rsb] seed=2 nkeys=2000 commits=100 per=150: rng=197 snaps=8 snapcmps=157 rb=4 reopen=0 maint=0 busy=0 lcommit=0 | runs=12(max 21) cells=46 lvl=10/2/0/0/0 tombs=53 PASS
+storm[rd] seed=2 nkeys=3000 commits=120 per=200: rng=255 snaps=0 snapcmps=0 rb=0 reopen=0 maint=0 busy=0 lcommit=0 | runs=10(max 13) cells=92 lvl=5/2/1/0/2 tombs=244 PASS
+storm[rsboalc] seed=4 nkeys=3000 commits=120 per=200: rng=238 snaps=14 snapcmps=198 rb=4 reopen=6 maint=8 busy=0 lcommit=32 | runs=18(max 25) cells=153 lvl=13/4/1/0/0 tombs=138 PASS
+storm[rsc] seed=1 nkeys=2000 commits=100 per=150: rng=195 snaps=11 snapcmps=158 rb=0 reopen=0 maint=6 busy=0 lcommit=0 | runs=14(max 19) cells=74 lvl=8/3/1/2/0 tombs=192 PASS
+g9 墓碑账目口径（坑 92/93/94/95）+ 风暴 6 组: PASS (2.3 s)
+== g10 FCS R2 层合并预算 + 分步维护（consolidate_step / compact_file_step：每步 verify + 快照视图抽查）+ R7 墓碑自动归一 + R8 局部 TRIM
+  R2 预算 level_merges=1 vs 0: runs(max/end) 13/8 vs 13/8, 最长提交 1.9 vs 2.0 ms  ok
+  R2 consolidate_step: runs 20 → 7(快照钉住) → 1, 步数 2 + 1  ok
+  R2 compact_file_step: 高水位 一次性 139 / 分步 139（3 步）  ok
+  R7 范围墓碑自动归一（阈值 32）：峰值 33，第 10 次提交清零；快照期保留 51 条，释放后清零  ok
+  R8 局部 TRIM：discard 95 次，高水位 7.2 MB，文件实占 5.3 MB（洞已打出）  ok
+g10 R2 层合并预算 + 分步维护 + R7 墓碑自动归一 + R8 局部 TRIM: PASS (0.6 s)
+== g11 FCS 第 12 轮：提交后维护（R3-lite）+ 分步层合并作业（R2b）+ 坑 99 SB 闸/NOSPACE 重试 + 并发读者
+  并发读者 + 60 次提交（mode 1, budget 16）：读 326848 次、最长 64-get 批 8.9 ms、单元 1480、分片 1399、runs=8  ok
+  t_lazy(mode=0)：重开未知 70/70 单元，首次提交后 0，30 次提交后 0（单元 82）；runs=5  ok
+  t_lazy(mode=1)：重开未知 66/66 单元，首次提交后 0，30 次提交后 0（单元 70）；runs=7  ok
+  t_lazy(mode=2)：重开未知 66/66 单元，首次提交后 0，30 次提交后 0（单元 72）；runs=8  ok
+g11 第 12 轮：提交后维护 + 分步层合并作业 + 坑 99 + 并发 + 惰性存活账: PASS (3.3 s)
+== g12 FCS 坑 102：逻辑提交版本回绕（70000 次逻辑提交 + 跨回绕持有快照 ⇒ 视图 / verify / 重开 / 回退）
+g12 坑 102 版本回绕（70000 次逻辑提交 + 跨回绕快照）: PASS
+== g13 FCS 第 13 轮：流式归并产物 + 64 位 seq/ver 与 v1 清单链升级（含掉电，第 16 轮改写）+ 层合并新规则 (c)(d)(e) + 维护预算 / mode 3 后台线程
+  混链重开 → 再 2025 次提交触发全量清单重写 ⇒ 老页清零  ok
+  v1 升级 × 掉电 14 个切点：重开后仍 v1 9 / 已 v2 5，本批原子、之后可继续提交  ok
+  (c) 纯插入 72 批 × 500 × 32 B：run 数峰值 cheap=1024 → 14，cheap=0 → 32  ok
+  (d) 不满 t 条的脏前缀：A,B → 2 条，+C（A、B 各 60% 死）→ 2 条，剩余垃圾 0%  ok
+  (e) 顶层单条 75% 脏：422 → 106 页，之后维护不再碰它  ok
+  (e2) lvl 1 单条 843 页被范围删除盖掉 60%：→ 337 页 lvl 2（分片 15）  ok
+  (f) lvl_t=2 纯插入 60 批：run 数峰值 7、顶层 1 个家族 / 4 条 run、最终 6 条  ok
+  mode 1 预算 1 µs × 48 次提交：推迟 41 次、提交后有欠账 41 次、run 峰值 33（兜底 164）；预算放开后欠账清零  ok
+  mode 3 后台维护线程 + 读者：读 513856 次、维护单元 904、run 峰值 13（兜底 164）、结束 10 条  ok
+g13 第 13 轮：流式产物 + 64 位序号 / v1 清单链升级（第 16 轮改写）+ 层合并规则 + 维护预算 / mode 3: PASS (6.0 s)
+== g14 FCS 第 14 轮：作业收尾单元级增量账（账零漂移）+ 文件高水位（预留按存活估 / 就地续租 / 顶部回落 / hw 回收策略）+ mode 3 读者让路
+  作业增量账：120 次提交 job_fast=14214 job_slow=0（提交后有欠账 0 次、提交 max 7.3 ms）；清账后账零漂移  ok
+  预留按存活估：源 2400 页（80% 脏）⇒ 产物 480 页，峰值增长 603 页（1.26× 产物；老估法 ≈ 5.62×）stream=1 moves=0 extends=0  ok
+  估小就地续租：extends=2 moves=0 stream=1  ok
+  高水位：默认 tail 4652 / 活页 2997 (1.55x, 写 19.0 MB)；pct=150 mode 1: tail 4062 (1.37x, 回收 8 次, 写 21.1 MB)；mode 3: tail 4062 (1.37x, 回收 8 次)  ok
+  顶部释放回落：t0 237 → 尾部分配 300 页 → 释放 + 提交点 ⇒ tail_ 237；清单页簇在顶（0）不回落；重开一致  ok
+  读者让路 pass 0（quantum 1 ms）：读 694208 次、单元 219、让路 14 次、unit_max 2.4 ms、>4ms 单元 0；账零漂移  ok
+  读者让路 pass 1（quantum 0）：读 480256 次、单元 334、让路 0 次、unit_max 3.6 ms、>4ms 单元 0；账零漂移  ok
+g14 第 14 轮：作业增量账 + 文件高水位 + 读者让路: PASS (5.6 s)
+== g15 FCS 第 15 轮：高水位回收二步搬家（规划器 / 一提交点一条 / 窗外落地 / 快照钉住是墙）
+  规划器：窗 [67,353) 挡路 run page0=147；无窗外目的地时放弃  ok
+  二步搬家：run 布局顶 568 → 282（tail 282，活页 268，1.05x），搬开挡路 run 2 条、顶部搬家 1 次、4 个提交点  ok
+  快照钉住挡路 run：存活期间不动；释放后 run 布局顶 → 282（1.05x）blockers=2 reclaims=1  ok
+g15 OK
+== g16 FCS 第 16 轮：P2b 分片归并 + RUN_TRIM（分片基本面 / 跨重开重放 TRIM / abort+rollback / 快照作废 / 溢出链 / 墓碑不复活）
+  分片基本面：150 次提交 parts=201 trims=673 job_fast=27540 job_slow=11；tail 超出活页峰值 1489 页；清账后 runs=46  ok
+  跨重开：作业中途关库（重开后裁过的源 4 条、runs=27）⇒ 重放 TRIM、所有权、读全对；继续维护后家族并掉  ok
+  回退：分片中途 abort()、再 rollback(快照) ⇒ 状态与清单一致（verify 所有权 + 比对），继续维护正常  ok
+  快照：分片中途开快照（视图 7）⇒ 作业作废、快照读不变；放掉后维护收敛  ok
+  溢出链：1/3 大值负载 parts=6；重开（附件页过滤）+ 继续维护 ⇒ verify 无所有权错误  ok
+  墓碑：作业作废后删掉片键域里的 150 个键、再合并 ⇒ 复活 0 个  ok
+g16 第 16 轮：P2b 分片归并 + RUN_TRIM（分片 / 重开 / 回退 / 快照 / 溢出链 / 墓碑）: PASS (1.7 s)
+== g17 FCS 第 17 轮：fsync 出锁（提交分段 / 提交顺序器 / 两个 SB 代数 / durable_vers；慢 sync 设备下读者不被挡、空票等持久、阶段二失败粘性、在飞时快照、3 写者×mode 3）+ 家族虚拟源游标（源 >64）+ 中等产物按洞分片
+  t_lockfree_sync: 6/6 轮抓到 sync 窗口；窗口内 get max 0.00 ms（sync 睡 40 ms×2）；提交 max 80 ms  ok
+  t_empty_ticket: 抓到 4/4 次；B（无新写）最短等待 79 ms  ok
+  t_phase2_fail: 单线程 IO→重建→恢复；并发粘性失败；重开一致  ok
+  t_snapshot_inflight: 在飞时 snapshot()（抓到 1）/ rollback  ok
+  t_multi_writers seed 1: 3 写者 × 150 轮（durable 360 / logical 90）+ 2 读者 16400 次 get，runs=8  ok
+  t_multi_writers seed 2: 3 写者 × 150 轮（durable 360 / logical 90）+ 2 读者 11463 次 get，runs=8  ok
+  t_wide_family: runs=122 src_max=72 cur_max=4 slices=1061  ok
+  t_hole_fit: on  peak=3495 (1.82x) tail=3495 runs=23 fits=1 | off peak=3784 (1.97x) tail=3784 runs=22 fits=0  ok
+g17 第 17 轮：fsync 出锁（提交分段 / 顺序器 / 两个代数 / durable_vers）+ 家族虚拟源游标 + 中等产物按洞分片: PASS (5.5 s)
+== h1 挂载模糊（合法镜像随机翻字节 ⇒ open 只许 OK/CORRUPT/IO，坏数据必须查得出来，不崩不挂）
+  h1 挂载模糊 400 次（seed 1，镜像 49 页）：OK 400 / CORRUPT 0 / IO 0 / 其它 0；成功挂载后 verify 报错 330 次、同时 get 读到假版本 24 次（都查得出来）
+h1 挂载模糊: PASS (0.3 s)
+h1 挂载模糊: PASS (0.3 s)
+== h2 golden 镜像兼容（tests/golden/*.img v2：挂载 + 逐键比对 + 快照视图 + verify；tests/golden/v1/*.img 老库：只读不写回 → 写即升级 → 重开）
+  h2 v2 small      20 页 runs=6：当前视图 627 键 verify=OK  ok
+  h2 v2 bigval    120 页 runs=5：当前视图 129 键 verify=OK  ok
+  h2 v2 tomb_snap  19 页 runs=5：当前视图 637 键 verify=OK  ok
+  h2 v1 small      20 页：只读 627 键 → 升级（v1→v2）→ 重开 runs=7 verify=OK  ok
+  h2 v1 bigval    120 页：只读 129 键 → 升级（v1→v2）→ 重开 runs=6 verify=OK  ok
+  h2 v1 tomb_snap  19 页：只读 637 键 → 升级（v1→v2）→ 重开 runs=6 verify=OK  ok
+h2 golden 镜像兼容（v2 三件套 + v1 老库只读/升级/重开）: PASS
+== h3 多写者 × 异步提交 × 掉电（3 写者线程 + VolDev 随机掉电/撕裂，每线程自己的持久下界模型，3 种子 × (10 轮长 span + 40 轮短 span)）
+  h3 seed 1 span 1500: async=1 io_threads=2 whole=0 | 10 轮 掉电 10 次 | put 20349 del 3542 commit 2936 lcommit 2337 | 撕裂 5 页  ok
+  h3 seed 1 span 60: async=1 io_threads=2 whole=0 | 40 轮 掉电 40 次 | put 2754 del 493 commit 363 lcommit 328 | 撕裂 18 页  ok
+  h3 seed 2 span 1500: async=0 io_threads=1 whole=1 | 10 轮 掉电 10 次 | put 28728 del 4907 commit 4203 lcommit 3416 | 撕裂 5 页  ok
+  h3 seed 2 span 60: async=0 io_threads=1 whole=1 | 40 轮 掉电 40 次 | put 4363 del 780 commit 618 lcommit 512 | 撕裂 12 页  ok
+  h3 seed 3 span 1500: async=1 io_threads=2 whole=0 | 10 轮 掉电 10 次 | put 20423 del 3630 commit 2945 lcommit 2384 | 撕裂 5 页  ok
+  h3 seed 3 span 60: async=1 io_threads=2 whole=0 | 40 轮 掉电 40 次 | put 3106 del 545 commit 494 lcommit 369 | 撕裂 15 页  ok
+h3 多写者 × 异步 × 掉电: PASS
+== c1 FCS scrub（介质 CRC）
+verify errors=1 first=page crc
+溢出链载荷翻位：scrub bad=1 first=2
+PASS
+== r2 FCS 空间耗尽/写失败/不挂死
+-- 灌满小设备（RamDev 96 页）
+  停在第 399 次写，RC=NOSPACE（79 页）
+  compact_file: OK（24 页）
+  回收后又写了 193 次（85 页）
+-- 异步写 + 灌满（RamDev 128 页，2 线程）
+  停在第 449 次写，RC=NOSPACE（117 页，后台完成 197 次页写）
+  compact_file: NOSPACE（117 页）
+-- 写失败注入（异步，每 7 次提交坏一笔写）
+  提交成功 343 次、失败 57 次；恢复提交：OK
+-- 回退后重挂载（逻辑时钟必须单调）
+-- 慢设备（写卡 3 s）+ 有界等待 150 ms
+  卡住时的提交：TIMEOUT（150 ms，超时计数 1）
+  恢复后提交：OK
+PASS
+== s2 FCS 长跑无漂移
+          上次成功 compact_file op=39988
+  漂移检查: used 96 -> 219, live 89 -> 208, 垃圾 7 -> 11, runs 1 -> 1, extents 0 -> 0
+  每 4k 次操作耗时: 首段 108.2 ms → 末段 300.0 ms（2.77x）
+PASS
+== b1 FCS 大库（>256 MB，PageId 32 位）
+reopen 28.6 ms  verify 165.0 ms  errors=0 回读坏=0 meta_hits=10 runs=1
+total 5.2 s
+PASS
+EXIT=0

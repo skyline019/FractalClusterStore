@@ -1,0 +1,5 @@
+# host: Linux voyagerStar 6.18.33.2-microsoft-standard-WSL2
+# date: 2026-10-20T23:10:11+08:00
+# fcs.h: 7851 lines; FCS_R17=1
+# script: backup/peers-r17/run_peers_r17.sh
+# bench7.cpp restored from ~/work/embdb/x/bench/ (missing from battle zip)

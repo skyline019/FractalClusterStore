@@ -1,0 +1,64 @@
+\section{概述与产品命题}
+
+\subsection{定位}
+FCS 是面向\textbf{固定容量持久化块设备}的嵌入式有序 KV 内核：
+\begin{itemize}[leftmargin=1.6em]
+  \item 键类型固定为 \texttt{u64}；值为任意字节序列（大值走溢出页链）。
+  \item 公开操作：\texttt{put} / \texttt{get} / \texttt{del} / \texttt{del\_range} / 前缀扫描与游标。
+  \item 热路径无堆分配倾向（内存表为连续值区 + 开放寻址）；崩溃后恢复到\textbf{某个提交点}的一致状态。
+  \item \textbf{不是} B+ 树引擎，也\textbf{不是} SQL；单进程内多写者由引擎锁串行化公开入口。
+\end{itemize}
+
+\subsection{核心命题}
+v2 的 B+ 树大量复杂度花在「维持平衡」的副作用上（分隔键下推、父指针、级联分裂、COW）。
+FCS 的命题是：\textbf{直接维护平衡本身，于是「树」消失}。
+三个同构（分形）层次：
+\begin{center}
+\begin{tabular}{@{}lll@{}}
+\toprule
+层次 & 有序结构 & 物理实体 \\
+\midrule
+store & 单元表 directory & cell $=$ 键区间 + 段视图 \\
+run & 页表 fences & 页 $=$ 有序记录序列 \\
+page & 页内记录 & 二分 / 线性 + 可选前缀压缩 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+关键点：\textbf{单元不拥有数据}。数据只存在于不可变的段（run）中；单元是「(run, 页区间, 键域)」的集合视图。
+因此分裂/合并单元可在 $O(\#\text{段})$ 内完成，而无需自底向上传播。
+
+\subsection{三条平衡不变量}
+\begin{description}[style=nextline,leftmargin=2.2em]
+  \item[B1] 单元物理字节 $\le \texttt{BMAX}$（默认 $32\,\mathrm{KiB}$）：超限则在页边界切开。
+  \item[B2] 单元段数 $\le \texttt{SMAX}$：超限则压实为更少段（布隆使读对段数不敏感）。
+  \item[B3] 每次提交的重写预算随垃圾产生速率自适应；候选压实单元按 0/1 背包分配。
+\end{description}
+
+\subsection{文档范围与冻结线}
+\begin{itemize}[leftmargin=1.6em]
+  \item \textbf{代码}：\texttt{embdb/x/include/\{fcs,common,blockdev,layout\}.h}（产品主树）。
+  \item \textbf{冻结轮次}：ROUND16（P2a+P2b）$\to$ ROUND17（fsync 出锁 / hole\_fit / 家族游标）$\to$ ROUND18（护洞 / 碎片 A / 整理态；并洞 B 默认关）。
+  \item \textbf{评估主文}：\texttt{docs/00-entry/EVAL17.md}；升格对照：\texttt{docs/00-entry/BATTLE.md}。
+  \item \textbf{非产品默认}：本机「小预留、TRIM 关」分叉已归档，不与主树混编。
+\end{itemize}
+
+\subsection{一页结论（摘自 EVAL17）}
+\begin{table}[ht]
+\centering
+\small
+\begin{tabular}{@{}p{2.2cm}p{7.2cm}p{4.8cm}@{}}
+\toprule
+维度 & 结论 & 最大缺口 \\
+\midrule
+定位 & 追加 run + 单元目录 + 分层归并 + 分片 TRIM & 键固定 u64；单进程 \\
+正确性 & 回归含 g15--g18；格式/墓碑/宽家族 & 无小时 soak；无真拔电 \\
+耐久 & 双槽 SB；页复用看 \texttt{sb\_synced\_} & 阶段二失败窗口变宽 \\
+写 & 整理后 $\ll$ SQLite / LMDB & 默认同步时写接近 SQLite \\
+读 & 点查追平 LMDB；range 整理后仍慢于 LMDB & 未整理 range 差距大 \\
+空间 & 整理后紧；合并峰 det200k $\sim 1.71\times$ & 养洞；P2c 未做 \\
+延迟 & fsync 出锁；读者残余 $\sim$ 维护单元 & 锁内仍有 \texttt{flush\_mem} \\
+\bottomrule
+\end{tabular}
+\caption{产品冻结时的能力边界（细节见第~\ref{sec:eval}~章）。}
+\end{table}

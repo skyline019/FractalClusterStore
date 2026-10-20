@@ -1,0 +1,542 @@
+[
+  {
+    "id": 1,
+    "f": "batch2a.js",
+    "oldN": 3,
+    "newN": 3
+  },
+  {
+    "id": 2,
+    "f": "batch2a.js",
+    "oldN": 3,
+    "newN": 2
+  },
+  {
+    "id": 3,
+    "f": "batch2a.js",
+    "oldN": 3,
+    "newN": 2
+  },
+  {
+    "id": 4,
+    "f": "batch2a.js",
+    "oldN": 3,
+    "newN": 3
+  },
+  {
+    "id": 5,
+    "f": "batch2a.js",
+    "oldN": 3,
+    "newN": 3
+  },
+  {
+    "id": 6,
+    "f": "batch2a.js",
+    "oldN": 2,
+    "newN": 2
+  },
+  {
+    "id": 7,
+    "f": "batch2a.js",
+    "oldN": 2,
+    "newN": 2
+  },
+  {
+    "id": 8,
+    "f": "batch2a.js",
+    "oldN": 2,
+    "newN": 1
+  },
+  {
+    "id": 9,
+    "f": "batch2a.js",
+    "oldN": 2,
+    "newN": 2
+  },
+  {
+    "id": 10,
+    "f": "batch2a.js",
+    "oldN": 2,
+    "newN": 1
+  },
+  {
+    "id": 11,
+    "f": "batch2a.js",
+    "oldN": 2,
+    "newN": 1
+  },
+  {
+    "id": 12,
+    "f": "batch2a.js",
+    "oldN": 1,
+    "newN": 1
+  },
+  {
+    "id": 13,
+    "f": "batch2a.js",
+    "oldN": 2,
+    "newN": 1
+  },
+  {
+    "id": 14,
+    "f": "batch2a.js",
+    "oldN": 3,
+    "newN": 2
+  },
+  {
+    "id": 15,
+    "f": "batch2a.js",
+    "oldN": 2,
+    "newN": 1
+  },
+  {
+    "id": 16,
+    "f": "batch2a.js",
+    "oldN": 2,
+    "newN": 1
+  },
+  {
+    "id": 17,
+    "f": "batch2a.js",
+    "oldN": 2,
+    "newN": 2
+  },
+  {
+    "id": 18,
+    "f": "batch2a.js",
+    "oldN": 1,
+    "newN": 1
+  },
+  {
+    "id": 19,
+    "f": "batch2b.js",
+    "oldN": 2,
+    "newN": 2
+  },
+  {
+    "id": 20,
+    "f": "batch2b.js",
+    "oldN": 2,
+    "newN": 2
+  },
+  {
+    "id": 21,
+    "f": "batch2b.js",
+    "oldN": 1,
+    "newN": 1
+  },
+  {
+    "id": 22,
+    "f": "batch2b.js",
+    "oldN": 2,
+    "newN": 2
+  },
+  {
+    "id": 23,
+    "f": "batch2b.js",
+    "oldN": 2,
+    "newN": 2
+  },
+  {
+    "id": 24,
+    "f": "batch2b.js",
+    "oldN": 2,
+    "newN": 1
+  },
+  {
+    "id": 25,
+    "f": "batch2b.js",
+    "oldN": 2,
+    "newN": 2
+  },
+  {
+    "id": 26,
+    "f": "batch2b.js",
+    "oldN": 2,
+    "newN": 1
+  },
+  {
+    "id": 27,
+    "f": "batch2b.js",
+    "oldN": 2,
+    "newN": 1
+  },
+  {
+    "id": 28,
+    "f": "batch2b.js",
+    "oldN": 2,
+    "newN": 2
+  },
+  {
+    "id": 29,
+    "f": "batch2b.js",
+    "oldN": 2,
+    "newN": 1
+  },
+  {
+    "id": 30,
+    "f": "batch2b.js",
+    "oldN": 2,
+    "newN": 1
+  },
+  {
+    "id": 31,
+    "f": "batch2b.js",
+    "oldN": 2,
+    "newN": 1
+  },
+  {
+    "id": 32,
+    "f": "batch2b.js",
+    "oldN": 2,
+    "newN": 2
+  },
+  {
+    "id": 33,
+    "f": "batch2b.js",
+    "oldN": 2,
+    "newN": 1
+  },
+  {
+    "id": 34,
+    "f": "batch2b.js",
+    "oldN": 2,
+    "newN": 1
+  },
+  {
+    "id": 35,
+    "f": "batch2b.js",
+    "oldN": 2,
+    "newN": 1
+  },
+  {
+    "id": 36,
+    "f": "batch2b.js",
+    "oldN": 2,
+    "newN": 1
+  },
+  {
+    "id": 37,
+    "f": "batch3a.js",
+    "oldN": 2,
+    "newN": 1
+  },
+  {
+    "id": 38,
+    "f": "batch3a.js",
+    "oldN": 2,
+    "newN": 1
+  },
+  {
+    "id": 39,
+    "f": "batch3a.js",
+    "oldN": 2,
+    "newN": 1
+  },
+  {
+    "id": 40,
+    "f": "batch3a.js",
+    "oldN": 2,
+    "newN": 1
+  },
+  {
+    "id": 41,
+    "f": "batch3a.js",
+    "oldN": 1,
+    "newN": 1
+  },
+  {
+    "id": 42,
+    "f": "batch3a.js",
+    "oldN": 2,
+    "newN": 1
+  },
+  {
+    "id": 43,
+    "f": "batch3a.js",
+    "oldN": 2,
+    "newN": 1
+  },
+  {
+    "id": 44,
+    "f": "batch3a.js",
+    "oldN": 2,
+    "newN": 1
+  },
+  {
+    "id": 45,
+    "f": "batch3a.js",
+    "oldN": 1,
+    "newN": 1
+  },
+  {
+    "id": 46,
+    "f": "batch3a.js",
+    "oldN": 1,
+    "newN": 1
+  },
+  {
+    "id": 47,
+    "f": "batch3a.js",
+    "oldN": 1,
+    "newN": 1
+  },
+  {
+    "id": 48,
+    "f": "batch3a.js",
+    "oldN": 1,
+    "newN": 1
+  },
+  {
+    "id": 49,
+    "f": "batch3a.js",
+    "oldN": 1,
+    "newN": 1
+  },
+  {
+    "id": 50,
+    "f": "batch3a.js",
+    "oldN": 1,
+    "newN": 1
+  },
+  {
+    "id": 51,
+    "f": "batch3a.js",
+    "oldN": 2,
+    "newN": 1
+  },
+  {
+    "id": 52,
+    "f": "batch3a.js",
+    "oldN": 2,
+    "newN": 1
+  },
+  {
+    "id": 53,
+    "f": "batch3b.js",
+    "oldN": 2,
+    "newN": 1
+  },
+  {
+    "id": 54,
+    "f": "batch3b.js",
+    "oldN": 1,
+    "newN": 1
+  },
+  {
+    "id": 55,
+    "f": "batch3b.js",
+    "oldN": 2,
+    "newN": 1
+  },
+  {
+    "id": 56,
+    "f": "batch3b.js",
+    "oldN": 1,
+    "newN": 1
+  },
+  {
+    "id": 57,
+    "f": "batch3b.js",
+    "oldN": 2,
+    "newN": 1
+  },
+  {
+    "id": 59,
+    "f": "batch3b.js",
+    "oldN": 1,
+    "newN": 1
+  },
+  {
+    "id": 60,
+    "f": "batch3b.js",
+    "oldN": 1,
+    "newN": 1
+  },
+  {
+    "id": 61,
+    "f": "batch3b.js",
+    "oldN": 1,
+    "newN": 1
+  },
+  {
+    "id": 62,
+    "f": "batch3b.js",
+    "oldN": 1,
+    "newN": 1
+  },
+  {
+    "id": 63,
+    "f": "batch3b.js",
+    "oldN": 1,
+    "newN": 1
+  },
+  {
+    "id": 64,
+    "f": "batch3b.js",
+    "oldN": 1,
+    "newN": 1
+  },
+  {
+    "id": 65,
+    "f": "batch3b.js",
+    "oldN": 1,
+    "newN": 1
+  },
+  {
+    "id": 66,
+    "f": "batch3b.js",
+    "oldN": 1,
+    "newN": 1
+  },
+  {
+    "id": 67,
+    "f": "batch3b.js",
+    "oldN": 2,
+    "newN": 1
+  },
+  {
+    "id": 68,
+    "f": "batch3b.js",
+    "oldN": 2,
+    "newN": 1
+  },
+  {
+    "id": 69,
+    "f": "batch3c.js",
+    "oldN": 2,
+    "newN": 1
+  },
+  {
+    "id": 70,
+    "f": "batch3c.js",
+    "oldN": 2,
+    "newN": 2
+  },
+  {
+    "id": 71,
+    "f": "batch3c.js",
+    "oldN": 1,
+    "newN": 1
+  },
+  {
+    "id": 72,
+    "f": "batch3c.js",
+    "oldN": 1,
+    "newN": 1
+  },
+  {
+    "id": 73,
+    "f": "batch3c.js",
+    "oldN": 1,
+    "newN": 1
+  },
+  {
+    "id": 74,
+    "f": "batch3c.js",
+    "oldN": 1,
+    "newN": 1
+  },
+  {
+    "id": 75,
+    "f": "batch3c.js",
+    "oldN": 1,
+    "newN": 1
+  },
+  {
+    "id": 76,
+    "f": "batch3c.js",
+    "oldN": 1,
+    "newN": 1
+  },
+  {
+    "id": 77,
+    "f": "batch3c.js",
+    "oldN": 1,
+    "newN": 1
+  },
+  {
+    "id": 78,
+    "f": "batch3c.js",
+    "oldN": 1,
+    "newN": 1
+  },
+  {
+    "id": 79,
+    "f": "batch3c.js",
+    "oldN": 1,
+    "newN": 1
+  },
+  {
+    "id": 80,
+    "f": "batch3c.js",
+    "oldN": 2,
+    "newN": 1
+  },
+  {
+    "id": 81,
+    "f": "batch3c.js",
+    "oldN": 1,
+    "newN": 1
+  },
+  {
+    "id": 82,
+    "f": "batch3c.js",
+    "oldN": 1,
+    "newN": 1
+  },
+  {
+    "id": 83,
+    "f": "batch3c.js",
+    "oldN": 1,
+    "newN": 1
+  },
+  {
+    "id": 84,
+    "f": "batch3c.js",
+    "oldN": 1,
+    "newN": 1
+  },
+  {
+    "id": 85,
+    "f": "batch4.js",
+    "oldN": 2,
+    "newN": 1
+  },
+  {
+    "id": 86,
+    "f": "batch4.js",
+    "oldN": 2,
+    "newN": 2
+  },
+  {
+    "id": 87,
+    "f": "batch4.js",
+    "oldN": 2,
+    "newN": 1
+  },
+  {
+    "id": 88,
+    "f": "batch4.js",
+    "oldN": 1,
+    "newN": 1
+  },
+  {
+    "id": 89,
+    "f": "batch4.js",
+    "oldN": 1,
+    "newN": 1
+  },
+  {
+    "id": 90,
+    "f": "batch4.js",
+    "oldN": 2,
+    "newN": 2
+  },
+  {
+    "id": 91,
+    "f": "batch4.js",
+    "oldN": 2,
+    "newN": 2
+  }
+]

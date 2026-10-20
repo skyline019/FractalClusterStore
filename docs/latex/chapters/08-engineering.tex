@@ -1,0 +1,32 @@
+\section{工程组织与配套材料}
+
+\subsection{目录（产品树）}
+\begin{verbatim}
+embdb/x/
+  include/     fcs.h common.h blockdev.h layout.h store.h(v2)
+  tests/       回归 + golden/
+  bench/       bench2--7；probe/layout.cpp
+  docs/        DESIGN* EVAL17 BATTLE ROUND13--18
+  docs/latex/  本文档源
+  web/         fcs-anim / fcs-pits 源
+  backup/      轮次快照与清扫归档
+\end{verbatim}
+
+\subsection{注释模块地图}
+\texttt{fcs.h} 文件头含模块 TOC（M01--M07\ldots）；修坏还原见
+\texttt{backup/r18/pre-comment-modular/RESTORE.md}。
+清扫清单：\texttt{backup/r18/swept/CLEAN\_MANIFEST.md}。
+
+\subsection{可视化}
+\begin{itemize}[leftmargin=1.6em]
+  \item \texttt{fcs-anim.html}：运行时解剖（React 构建产物）。
+  \item \texttt{fcs-pits.html}：坑库；左右示例数据动画 + 深析；含 R15--R18 扩展批。
+  \item 重建：\texttt{python3 web/pits/build.py}；\texttt{cd web \&\& npm run build}。
+\end{itemize}
+
+\subsection{已知工程债}
+\begin{itemize}[leftmargin=1.6em]
+  \item 单头文件体量（约 $8\,\mathrm{k}$ 行级）：拆分与本地 git 流程仍弱。
+  \item 旋钮多：部署请走 \texttt{configure\_deploy}/\texttt{TidyPolicy}，避免漏配。
+  \item P2c（\texttt{M\_RUN\_HOLE}）仅占 op 号；再压峰走空间轨而非更多 cliff 旋钮。
+\end{itemize}

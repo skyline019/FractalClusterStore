@@ -1,0 +1,48 @@
+\section{评估与对标}
+\label{sec:eval}
+
+\subsection{正确性}
+\begin{itemize}[leftmargin=1.6em]
+  \item \texttt{make test}：含 f/g/h/s/c/r/b 等数十段；R17/R18 增量 \texttt{g15}--\texttt{g18}。
+  \item 掉电：\texttt{g6}/\texttt{h3}（易失缓存 + 随机撕裂）。
+  \item 模糊：\texttt{h1} 挂载；\texttt{g5} 交错 API。
+  \item 消毒：\texttt{make asan}；关键路径 TSan（w1/g7/g11/g13/g14/g17）。
+\end{itemize}
+缺口：无小时级 soak；无物理拔电；无多进程文件锁。
+
+\subsection{Peers（FCS / SQLite / LMDB）}
+\begin{itemize}[leftmargin=1.6em]
+  \item R17 基线旋钮：\texttt{backup/peers-r17/}。
+  \item Soft 产品形态（\texttt{configure\_deploy}）：\texttt{backup/peers-soft/}（2026-10-21；\texttt{run\_peers\_soft.sh} / \texttt{run\_all.sh}）。
+\end{itemize}
+方向性结论（EVAL17 §3.1）：
+\begin{itemize}[leftmargin=1.6em]
+  \item Soft async+整理：写路径 insert 约 $0.07$--$0.12\times$ SQLite/LMDB；空间 $\sim 2.25\,\mathrm{MB}$ @50k（贴 SQLite、紧于 LMDB $5.54\,\mathrm{MB}$）。
+  \item 点查 Soft 下仍强于 SQLite、可优于/追平 LMDB；range 整理后约 $2\times$ LMDB，Soft sync 未整理可达 $\sim 11\times$。
+  \item Soft sync 200k/100B 未 polish：insert $1.27\times$ SQLite、range $3.51\times$（与「写换读」一致）。
+\end{itemize}
+具体 µs/op 以 peers 日志为准；沙箱 2 核抖动常见。
+
+\subsection{峰值 KPI（冻结口径）}
+\begin{table}[ht]
+\centering
+\small
+\begin{tabular}{@{}llp{5.5cm}@{}}
+\toprule
+刀 & det200k 峰 & 决策 \\
+\midrule
+TRIM + hole\_fit & $\sim 1.75$--$1.81\times$ & 采纳 \\
+碎片 A & $\mathbf{\sim 1.71\times}$ & Soft 默认开 \\
+护洞 & $\sim 1.81$（相对 1.82） & Soft 开；非 200k KPI \\
+并洞 B & $1.71\to 1.74$ & \textbf{默认关} \\
+\bottomrule
+\end{tabular}
+\caption{养洞相关峰值刀（ROUND17/18）。下一刀倾向稀疏产物 / P2c 空间轨。}
+\end{table}
+
+\subsection{延迟}
+\begin{itemize}[leftmargin=1.6em]
+  \item 提交 fsync 出锁：慢盘探针数量级收益；本机快 fsync 上收益有限。
+  \item 读者 max 残余常来自维护单元（预算内），而非提交 sync。
+  \item 多写者对吞吐加速有限：瓶颈仍在 \texttt{flush\_mem} 等。
+\end{itemize}

@@ -1,0 +1,191 @@
+\section{流程图、设计图与核心伪代码}
+\label{sec:diagrams}
+
+\subsection{端到端写路径（部署视角）}
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[
+  font=\small,
+  node distance=0.55cm and 0.9cm,
+  box/.style={draw=boxline,rounded corners=2pt,align=center,inner sep=5pt,minimum width=2.4cm,minimum height=0.85cm},
+  io/.style={box,fill=cyan!12},
+  cpu/.style={box,fill=orange!10},
+  disk/.style={box,fill=violet!10},
+  dec/.style={diamond,draw=boxline,aspect=2.2,inner sep=1pt,align=center,fill=amber!8},
+  arr/.style={-{Latex},thick,black!55}
+]
+\node[io] (put) {put/del\\MemTable};
+\node[cpu,right=of put] (c1) {phase1\\持锁};
+\node[disk,right=of c1] (c2) {phase2\\锁外 sync};
+\node[cpu,right=of c2] (c3) {phase3\\发布};
+\node[io,below=1.1cm of c1] (maint) {maint\\预算/步进};
+\node[disk,below=1.1cm of c3] (trim) {TRIM/洞\\choose\_part};
+\draw[arr] (put) -- (c1);
+\draw[arr] (c1) -- (c2);
+\draw[arr] (c2) -- (c3);
+\draw[arr] (c3) |- (maint);
+\draw[arr] (maint) -| (trim);
+\draw[arr] (trim) -- (c1);
+\node[below=0.15cm of c2,font=\footnotesize\itshape,text=teal!50!black] {读者可并行 get};
+\end{tikzpicture}
+\caption{提交三段式与维护反馈：phase2 出锁是读者延迟的关键分界。}
+\label{fig:write-e2e}
+\end{figure}
+
+\subsection{盘面布局设计图（逻辑）}
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[
+  font=\footnotesize,
+  strip/.style={draw=boxline,minimum height=0.7cm,inner sep=2pt,align=center},
+  arr/.style={-{Latex},thick}
+]
+\node[strip,fill=teal!15,minimum width=1.6cm] (sb) {SB\\双槽};
+\node[strip,fill=violet!12,minimum width=2.0cm,right=0.15cm of sb] (man) {清单链};
+\node[strip,fill=cyan!10,minimum width=3.2cm,right=0.15cm of man] (data) {数据 run 页};
+\node[strip,fill=orange!12,minimum width=1.8cm,right=0.15cm of data] (ov) {溢出链};
+\node[strip,fill=gray!12,minimum width=1.4cm,right=0.15cm of ov] (free) {free\_};
+\node[strip,fill=red!8,minimum width=1.6cm,right=0.15cm of free] (hole) {中部大洞};
+\node[above=0.05cm of sb,font=\scriptsize] {低地址};
+\node[above=0.05cm of hole,font=\scriptsize] {高水位$\rightarrow$};
+\draw[decorate,decoration={brace,amplitude=4pt,mirror},black!50]
+  ([yshift=-2pt]data.south west) -- ([yshift=-2pt]ov.south east)
+  node[midway,below=6pt,font=\scriptsize] {不可变数据面};
+\draw[decorate,decoration={brace,amplitude=4pt},teal!60!black]
+  ([yshift=14pt]hole.north west) -- ([yshift=14pt]hole.north east)
+  node[midway,above=5pt,font=\scriptsize] {护洞：L0 跳过};
+\end{tikzpicture}
+\caption{逻辑盘面：控制面（SB/清单）与数据面分离；护洞保护合并释出的中部大洞。}
+\label{fig:layout-design}
+\end{figure}
+
+\subsection{单元--段--页 设计关系}
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[
+  font=\small,
+  c/.style={draw=boxline,rounded corners=2pt,align=left,inner sep=6pt},
+  arr/.style={-{Latex},thick,black!50}
+]
+\node[c,fill=cyan!8] (c1) {\textbf{Cell $[L,R)$}\\Seg$_1$, Seg$_2$, \ldots};
+\node[c,fill=orange!8,right=2.2cm of c1] (r1) {\textbf{Run $R_a$}\\seq, ver, fences\\Bloom, sp};
+\node[c,fill=violet!8,below=1.0cm of r1] (p1) {\textbf{Pages}\\p0..pn 有序记录};
+\draw[arr] (c1) -- node[above,font=\scriptsize]{Seg(键域,页区间)} (r1);
+\draw[arr] (r1) -- node[right,font=\scriptsize]{不可变} (p1);
+\node[c,fill=gray!6,below=1.0cm of c1] (note) {分裂：收窄键域+页区间\\不搬数据页};
+\draw[arr] (c1) -- (note);
+\end{tikzpicture}
+\caption{单元是视图，run 是物权；分裂零搬移依赖「键域与页区间同时收紧」（坑~1/~20）。}
+\label{fig:cell-run}
+\end{figure}
+
+\subsection{提交三段式伪代码}
+\begin{algorithm}[H]
+\caption{Commit（ROUND17 出锁版）}
+\begin{algorithmic}[1]
+\Require 调用方可未持锁（公开 \texttt{commit}）或已持锁（\texttt{commit\_locked}）
+\Ensure 返回时盘上为新提交点，或 \texttt{dirty\_} 待重建
+\State $cseq \gets$ \Call{Phase1}{}\Comment{持 XLock：flush\_mem、抓 SB 载荷、发票}
+\If{公开路径}
+  \State \Call{Unlock}{XLock}
+  \State \Call{Phase2Ordered}{$cseq$}\Comment{cmu\_ 按票号：wait\_io；sync；write\_SB；sync}
+  \State \Call{Lock}{XLock}
+\Else
+  \State \Call{Phase2Inline}{}\Comment{维护路径不放锁}
+\EndIf
+\State \Call{Phase3}{}\Comment{发布 sb\_synced\_、durable\_vers\_；promote\_pending}
+\State \Return OK 或 IO（阶段二失败 $\Rightarrow$ dirty\_）
+\end{algorithmic}
+\end{algorithm}
+
+\begin{algorithm}[H]
+\caption{页复用闸（代数）}
+\begin{algorithmic}[1]
+\Function{CanReusePending}{$gen$}
+  \State \Return $gen \le sb\_synced\_$\Comment{\textbf{不是} sb\_built\_：在飞 SB 不算}
+\EndFunction
+\end{algorithmic}
+\end{algorithm}
+
+\subsection{读路径伪代码}
+\begin{algorithm}[H]
+\caption{Get($k$, $view$)}
+\begin{algorithmic}[1]
+\State $c \gets$ 目录二分定位含 $k$ 的 cell
+\For{Seg $s$ in $c$ 按全序从新到旧}
+  \If{Bloom 否定 $k$} \textbf{continue}
+  \EndIf
+  \State 用 fences/sp 定位页，解码记录
+  \If{记录可见于 $view$ 且未被范围墓碑盖住}
+    \State \Return 值
+  \EndIf
+\EndFor
+\State \Return NOTFOUND
+\end{algorithmic}
+\end{algorithm}
+
+\subsection{P2b 分片 + TRIM 伪代码}
+\begin{algorithm}[H]
+\caption{MergeJob 一片（示意）}
+\begin{algorithmic}[1]
+\Require 源家族 runs，作业预算页数 $B$
+\State $hole \gets$ 最大可用洞（或护洞策略下允许的洞）
+\State $part \gets$ \Call{ChoosePart}{$B$, $hole$, frag?}\Comment{可降至 frag\_floor}
+\State 归并写出片 $P$（键区间 $[lo,hi)$）至洞或尾
+\State 对每个被吃掉前缀的源 $S$：追加 \texttt{M\_RUN\_TRIM}\Comment{锚页 page0 保留}
+\State 提交点：清单 + SB；源前缀进入 pending\_free
+\end{algorithmic}
+\end{algorithm}
+
+\begin{algorithm}[H]
+\caption{ChoosePart（含碎片 A）}
+\begin{algorithmic}[1]
+\State $cap \gets part\_cap(part\_lo)$
+\If{$largest\_hole \ge cap$}
+  \State \Return 按洞取 $\le cap$ 的片
+\ElsIf{$part\_frag$ \textbf{and} $free\ge cap$ \textbf{and} $largest\_hole\ge frag\_floor$}
+  \State $part\_frags{+}{+}$
+  \State \Return 在 $[frag\_floor, part\_lo)$ 按洞取片
+\Else
+  \State \Return 落尾（或更大预算）
+\EndIf
+\end{algorithmic}
+\end{algorithm}
+
+\subsection{整理状态机}
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[
+  font=\small,
+  st/.style={draw=boxline,rounded corners=3pt,minimum width=2.1cm,minimum height=0.75cm,align=center},
+  arr/.style={-{Latex},thick}
+]
+\node[st,fill=gray!10] (off) {Off};
+\node[st,fill=teal!12,right=1.2cm of off] (soft) {Soft};
+\node[st,fill=orange!12,right=1.2cm of soft] (hard) {Hard};
+\node[st,fill=violet!12,right=1.2cm of hard] (per) {Periodic};
+\draw[arr] (off) -- node[above,font=\scriptsize]{configure} (soft);
+\draw[arr] (soft) -- node[above,font=\scriptsize]{压力} (hard);
+\draw[arr] (hard) -- node[above,font=\scriptsize]{发布前} (per);
+\node[below=0.85cm of soft,st,fill=cyan!10,minimum width=3.2cm] (dep) {configure\_deploy\\async+cheap+hole\_fit\\frag+protect+hw};
+\node[below=0.85cm of per,st,fill=red!8,minimum width=2.4cm] (pol) {polish\\consolidate+shrink};
+\draw[arr] (soft) -- (dep);
+\draw[arr] (per) -- (pol);
+\end{tikzpicture}
+\caption{TidyPolicy：Soft 常驻读友好；Hard/Periodic 步进；polish 重锤。}
+\label{fig:tidy-sm}
+\end{figure}
+
+\begin{algorithm}[H]
+\caption{maybe\_tidy}
+\begin{algorithmic}[1]
+\If{$policy \in \{Off, Soft\}$} \Return OK
+\EndIf
+\State $sn \gets$ tidy\_snap()
+\If{$sn.runs$ 与 $sn.layout\_pct$ 均未超阈} \Return OK
+\EndIf
+\If{$policy = Hard$} \Return consolidate\_step()
+\Else \Return compact\_file\_step()
+\EndIf
+\end{algorithmic}
+\end{algorithm}

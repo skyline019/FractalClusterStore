@@ -1,0 +1,708 @@
+\section{代码详解：从底层往上拆}
+\label{sec:code-deep}
+
+本章面向\textbf{只熟悉基础数据库概念}的读者（表、主键、事务、提交、索引即可）。
+不要求读过 LSM / B+ 树论文。每一层先给「你已经知道的类比」，再落到 \texttt{embdb/x/include/fcs.h} 里的真实结构与调用链，并配图与\textbf{可手算的小例子}。
+
+\begin{mdframed}[linecolor=boxline,linewidth=0.5pt,innertopmargin=4pt,innerbottommargin=4pt]
+\textbf{阅读约定}
+\begin{itemize}[leftmargin=1.4em,itemsep=0.2em]
+  \item 真相源：\texttt{include/fcs.h}（模块 \texttt{M01}--\texttt{M07}）、\texttt{common.h}（\texttt{PAGE=4096}）、\texttt{blockdev.h}。
+  \item 公开入口：\texttt{Store::put/get/del/commit/\ldots}；内部名出现时会标明文件位置含义。
+  \item 「演示」数字是教学用的微型库，\textbf{不是} ROUND 实测 KPI。
+\end{itemize}
+\end{mdframed}
+
+% =============================================================================
+\subsection{先建立一张「地图」}
+\label{sec:cd-map}
+
+把 FCS 想成一张\textbf{只有一张表}的数据库：主键是 64 位整数，值是任意字节。
+没有 SQL，没有多表 JOIN——但「写缓冲 → 落盘 → 查最新 → 定期整理」这条故事线，和你在 SQLite / 日志型存储里见过的一样。
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[
+  font=\small,
+  L/.style={draw,rounded corners=2pt,align=center,inner sep=5pt,minimum width=2.6cm,minimum height=1.05cm},
+  arr/.style={-{Latex},thick}
+]
+\node[L,fill=black!4] (dev) {层 0\\块设备\\连续页号};
+\node[L,fill=teal!12,right=0.55cm of dev] (pg) {层 1\\数据页\\4\,KiB};
+\node[L,fill=teal!18,right=0.55cm of pg] (rec) {层 2\\记录\\键+长+值};
+\node[L,fill=orange!15,below=0.7cm of pg] (mem) {层 3\\MemTable\\未落盘写};
+\node[L,fill=violet!12,below=0.7cm of rec] (run) {层 4\\Run\\不可变有序段};
+\node[L,fill=blue!10,below=0.7cm of run] (cell) {层 5\\Cell+Seg\\目录视图};
+\node[L,fill=green!12,left=0.55cm of cell] (vis) {层 6\\可见性\\版本/墓碑};
+\node[L,fill=red!10,right=0.55cm of cell] (api) {层 7\\公开 API\\put/get/commit};
+\draw[arr] (dev) -- (pg);
+\draw[arr] (pg) -- (rec);
+\draw[arr] (mem) -- (run);
+\draw[arr] (run) -- (cell);
+\draw[arr] (cell) -- (vis);
+\draw[arr] (vis) -- (api);
+\draw[arr,dashed] (mem.east) -| (api.south);
+\draw[arr,dashed] (rec.south) -- (run.north);
+\end{tikzpicture}
+\caption{自底向上的七层拆解。虚线：写先经 MemTable；读可能先命中 MemTable 再探盘上 Run。}
+\end{figure}
+
+\begin{center}
+\small
+\begin{tabular}{@{}llp{7.2cm}@{}}
+\toprule
+你熟悉的概念 & FCS 对应物 & 一句话 \\
+\midrule
+数据库文件 & 一块 \texttt{BlockDev}（页号 $0,1,2,\ldots$） & 没有「文件系统里的多个 .db 文件」抽象 \\
+页 / 页缓存 & $4096\,\mathrm{B}$ 页 + 两路组相联缓存 & 一切持久字节都落在某页偏移上 \\
+行 & 记录（键 $8\,\mathrm{B}$ + 长度 + 值） & 键固定 \texttt{u64} \\
+写缓冲 / WAL 前奏 & \texttt{MemTable} & \texttt{put} 先改内存，\texttt{commit(true)} 才变 Run \\
+不可变 SST 文件 & \texttt{Run}（一段连续数据页） & 写完不再改；更新靠「更新的 Run」覆盖 \\
+表分区 / 键范围 & \texttt{Cell}（$[lo,hi)$） & 目录把键空间切成区间 \\
+索引指针 & \texttt{Seg}＝「某 Run 的某页区间 + 键域」 & Cell \textbf{不拥有}数据，只挂视图 \\
+事务提交点 & 超级块 SB + 清单增量 & 崩溃恢复到「某个已同步的提交点」 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+% =============================================================================
+\subsection{层 0：块设备——整库就是一串页}
+\label{sec:cd-dev}
+
+对基础读者：不要想象「一个目录里很多 .sst 文件」。FCS 面对的是\textbf{一块固定容量的块设备}（或预分配的大文件），整库地址空间就是页号 $0,1,2,\ldots$。
+
+\begin{itemize}[leftmargin=1.4em]
+  \item 页号类型 \texttt{PageId}（\texttt{u32}），页大小编译期常量 \texttt{PAGE = 4096}（\texttt{common.h}）。
+  \item 读：\texttt{page(p)} 经页缓存返回指针；写：先改缓冲再按提交路径刷设备。
+  \item 空闲页记在空闲表；\textbf{复用有闸}——须等对应超级块已同步（\texttt{sb\_synced\_}），否则崩溃会破坏「完整旧态」。
+  \item 下文演示假设前几百页够用；超级块占双槽（交替写入），见格式章。
+\end{itemize}
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[font=\scriptsize,box/.style={draw,minimum width=1.15cm,minimum height=0.7cm,align=center,inner sep=1pt}]
+\foreach \i/\lab/\c in {0/{SB-A}/red!15, 1/{SB-B}/red!10, 2/{数据}/teal!15, 3/{数据}/teal!15, 4/{...}/white, 5/{清单}/orange!15, 6/{数据}/teal!15, 7/{空闲}/black!6} {
+  \node[box,fill=\c] at (\i*1.25,0) (p\i) {p\i\\\lab};
+}
+\draw[-{Latex}] (-0.3,-1.0) -- (9.0,-1.0) node[right] {页号增大 $\rightarrow$};
+\end{tikzpicture}
+\caption{设备是线性页数组。超级块两槽、数据页、清单页、空闲页混排在同一地址空间。}
+\end{figure}
+
+% =============================================================================
+\subsection{层 1--2：数据页里的记录长什么样}
+\label{sec:cd-rec}
+
+\subsubsection{记录字节布局（教学用简化）}
+一条小值记录在数据页上的逻辑布局（启用页内前缀前，\texttt{pfx=0}）：
+
+\begin{center}
+\begin{tikzpicture}[font=\ttfamily\footnotesize]
+\node[draw,fill=black!3,inner sep=4pt] {
+\begin{tabular}{@{}c@{\,}c@{\,}c@{}}
+\texttt{key 8B} & \texttt{len 2B} & \texttt{value (偶数对齐)} \\
+\end{tabular}
+};
+\end{tikzpicture}
+\end{center}
+
+\begin{itemize}[leftmargin=1.4em]
+  \item 头文件：\texttt{M02}，\texttt{rec\_size(len) = 10 + 对齐后的值长}；溢出值时 \texttt{len = OVFL\_MARK (0xFFFF)}，值区换成 $16\,\mathrm{B}$ 描述符。
+  \item \textbf{版本不写在每条记录里}：同一条 Run 共享同一个逻辑版本（一次 \texttt{commit} / 一次压实产物）。
+  \item 页头还记 used、首末键、可选前缀压缩（有序键可少存高位字节）；旧页 \texttt{fmt=0} 走全键路径。
+\end{itemize}
+
+\subsubsection{示例 A：手算一条页上的字节}
+假设写入键 $k=100$，值 \texttt{"hi"}（长度 $2$）：
+
+\begin{enumerate}[leftmargin=1.6em]
+  \item 值长 $2$，对齐后仍为 $2$；\texttt{rec\_size(2) = 10 + 2 = 12} 字节。
+  \item 小端想象（仅示意）：\texttt{64 00 00 00 00 00 00 00 | 02 00 | 68 69}（键 $100$、长 $2$、ASCII \texttt{h i}）。
+  \item 若同页再写 $k=101$，值 \texttt{"ok"}，再占 $12$ 字节；页从偏移 \texttt{DHDR}（数据区起点，约 $40$）起顺序追加。
+\end{enumerate}
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[font=\scriptsize]
+\draw[thick] (0,0) rectangle (12,1.6);
+\fill[black!8] (0,0) rectangle (1.2,1.6);
+\node[align=center] at (0.6,0.8) {页头\\DHDR};
+\fill[teal!25] (1.2,0) rectangle (3.0,1.6);
+\node[align=center] at (2.1,0.8) {rec\\k=100};
+\fill[teal!40] (3.0,0) rectangle (4.8,1.6);
+\node[align=center] at (3.9,0.8) {rec\\k=101};
+\fill[black!4] (4.8,0) rectangle (12,1.6);
+\node at (8.4,0.8) {未用（used 之后）};
+\node[anchor=west] at (0,-0.45) {一页 $=4096\,\mathrm{B}$；多条记录按键\textbf{有序}排列（刷盘时排序写入）。};
+\end{tikzpicture}
+\caption{示例 A：一页内两条小记录的示意位置。}
+\end{figure}
+
+% =============================================================================
+\subsection{层 3：MemTable——先写内存，再谈落盘}
+\label{sec:cd-mem}
+
+\subsubsection{类比}
+像「还没 \texttt{fsync} 的私有写缓冲」：\texttt{put}/\texttt{del} 立刻改内存表；同进程其它线程的 \texttt{get} 在加锁后也能看见；\textbf{掉电会丢}尚未 \texttt{commit(true)} 的小值。
+
+实现上 MemTable 不是 \texttt{std::map}：用开放寻址 + 连续值区，避免每条记录两次堆分配（见 \texttt{M03} 注释）。对读者只需记住三点：按键覆盖写、可有序吐出、点查 $O(1)$ 期望。
+
+\subsubsection{代码行为（\texttt{M03} / \texttt{put\_raw}）}
+\begin{enumerate}[leftmargin=1.6em]
+  \item 拿写锁（\texttt{WGuard}）。
+  \item \texttt{mem\_.upsert(key)}：有则覆盖，无则插入。
+  \item 小值：值拷进 MemTable 连续值区；大值（$>$\texttt{INLINE\_VAL\_MAX}，约 $3000$）：\textbf{先}写成溢出页链，MemTable 只留 $16\,\mathrm{B}$ 描述符。
+  \item \texttt{del}：同一套 upsert，但长度记 $0$（墓碑语义，见层~6）。
+  \item \textbf{此时不分配数据 Run，不改超级块。}
+\end{enumerate}
+
+\begin{lstlisting}[language=pseudo,caption={put 热路径（对照 Store::put\_raw）}]
+function put_raw(key, val, len):
+  lock write
+  if len > INLINE_VAL_MAX:
+    d = write_overflow_chain(val)     // 已占设备页
+    mem.upsert(key) = descriptor(d)  // 16B，ovfl=true
+  else:
+    mem.upsert(key) = copy(val)
+  mem[key].ver = open_vers()          // 逻辑版本
+  unlock
+\end{lstlisting}
+
+\subsubsection{示例 B：三次 put，尚未 commit}
+\begin{center}
+\small
+\begin{tabular}{@{}llll@{}}
+\toprule
+步骤 & 调用 & MemTable 内容（键$\to$值） & 盘上 Run \\
+\midrule
+1 & \texttt{put(1,"a")} & $1\to\mathrm{a}$ & （无） \\
+2 & \texttt{put(2,"b")} & $1\to\mathrm{a},\;2\to\mathrm{b}$ & （无） \\
+3 & \texttt{put(1,"A")} & $1\to\mathrm{A},\;2\to\mathrm{b}$（覆盖） & （无） \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\texttt{get(1)} 在步骤 3 之后直接命中 MemTable，返回 \texttt{"A"}，\textbf{不会}去探 Run。
+
+% =============================================================================
+\subsection{层 4：Run——落盘后的「不可变有序文件」}
+\label{sec:cd-run}
+
+\subsubsection{类比}
+一条 Run $\approx$ LSM 里的一份 SSTable：键有序、写完只读、更新靠更新的文件。
+物理上是连续若干数据页（可再跟元数据页存 fences / bloom 等）。
+
+\subsubsection{结构体字段（读注释即可）}
+\texttt{struct Run}（\texttt{M05}）关键字段：
+
+\begin{center}
+\small
+\begin{tabular}{@{}lp{9.5cm}@{}}
+\toprule
+字段 & 含义 \\
+\midrule
+\texttt{page0, npages} & 数据页起止 \\
+\texttt{first, last} & 整条 Run 键范围 \\
+\texttt{ver, seq} & 逻辑版本；全局单调序号（新$\to$旧遍历用 \texttt{seq}） \\
+\texttt{fences[]} & 每页首键，二分定位到页 \\
+\texttt{bloom} & 「键一定不在」时可跳过整段 \\
+\texttt{live\_recs / live\_bytes} & 还有多少是「某键的最新副本」（归零可整段回收） \\
+\texttt{trim} & P2b：前缀页已释放，第 0 页留作身份锚 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[font=\small,
+  pg/.style={draw,rounded corners=1pt,align=center,inner sep=5pt,
+             minimum width=2.0cm,minimum height=1.15cm,fill=teal!18},
+  mt/.style={draw,rounded corners=1pt,align=center,inner sep=5pt,
+             minimum width=2.2cm,minimum height=1.15cm,fill=orange!20}
+]
+% 标题单独在上方，绝不与页框重叠
+\node[font=\bfseries] (ttl) at (3.5,1.85)
+  {Run\quad seq$=5$\quad ver$=3$\quad page0$=10$\quad npages$=3$};
+\node[pg] (p0) at (0.0,0) {p10\\首键 1};
+\node[pg] (p1) at (2.4,0) {p11\\首键 50};
+\node[pg] (p2) at (4.8,0) {p12\\首键 200};
+\node[mt] (m)  at (7.4,0) {meta\\fences / bloom};
+% 外框表示「一条物理 Run」
+\draw[thick,violet!50!black,rounded corners=2pt]
+  ($(p0.south west)+(-0.25,-0.35)$) rectangle ($(m.north east)+(0.25,0.35)$);
+\draw[-{Latex},thick] (p0) -- (p1) -- (p2);
+\draw[dashed] (p2) -- (m);
+\node[anchor=west,font=\scriptsize,align=left] at (-0.3,-1.55)
+  {数据页连续占用设备页号 $[10,13)$；\texttt{fences=[1,50,200]} 供二分定位；meta 可选。};
+\end{tikzpicture}
+\caption{一条 Run：标题在上、页框在下；数据页连续，可选 meta 挂在后面。}
+\end{figure}
+
+\paragraph{用 fences 手算「键落在哪一页」}
+设 \texttt{fences = [1, 50, 200]}（每页首键）。查键 $k$ 时：找最大的 $i$ 使 $\texttt{fences}[i]\le k$，则候选页是 \texttt{page0}+i。
+
+\begin{center}
+\small
+\begin{tabular}{@{}lll@{}}
+\toprule
+查询键 $k$ & 命中页 & 理由 \\
+\midrule
+$1$ & p10 & $1\le k < 50$ \\
+$80$ & p11 & $50\le k < 200$ \\
+$200$ & p12 & $k\ge 200$ \\
+$999$（且 $>$ Run.last） & （无） & 可先被 Run 的 \texttt{[first,last]} 拒绝 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Bloom 再挡一层：若 \texttt{bloom.may(k)=false}，整条 Run 都不用读页——这就是「读放大常接近 1 页」的来源。
+
+\subsubsection{示例 C：commit 把 MemTable 刷成 Run}
+接示例 B（MemTable 为 $1\to\mathrm{A},\,2\to\mathrm{b}$），调用 \texttt{commit(true)}（教学简化）：
+
+\begin{enumerate}[leftmargin=1.6em]
+  \item \textbf{锁内 phase1}：MemTable 按键有序吐出 $\to$ 写成新 Run（设 \texttt{page0=10}，\texttt{seq=1}，\texttt{ver=1}）；目录给覆盖该键域的 Cell 挂上 Seg；抓超级块载荷（尚未宣称「已同步」）。
+  \item \textbf{锁外 phase2}：数据页与超级块落盘并 \texttt{sync}（详见 fsync 章）。
+  \item \textbf{锁内 phase3}：发布 \texttt{sb\_synced\_}；清空已刷的 MemTable 条目。
+\end{enumerate}
+
+此后盘上逻辑内容：$(1,\mathrm{A}),\,(2,\mathrm{b})$。MemTable 变空；\texttt{get(1)} 走盘上 Run。
+
+% =============================================================================
+\subsection{层 5：Cell 与 Seg——目录，而不是「拥有数据的节点」}
+\label{sec:cd-cell}
+
+\subsubsection{为什么要多此一举？}
+若每次分裂都像 B+ 树那样搬记录，代价高。
+FCS 的关键句：
+
+\begin{quote}
+\textbf{单元（Cell）不拥有数据。}数据只活在 Run 里；Cell 只保存一组 \texttt{Seg}——「我关心这条 Run 的哪一段页、哪一段键」。
+\end{quote}
+
+因此切分一个 Cell 往往只需改段表（$O(\#\text{段})$），不必重写用户数据。
+可以把 Cell 想成「表分区的元数据行」，把 Seg 想成「指向某个不可变文件切片的索引项」。
+
+\subsubsection{三个结构}
+\begin{description}[style=nextline,leftmargin=2.4em]
+  \item[\texttt{Cell}] 键区间 $[lo,hi)$ + 有序段表 \texttt{segs} + 存活/垃圾字节账（\texttt{live}/\texttt{dead}）。
+  \item[\texttt{Seg}] 字段 \texttt{(rid, p0, p1, klo, khi, live)}：指向 Run~\texttt{rid} 的页半开区间 $[p0,p1)$，且\textbf{只}对键 $[klo,khi)$ 负责。页可以和邻居重叠，键域必须切开。
+  \item[\texttt{SegKey}] 排序键 $(\texttt{seq},\texttt{rid})$：段表按 \texttt{seq} 升序存放；遍历时 \texttt{rbegin()} 先拿到\textbf{最新}段。
+\end{description}
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[font=\small,
+  cell/.style={draw,rounded corners=2pt,align=center,inner sep=5pt,
+               minimum width=3.4cm,minimum height=1.0cm,fill=blue!12},
+  seg/.style={draw,rounded corners=1pt,align=left,inner sep=4pt,fill=blue!6},
+  note/.style={draw,rounded corners=2pt,align=center,inner sep=5pt,fill=violet!12}
+]
+% ---- 第一层：两个 Cell ----
+\node[cell] (c0) at (0,3.2) {Cell$_0$\quad $[0,\,100)$};
+\node[cell] (c1) at (5.6,3.2) {Cell$_1$\quad $[100,\,+\infty)$};
+% ---- 第二层：各 Cell 挂的 Seg（同列对齐，互不重叠）----
+\node[seg] (s0) at (0,1.6)
+  {Seg $\to$ Run\,3\quad pages $[0,2)$\\键域 $k\in[0,100)$};
+\node[seg] (s1a) at (5.6,1.6)
+  {Seg $\to$ Run\,3\quad pages $[1,3)$\\键域 $k\in[100,300)$};
+\node[seg,fill=teal!15] (s1b) at (5.6,0.2)
+  {Seg $\to$ Run\,5\quad pages $[0,1)$\\键域 $k\in[100,+\infty)$\quad\textbf{更新}};
+\draw[-{Latex},thick] (c0) -- (s0);
+\draw[-{Latex},thick] (c1) -- (s1a);
+\draw[-{Latex},thick] (c1.south) -- ++(0,-0.15) -| (s1b.north);
+% ---- 第三层：物理 Run 说明（单独一行，避开上方框）----
+\node[note,minimum width=9.6cm] (run) at (2.8,-1.2)
+  {物理层：同一条 Run\,3 被两个 Cell 各挂一段（页可重叠，键域必须切开）};
+\draw[dashed,violet!60!black] (s0.south) -- (run.north -| s0);
+\draw[dashed,violet!60!black] (s1a.south) -- (run.north -| s1a);
+\end{tikzpicture}
+\caption{目录视图（分层绘制）：Cell $\to$ Seg $\to$ 共享物理 Run；Cell$_1$ 另有更新的 Run\,5。}
+\end{figure}
+
+\paragraph{读图要点}
+\begin{itemize}[leftmargin=1.4em]
+  \item Cell$_0$ 与 Cell$_1$ 都引用 Run\,3，但键域在 $100$ 切开：左边的 Seg 绝不会把键 $150$ 算进自己的 \texttt{live}。
+  \item 页区间可以重叠（图中 $[0,2)$ 与 $[1,3)$ 都含页 $1$）：重叠页里同时可能有左右两边的键，\textbf{靠键域过滤}，不是靠「独占页」。
+  \item Cell$_1$ 上 Run\,5 的 Seg 更新：\texttt{get} 时 \texttt{rbegin()} 先探 Run\,5；命中（含墓碑）即停，不会「救回」Run\,3 里的旧值。
+\end{itemize}
+
+\paragraph{示例：两个 get 各走哪条路}
+\begin{center}
+\small
+\begin{tabular}{@{}llp{6.6cm}@{}}
+\toprule
+调用 & 进入的 Cell & 探段顺序（新$\to$旧） \\
+\midrule
+\texttt{get(50)} & Cell$_0$ & 仅 Run\,3 的左 Seg；在页 $[0,2)$ 内找 $50$ \\
+\texttt{get(150)} & Cell$_1$ & 先 Run\,5；未命中再 Run\,3 右 Seg（页 $[1,3)$，且 $k\ge100$） \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsubsection{示例 D：一次切分在目录上发生了什么}
+初始：唯一 Cell $[0,\infty)$，一段指向 Run\,3 全页。
+在键 $100$ 切开后：
+
+\begin{itemize}[leftmargin=1.4em]
+  \item 左 Cell：Seg 键域收到 $[0,100)$；若某源段在左侧\textbf{零记录}，段壳必须丢掉（否则「幽灵段」，见踩坑章）。
+  \item 右 Cell：对称处理 $[100,\infty)$。
+  \item Run\,3 的\textbf{字节一动不动}；变的只是两份目录视图。
+\end{itemize}
+
+切分前后对照（教学）：
+
+\begin{center}
+\small
+\begin{tabular}{@{}lp{5.2cm}p{5.2cm}@{}}
+\toprule
+ & 切分前 & 切分后 \\
+\midrule
+Cell 数 & 1 个 $[0,\infty)$ & 2 个 $[0,100)$ / $[100,\infty)$ \\
+Run\,3 数据页 & 原样 & 原样（无重写） \\
+Seg 键域 & $[0,\infty)$ & 左 $[0,100)$，右 $[100,\infty)$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+% =============================================================================
+\subsection{层 6：可见性——版本、墓碑、范围删除}
+\label{sec:cd-vis}
+
+\subsubsection{点查规则（你需要记住的唯一公式）}
+对键 $k$、视图版本 $\mathit{view}$（通常 $=$ 当前打开版本）：
+
+\begin{enumerate}[leftmargin=1.6em]
+  \item 若 MemTable 有 $k$ 且其 \texttt{ver} $\le \mathit{view}$：以内存为准（len$=0$ $\Rightarrow$ 不存在）。
+  \item 否则找到含 $k$ 的 Cell，按段从新到旧（\texttt{segs.rbegin}）：
+  \begin{itemize}
+    \item bloom 说「不可能」$\to$ 跳过；
+    \item \texttt{probe} 在段页区间内找到记录：len$=0$ 是墓碑 $\to$ \texttt{NOTFOUND}；否则返回值；
+    \item 找不到 $\to$ 试更老的段。
+  \end{itemize}
+  \item 都没有 $\to$ \texttt{NOTFOUND}。
+\end{enumerate}
+
+\begin{lstlisting}[language=pseudo,caption={get\_at 主循环（对照 Store::get\_at）}]
+function get_at(key, view):
+  if mem has key and mem.ver <= view:
+    return mem value or NOTFOUND if tombstone
+  C = find_cell(key)
+  for seg in C.segs from newest to oldest:
+    R = run(seg.rid)
+    if not bloom.may(key): continue
+    rc, val = probe(R, seg.pages, key, view)
+    if found tombstone: return NOTFOUND
+    if found value: return value
+  return NOTFOUND
+\end{lstlisting}
+
+\subsubsection{示例 E：覆盖与删除的时间线}
+\begin{center}
+\small
+\begin{tabular}{@{}clp{8.6cm}@{}}
+\toprule
+时刻 & 操作 & 读者看见的 $k=7$ \\
+\midrule
+T0 & （空库） & 不存在 \\
+T1 & \texttt{put(7,"x"); commit} & \texttt{"x"}（Run$_1$） \\
+T2 & \texttt{put(7,"y"); commit} & \texttt{"y"}（Run$_2$ 更新；Run$_1$ 上旧值变垃圾） \\
+T3 & \texttt{del(7); commit} & 不存在（Run$_3$ 墓碑；probe 遇 len$=0$ 即停） \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[font=\scriptsize,r/.style={draw,minimum width=2.4cm,minimum height=0.85cm,align=center}]
+\node[r,fill=teal!20] (a) {Run$_1$\\{7 $\rightarrow$ x}};
+\node[r,fill=teal!35,right=0.4cm of a] (b) {Run$_2$\\{7 $\rightarrow$ y}};
+\node[r,fill=red!20,right=0.4cm of b] (c) {Run$_3$\\{7 $\rightarrow$ 墓碑}};
+\draw[-{Latex}] (a) -- (b) -- (c);
+\node[anchor=west] at (0,-1.1) {get 从右（新）往左探：先碰到墓碑 $\Rightarrow$ 结束，不会返回 x/y。};
+\end{tikzpicture}
+\caption{示例 E：同一键多版本并存；读只认最新段上的结果。}
+\end{figure}
+
+范围删除（\texttt{del\_range}）还会在清单里留下 \texttt{M\_RANGE} 类记录：不占用户键空间，但读路径要用 \texttt{range\_hidden} 判断键是否被区间墓碑盖住。
+
+% =============================================================================
+\subsection{层 7：把 API 串成一条「演示剧本」}
+\label{sec:cd-demo}
+
+下面用\textbf{完整微型剧本}把层 0--6 串起来。假设教学库键很小，一切发生在一个 Cell 内。
+每一步给出「MemTable / 盘上 Run / get 结果」三列状态，便于对照代码。
+
+\subsubsection{剧本步骤与状态表}
+\begin{enumerate}[leftmargin=1.6em]
+  \item \texttt{open(dev)}：读双槽超级块，重放清单，重建 \texttt{runs\_} 与 Cell 目录；空库则一个 Cell 覆盖全域。
+  \item \texttt{put(10, "cat")}；\texttt{put(20, "dog")} —— 仅 MemTable。
+  \item \texttt{commit(true)} —— 产生 Run\,A（两键），SB 持久；MemTable 清空。
+  \item \texttt{put(10, "CAT")}；\texttt{del(20)} —— 又进 MemTable。
+  \item \texttt{get(10)} $\to$ \texttt{"CAT"}（内存命中）；\texttt{get(20)} $\to$ 不存在（内存墓碑）。
+  \item \texttt{commit(true)} —— 产生 Run\,B；目录两段，新段在上。
+  \item 再次 \texttt{get(10)}：MemTable 空，探 Cell 最新段 Run\,B 得 \texttt{"CAT"}；\texttt{get(20)} 在 Run\,B 见墓碑 $\to$ 不存在。
+\end{enumerate}
+
+\begin{center}
+\small
+\begin{tabular}{@{}clp{3.4cm}p{3.6cm}@{}}
+\toprule
+步 & MemTable & 盘上 Run（新$\to$旧） & \texttt{get(10)} / \texttt{get(20)} \\
+\midrule
+1 & $\emptyset$ & （无） & 不存在 / 不存在 \\
+2 & $10\to\mathrm{cat},\,20\to\mathrm{dog}$ & （无） & cat / dog \\
+3 & $\emptyset$ & A: $10\to\mathrm{cat},20\to\mathrm{dog}$ & cat / dog \\
+4 & $10\to\mathrm{CAT},\,20\to$墓碑 & A（同上） & CAT / 不存在 \\
+5 & （同 4） & A & CAT / 不存在 \\
+6--7 & $\emptyset$ & B（新）, A（旧） & CAT / 不存在 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[
+  font=\scriptsize,
+  node distance=0.5cm and 0.55cm,
+  st/.style={draw,rounded corners=2pt,align=center,inner sep=4pt,minimum width=2.2cm,fill=black!3},
+  go/.style={-{Latex}}
+]
+\node[st] (o) {open};
+\node[st,right=of o] (p1) {put 10,20};
+\node[st,right=of p1] (c1) {commit\\Run A};
+\node[st,below=of c1] (p2) {put/del\\Mem};
+\node[st,left=of p2] (g) {get 命中\\Mem};
+\node[st,left=of g] (c2) {commit\\Run B};
+\node[st,below=of c2] (g2) {get 探盘\\Run B};
+\draw[go] (o) -- (p1) -- (c1) -- (p2) -- (g) -- (c2) -- (g2);
+\end{tikzpicture}
+\caption{演示剧本控制流（省略锁与维护）。}
+\end{figure}
+
+\paragraph{步 7 的 probe 内心独白（教学）}
+\begin{lstlisting}[language=pseudo,caption={get(10) 在步 7：Mem 已空}]
+C = find_cell(10)                 // 唯一 Cell
+for seg in C.segs from newest:    // 先 Run B，再 Run A
+  if bloom of Run B may(10):
+    page = fences_locate(Run B, 10)
+    rec = scan_page(page, 10)
+    if rec found: return "CAT"    // 停；绝不看 Run A 的旧 "cat"
+\end{lstlisting}
+
+\subsubsection{对应代码入口速查}
+\begin{center}
+\small
+\begin{tabular}{@{}llp{6.8cm}@{}}
+\toprule
+调用 & 大致位置（\texttt{fcs.h}） & 你要盯的不变量 \\
+\midrule
+\texttt{put}/\texttt{del} & \texttt{M07h} & 只动 MemTable（大值可先写溢出链） \\
+\texttt{get} & \texttt{M07e} \texttt{get\_at} & 先 mem 后段新$\to$旧；墓碑停 \\
+\texttt{commit} & \texttt{commit\_phase1/2/3} & 逻辑可见 vs 耐久；锁外 sync \\
+\texttt{flush\_mem} & 写路径内部 & Mem $\to$ 一条 L0 Run \\
+\texttt{find\_cell} & 目录 & 键落在哪个 $[lo,hi)$ \\
+\texttt{probe} & 段内定位 & fences/sp + 页内查找 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\begin{lstlisting}[language=fcsapi,caption={读者可粘贴的最小用法骨架}]
+Store s;
+s.open(dev);
+s.put(10, "cat", 3);
+s.put(20, "dog", 3);
+s.commit(true);                 // 耐久提交
+s.put(10, "CAT", 3);
+s.del(20);
+char buf[32]; u16 n = 0;
+s.get(10, buf, sizeof(buf), &n); // n=3, buf="CAT"
+s.commit(true);
+s.polish();                     // 可选：对外服务前整理
+\end{lstlisting}
+
+% =============================================================================
+\subsection{提交点、清单与崩溃：和「事务」对齐的那一层}
+\label{sec:cd-commit}
+
+\begin{itemize}[leftmargin=1.4em]
+  \item \texttt{commit(false)}：只推进\textbf{逻辑}提交（组可见性），可不做耐久 IO。
+  \item \texttt{commit(true)}：物理提交——刷 MemTable（若需要）+ 写清单增量 + 写超级块 + 同步。
+  \item 崩溃后：挂载选中合法 SB 槽，重放清单，恢复到\textbf{最后一次已同步提交}；其后的逻辑提交丢失——与「同步语义」一致。
+  \item ROUND17 起：页复用必须等待 \texttt{sb\_synced\_}，避免「在飞 SB」时把旧态页抢去写坏。
+\end{itemize}
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[font=\scriptsize,box/.style={draw,align=center,inner sep=4pt,rounded corners=1pt}]
+\node[box,fill=orange!15] (p1) {phase1\\{锁内：内存+发写+抓 SB}};
+\node[box,fill=violet!15,right=0.6cm of p1] (p2) {phase2\\{锁外：等 IO + sync SB}};
+\node[box,fill=teal!15,right=0.6cm of p2] (p3) {phase3\\{锁内：发布 synced}};
+\draw[-{Latex}] (p1) -- (p2) -- (p3);
+\node[anchor=west,align=left] at (0,-1.15) {读者在 phase2 期间不再被「双 fsync」挡住（见 R17）；\\get 仍可能与维护单元短暂互斥。};
+\end{tikzpicture}
+\caption{耐久 commit 的三阶段（教学级；细节见 fsync 专章）。}
+\end{figure}
+
+% =============================================================================
+\subsection{维护与合并：为什么库还会「自己写盘」}
+\label{sec:cd-maint}
+
+基础读者常困惑：我没调用 \texttt{put}，设备灯为什么还在闪？
+
+\begin{itemize}[leftmargin=1.4em]
+  \item 覆盖写与删除会让旧 Run 变成垃圾；段数变多会让读变慢。
+  \item 引擎在提交后按策略做\textbf{维护}：把多个旧 Run 归并成更少、更新的 Run（分层 / 压实），并更新目录。
+  \item \texttt{configure\_deploy()} / Soft 整理态：常驻轻量整理；\texttt{polish()}：发布前重锤。
+  \item 养洞（hole\_fit、碎片感知切片等）影响「新页落在文件中部还是尾部」，从而影响峰值空间——这是空间议题，不改变 get/put 语义。
+\end{itemize}
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[font=\scriptsize,box/.style={draw,inner sep=3pt,align=center,rounded corners=1pt}]
+\node[box,fill=violet!12] (r1) {Run 旧\\很多垃圾};
+\node[box,fill=violet!12,right=0.25cm of r1] (r2) {Run 中};
+\node[box,fill=violet!12,right=0.25cm of r2] (r3) {Run 新};
+\node[box,fill=green!15,right=1.0cm of r3] (out) {归并产物\\更少页};
+\draw[-{Latex}] (r3.east) -- (out.west) node[midway,above] {merge};
+\node[anchor=north,align=left] at ($(r2.south)!0.5!(out.south)+(0,-0.35)$) {目录改挂新 Seg；旧 Run live 归零后释放页。};
+\end{tikzpicture}
+\caption{维护不改变「最新键值」语义，只改物理布局与垃圾比例。}
+\end{figure}
+
+% =============================================================================
+\subsection{源码目录：按模块找代码}
+\label{sec:cd-modules}
+
+\begin{center}
+\small
+\begin{tabular}{@{}clp{8.4cm}@{}}
+\toprule
+模块 & 主题 & 建议阅读顺序 \\
+\midrule
+\texttt{M01} & 容量/层/特性宏 & 先扫常量：\texttt{BMAX}/\texttt{SMAX}/\texttt{PAGE} 相关 \\
+\texttt{M02} & 记录编解码 & 与本节层 1--2 对照 \\
+\texttt{M03} & MemTable & 与 \texttt{put\_raw} 对照 \\
+\texttt{M04} & Bloom & 理解 get 为何常「探一段就停」 \\
+\texttt{M05} & Run/Seg/Cell & 本节层 4--5 的结构体注释极有价值 \\
+\texttt{M06} & XLock / TLS & 多读者时再读；单线程可跳过 \\
+\texttt{M07a--} & Store 实现 & 按 API 跳读：读$\to$读$\to$commit$\to$挂载 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+辅助头文件：
+\begin{itemize}[leftmargin=1.4em]
+  \item \texttt{common.h}：\texttt{RC}、\texttt{PAGE}、CRC/哈希。
+  \item \texttt{blockdev.h}：设备读写抽象。
+  \item \texttt{layout.h}：更偏 XDB 叶页槽布局；FCS 数据页以 \texttt{fcs.h} 的数据页头为准，读格式章即可。
+\end{itemize}
+
+% =============================================================================
+\subsection{一张「点查」全路径图（汇总）}
+\label{sec:cd-getfig}
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[
+  font=\scriptsize,
+  d/.style={draw,align=center,inner sep=3pt,rounded corners=1pt,minimum width=2.3cm},
+  styY/.style={fill=green!12},
+  styN/.style={fill=red!10},
+  styQ/.style={fill=yellow!15}
+]
+\node[d,styQ] (start) {get(key)};
+\node[d,below=0.4cm of start] (mem) {MemTable\\有 key?};
+\node[d,styY,right=1.1cm of mem] (memhit) {返回 mem\\或墓碑};
+\node[d,below=0.45cm of mem] (cell) {find\_cell};
+\node[d,below=0.45cm of cell] (loop) {段：新到旧};
+\node[d,styQ,right=1.1cm of loop] (bloom) {bloom.may?};
+\node[d,below=0.45cm of loop] (probe) {probe 页内};
+\node[d,styY,right=1.1cm of probe] (ok) {返回值};
+\node[d,styN,left=1.1cm of probe] (tomb) {墓碑\\NOTFOUND};
+\node[d,styN,below=0.45cm of probe] (miss) {NOTFOUND};
+\draw[-{Latex}] (start) -- (mem);
+\draw[-{Latex}] (mem) -- node[above,font=\tiny]{是} (memhit);
+\draw[-{Latex}] (mem) -- (cell);
+\draw[-{Latex}] (cell) -- (loop);
+\draw[-{Latex}] (loop) -- (bloom);
+\draw[-{Latex}] (bloom) -- node[right,font=\tiny]{可能} (probe);
+\draw[-{Latex}] (probe) -- (ok);
+\draw[-{Latex}] (probe) -- (tomb);
+\draw[-{Latex}] (probe) -- (miss);
+\draw[-{Latex}] (loop.east) -- ++(0.35,0) |- (bloom.east);
+\end{tikzpicture}
+\caption{点查决策图（与代码分支一致的教学版）。}
+\end{figure}
+
+% =============================================================================
+\subsection{一张「写+提交」全路径图（汇总）}
+\label{sec:cd-putfig}
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[
+  font=\scriptsize,
+  d/.style={draw,align=center,inner sep=3pt,rounded corners=1pt}
+]
+\node[d,fill=orange!15] (put) {put/del};
+\node[d,right=0.5cm of put] (mt) {更新 MemTable};
+\node[d,right=0.5cm of mt] (c) {commit?};
+\node[d,fill=violet!12,below=0.55cm of c] (flush) {flush\_mem\\写成 Run};
+\node[d,fill=violet!12,right=0.5cm of flush] (man) {清单增量};
+\node[d,fill=violet!12,right=0.5cm of man] (sb) {写 SB + sync};
+\node[d,fill=green!12,below=0.55cm of flush] (dir) {目录挂 Seg\\活账更新};
+\draw[-{Latex}] (put) -- (mt) -- (c);
+\draw[-{Latex}] (c) -- node[right,font=\tiny]{durable} (flush);
+\draw[-{Latex}] (flush) -- (man) -- (sb);
+\draw[-{Latex}] (flush) -- (dir);
+\end{tikzpicture}
+\caption{写路径教学图：未 commit 前世界只在 MemTable（大值链除外）。}
+\end{figure}
+
+% =============================================================================
+\subsection{自测题（建议不看答案先做）}
+\label{sec:cd-quiz}
+
+\begin{enumerate}[leftmargin=1.6em]
+  \item 只 \texttt{put} 不 \texttt{commit}，掉电后数据还在吗？大值溢出链呢？
+  \item 为什么 Cell 切分通常不必重写 Run 数据页？
+  \item \texttt{get} 在某一段上看到墓碑，会不会继续看更老的段把旧值「救回」？
+  \item 同一物理页能否出现在两个 Cell 的 Seg 里？键域要满足什么？
+\end{enumerate}
+
+\paragraph{简答}
+\begin{enumerate}[leftmargin=1.6em]
+  \item 普通小值：不在。大值链若已写出但未进成功提交，恢复时不应变成用户可见数据；实现上靠提交点与释放闸，细节见耐久章。
+  \item 因为数据在 Run，Cell 只改 Seg 视图。
+  \item 不会——墓碑表示「更新版本删除」，必须停。
+  \item 能；各自 \texttt{[klo,khi)} 必须切开，且只解释自己键域内的记录。
+\end{enumerate}
+
+% =============================================================================
+\subsection{常见误解（读代码前先澄清）}
+\label{sec:cd-myths}
+
+\begin{center}
+\small
+\begin{tabular}{@{}p{4.2cm}p{7.6cm}@{}}
+\toprule
+误解 & 实际情况 \\
+\midrule
+「Cell 像 B+ 树节点，分裂要搬数据」 & Cell 是目录视图；分裂改 Seg，数据页可不动 \\
+「Run 更新会改旧页」 & Run 不可变；更新 $=$ 新 Run + 目录挂新 Seg \\
+「删除会立刻腾出设备页」 & 先留墓碑；等 live 归零 / 归并后才释放 \\
+「commit 一定很慢」 & \texttt{commit(false)} 可只做逻辑提交；耐久才 sync \\
+「多段一定很慢」 & Bloom + fences 让多数点查仍接近一页 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{下一章怎么读}
+读完本章后：
+\begin{itemize}[leftmargin=1.4em]
+  \item 用架构章对照「三层分形」术语是否对得上；
+  \item 用格式章看 SB/清单字节；
+  \item 用伪代码/流程图章看合并与 fsync；
+  \item 用踩坑章理解「目录切分 / 可见性 / 提交点」写错会长什么样。
+\end{itemize}

@@ -1,0 +1,55 @@
+\section{体系结构}
+
+\subsection{逻辑视图}
+\begin{figure}[ht]
+\centering
+\begin{tikzpicture}[
+  font=\small,
+  box/.style={draw=black!50,rounded corners=2pt,align=center,inner sep=6pt,minimum width=2.8cm},
+  arr/.style={-{Latex},thick,black!60}
+]
+\node[box,fill=teal!8] (store) {Store\\公开 API / 锁 / 维护};
+\node[box,below=0.55cm of store,fill=cyan!6] (dir) {Cell 目录\\键区间二分};
+\node[box,below=0.55cm of dir,fill=orange!6] (seg) {Seg 视图\\(run, 页区间, 键域)};
+\node[box,below left=0.7cm and -0.2cm of seg,fill=black!4] (run) {Run\\fences / Bloom / sp};
+\node[box,below right=0.7cm and -0.2cm of seg,fill=black!4] (page) {Page\\记录 / 前缀 / CRC};
+\node[box,below=1.5cm of seg,fill=violet!6] (man) {Manifest + 双槽 SB};
+\draw[arr] (store) -- (dir);
+\draw[arr] (dir) -- (seg);
+\draw[arr] (seg) -- (run);
+\draw[arr] (seg) -- (page);
+\draw[arr] (store) -- (man);
+\end{tikzpicture}
+\caption{FCS 逻辑层次：目录与清单是控制面，run/page 是数据面。}
+\end{figure}
+
+\subsection{组件职责}
+\begin{description}[style=nextline,leftmargin=1.4em]
+  \item[MemTable] 提交前的写缓冲：点查、覆盖写、有序吐出、整体清空；满则 Flush 成 L0 run。
+  \item[Run] 一次提交或一次压实/合并的产物；不可变；带稀疏索引 \texttt{sp}、可选元数据页、布隆。
+  \item[Cell / Seg] 逻辑可见性窗口；段键用 $(\mathrm{seq},\mathrm{rid})$ 等全序标识，避免页号复用撞身份。
+  \item[Version / Manifest] 有效 run 集合与下一文件号；\textbf{恢复真相源}。每次 Flush/Compact 写新清单，再 fsync，再删过期页。
+  \item[BlockDev] RamDev / FileDev / NorSim；写放大计量、故障注入、\texttt{sync}/\texttt{TRIM}。
+\end{description}
+
+\subsection{并发模型（P1）}
+\begin{itemize}[leftmargin=1.6em]
+  \item 公开入口默认经 \texttt{XLock}：写可重入独占；读可共享（\texttt{set\_shared\_reads}）。
+  \item 写者优先；glibc \texttt{shared\_mutex} 的读者优先曾导致写者饥饿（坑~86），故自研等待队列。
+  \item 每线程 TLS 槽（风险指针、共享深度、私有页缓冲）；槽耗尽退化为独占。
+  \item mode~3：后台维护线程；与读者让路、预算/时间片协同（ROUND13/14）。
+\end{itemize}
+
+\subsection{维护模式}
+\begin{center}
+\begin{tabular}{@{}clp{8.5cm}@{}}
+\toprule
+模式 & 名称 & 行为摘要 \\
+\midrule
+0 & 提交前 & 老路径；部署契约避免退回 \\
+1 & 提交后 & 默认；墙钟预算（如 $20\,\mathrm{ms}$）内做有界单元 \\
+3 & 后台线程 & 缩短 commit 墙钟；读者 p99 可能变差 \\
+\bottomrule
+\end{tabular}
+\end{center}
+分步 API：\texttt{consolidate\_step} / \texttt{compact\_file\_step} 返回 \texttt{MORE}，每步 $=$ 提交点。

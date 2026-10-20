@@ -1,0 +1,30 @@
+# build products
+/build/
+*.o
+*.a
+*.so
+*.exe
+*.out
+
+# local DB / device images (runtime)
+*.db
+*.db-wal
+*.db-shm
+*.img
+!tests/golden/**/*.img
+!tests/golden/v1/**/*.img
+
+# latex aux
+docs/latex/build/
+
+# bulky / non-product trees
+backup/r18/swept/
+backup/pre-battle-promote/
+backup/r16-L-local/
+
+# editor / OS
+.DS_Store
+Thumbs.db
+*.swp
+.codebase-memory/
+.cursor/

@@ -1,0 +1,125 @@
+# host: Linux voyagerStar 6.18.33.2-microsoft-standard-WSL2 #1 SMP PREEMPT_DYNAMIC Thu Jun 18 21:54:43 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux 
+# date: 2026-10-21T02:15:30+08:00
+# mode: Soft / configure_deploy
+# fcs.h: 8118 lines
+== build ==
+BUILD_OK
+== bench4 Soft sync ==
+# FCS vs SQLite   N=50000 B=500 val=32B 读=50000 区间=2000×100  kidx=0 async=0 group=0 lvl_t=8 key=随机 soft=1
+# 单位: µs/op（越小越好） | 写字节 = 引擎自计 / 块层实测 / 逻辑值字节
+# fcs insert: max commit = 14109 µs  mem high-water = 21000 B
+# fcs reads: 0.00 页/get  probes/get=1.02  hits=50000
+# fcs range cache: hits/scan=9.62 misses/scan=0.000 sp_skips/scan=0.47
+# fcs io jobs=0  async=0
+# fcs range cursors/scan=9.18
+# fcs range: 3.65 µs/scan  rows=2000  (3.65 µs/row)
+# fcs space: file=27963392 B hw=3203072 B (live_pages=2854912 free=86016 largest_free=13 pg extents=3)  live_recs=50000  bytes/rec=64.1  runs=10 cells=109  hw_reclaims=11 pending=0
+# fcs r17: merge src_max=8 cur_max=8 hole_fits=0 durable=151
+# sqlite range: 1.69 µs/scan rows=2000 (1.69 µs/row)
+# sqlite space: file=2347008 B live_recs=50000 bytes/rec=46.9
+
+phase                 us/op       block B/op     logical B/op
+fcs insert            4.596            141.4            129.8
+sqlite insert         4.295             80.4              0.0
+fcs update            5.416              0.0            188.5
+sqlite update         8.593              0.0              0.0
+fcs get               0.542              0.0              0.0
+sqlite get            1.584              0.0              0.0
+fcs range             3.648              0.0              0.0
+sqlite range          1.686              0.0              0.0
+
+                        fcs       sqlite   fcs/sqlite
+insert us/op          4.596        4.295         1.07
+update us/op          5.416        8.593         0.63
+get us/op             0.542        1.584         0.34
+range us/scan         3.648        1.686         2.16
+space bytes         3203072      2347008
+block write B       7069696      4018176
+== bench4 Soft async+group+cons+shr ==
+# FCS vs SQLite   N=50000 B=500 val=32B 读=50000 区间=2000×100  kidx=0 async=1 group=1 lvl_t=8 key=随机 soft=1
+# 单位: µs/op（越小越好） | 写字节 = 引擎自计 / 块层实测 / 逻辑值字节
+# fcs insert: max commit = 13327 µs  mem high-water = 2100000 B
+# fcs 收缩: rc=0  文件 2248704 B (549 页)  top=549 活页=503 空闲块=0/最大0  合计 23.9 ms
+# fcs reads: 0.01 页/get  probes/get=1.00  hits=50000
+# fcs range cache: hits/scan=1.06 misses/scan=0.000 sp_skips/scan=0.00
+# fcs io jobs=0  async=1
+# fcs range cursors/scan=1.00
+# fcs range: 0.75 µs/scan  rows=2000  (0.75 µs/row)
+# fcs space: file=2248704 B hw=2248704 B (live_pages=2060288 free=0 largest_free=0 pg extents=0)  live_recs=50000  bytes/rec=45.0  runs=1 cells=128  hw_reclaims=0 pending=0
+# fcs r17: merge src_max=2 cur_max=2 hole_fits=0 durable=157
+# sqlite range: 1.68 µs/scan rows=2000 (1.68 µs/row)
+# sqlite space: file=2347008 B live_recs=50000 bytes/rec=46.9
+
+phase                 us/op       block B/op     logical B/op
+fcs insert            0.465             44.7             44.6
+sqlite insert         3.750             80.4              0.0
+fcs update            0.593              0.0             35.6
+sqlite update         7.420              0.0              0.0
+fcs get               0.324              0.0              0.0
+sqlite get            1.613              0.0              0.0
+fcs range             0.752              0.0              0.0
+sqlite range          1.683              0.0              0.0
+
+                        fcs       sqlite   fcs/sqlite
+insert us/op          0.465        3.750         0.12
+update us/op          0.593        7.420         0.08
+get us/op             0.324        1.613         0.20
+range us/scan         0.752        1.683         0.45
+space bytes         2248704      2347008
+block write B       2236416      4018176
+== bench4 Soft 200k sync ==
+# FCS vs SQLite   N=200000 B=2000 val=100B 读=100000 区间=2000×100  kidx=0 async=0 group=0 lvl_t=8 key=随机 soft=1
+# 单位: µs/op（越小越好） | 写字节 = 引擎自计 / 块层实测 / 逻辑值字节
+# fcs insert: max commit = 12274 µs  mem high-water = 220000 B
+# fcs reads: 0.60 页/get  probes/get=1.02  hits=100000
+# fcs range cache: hits/scan=7.81 misses/scan=1.986 sp_skips/scan=0.53
+# fcs io jobs=0  async=0
+# fcs range cursors/scan=9.11
+# fcs range: 11.69 µs/scan  rows=2000  (11.69 µs/row)
+# fcs space: file=49963008 B hw=37597184 B (live_pages=23863296 free=12390400 largest_free=2526 pg extents=10)  live_recs=200000  bytes/rec=188.0  runs=21 cells=1570  hw_reclaims=11 pending=0
+# fcs r17: merge src_max=18 cur_max=8 hole_fits=16 durable=152
+# sqlite range: 3.33 µs/scan rows=2000 (3.33 µs/row)
+# sqlite space: file=23506944 B live_recs=200000 bytes/rec=117.5
+
+phase                 us/op       block B/op     logical B/op
+fcs insert            1.955            248.7            234.2
+sqlite insert         1.536            230.4              0.0
+fcs update            7.123              0.0            474.1
+sqlite update        12.860              0.0              0.0
+fcs get               1.651              0.0              0.0
+sqlite get            2.377              0.0              0.0
+fcs range            11.690              0.0              0.0
+sqlite range          3.330              0.0              0.0
+
+                        fcs       sqlite   fcs/sqlite
+insert us/op          1.955        1.536         1.27
+update us/op          7.123       12.860         0.55
+get us/op             1.651        2.377         0.69
+range us/scan        11.690        3.330         3.51
+space bytes        37597184     23506944
+block write B      49733632     46071808
+== bench7 Soft async+group+cons+shr ==
+# FCS vs LMDB  N=50000 B=500 val=32B R=50000 S=2000×100  fcs(async=1 group=1 cons=1 shr=1 soft=1)
+# LittleFS: 暂缓（非有序KV；禁测其不擅长能力）。每 B 次一持久屏障 | LMDB 大端键
+# fcs done insert=0.303 update=0.586 get=0.321 range=0.677 space=2248704 B
+# lmdb done insert=4.541 update=9.991 get=0.427 range=0.328 space=5541888 B
+
+phase                   fcs         lmdb     fcs/lmdb
+insert us/op          0.303        4.541         0.07
+update us/op          0.586        9.991         0.06
+get us/op             0.321        0.427         0.75
+range us/scan         0.677        0.328         2.06
+space bytes         2248704      5541888
+== bench7 Soft sync ==
+# FCS vs LMDB  N=50000 B=500 val=32B R=50000 S=2000×100  fcs(async=0 group=0 cons=0 shr=0 soft=1)
+# LittleFS: 暂缓（非有序KV；禁测其不擅长能力）。每 B 次一持久屏障 | LMDB 大端键
+# fcs done insert=4.328 update=5.338 get=0.447 range=3.655 space=3203072 B
+# lmdb done insert=4.892 update=8.036 get=0.293 range=0.320 space=5541888 B
+
+phase                   fcs         lmdb     fcs/lmdb
+insert us/op          4.328        4.892         0.88
+update us/op          5.338        8.036         0.66
+get us/op             0.447        0.293         1.52
+range us/scan         3.655        0.320        11.43
+space bytes         3203072      5541888
+ALL_SOFT_PEERS_OK

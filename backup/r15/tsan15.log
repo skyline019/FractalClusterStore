@@ -1,0 +1,13 @@
+== tsan g14 yield retry ==
+  读者让路 pass 0（quantum 1 ms）：读 110208 次、单元 865、让路 771 次、unit_max 35.7 ms、>4ms 单元 37；账零漂移  ok
+  读者让路 pass 1（quantum 0）：读 104832 次、单元 337、让路 0 次、unit_max 39.4 ms、>4ms 单元 131；账零漂移  ok
+g14 第 14 轮：作业增量账 + 文件高水位 + 读者让路: PASS (16.3 s)
+tsan_g14 ok
+== tsan g15 ==
+  fmt: disk_fmt=2 MENT=48 ok
+  trim_unit: drop=2 trims=1 ok
+  trim_replay: ok
+  job_peak: trims=0 runs=2 ok
+  snap: pinned no-trim ok
+  bad_trim: bad_man=1 ok
+g15 P2 fmt+TRIM: PASS

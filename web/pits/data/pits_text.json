@@ -1,0 +1,542 @@
+[
+{
+"id": 1,
+"title": "幽灵段",
+"body": "切分后给子 cell 保留\"该 run 在本区间没有记录\"的段，日后合并回来会重复计入。\n→ 段必须带键域，且键域非空才保留。"
+},
+{
+"id": 2,
+"title": "cell 回并",
+"body": "会把邻居的记录重新纳入视野，与压实段形成重复副本。→ cell 只细分不回并。"
+},
+{
+"id": 3,
+"title": "压实产物的 seq 必须落在\"栈底\"且全局唯一",
+"body": "，否则会和被它替换的 run 撞号，\nseg map 里一条覆盖另一条，读到的就是旧值。"
+},
+{
+"id": 4,
+"title": "页号会复用",
+"body": "，所以段身份 = `(cell, rid, seq)`，清单里的 `M_SEG_DEL` 必须带 seq。\n（这一条在组提交/分层合并引入后**再次咬人**：重放时 `M_SEG_DEL` 删掉了刚复用同一\n页号的新 run。）"
+},
+{
+"id": 5,
+"title": "提交失败前不能复用刚释放的页",
+"body": "（否则崩溃后\"完整旧态\"已被破坏）→ `pending_free_`。"
+},
+{
+"id": 6,
+"title": "NOR 只能 1→0",
+"body": "先擦后写，且擦除必须发生在提交点之后。"
+},
+{
+"id": 7,
+"title": "压缩产物与快照互斥",
+"body": "有快照时暂停回收。"
+},
+{
+"id": 8,
+"title": "压实只保留最新版本",
+"body": "——所以\"前缀合并\"永远回收不了空间，必须整 cell 重写。"
+},
+{
+"id": 9,
+"title": "分层合并的产物必须继承\"源里最新的 seq\"",
+"body": "，否则旧值复活（见 §5.3）；合并组还必须在全库 seq 顺序上连续（坑 91）。\n**单元压实产物**则取新鲜 seq、进 L0（坑 90）。"
+},
+{
+"id": 10,
+"title": "分层合并时不要递减源 run 的存活账",
+"body": "，否则活着的 tombstone 会被当成垃圾回收掉。"
+},
+{
+"id": 11,
+"title": "记录头改窄必须一次改全",
+"body": "16 B → 10 B 时有 4 处 `off + 16 <= used` 漏改，\n表现为\"提交后 get 不到\"。改完要 `grep '16 <= used'` 与 `, 16)`。"
+},
+{
+"id": 12,
+"title": "部分页写必须 4 B 对齐",
+"body": "`RamDev::valid` 要求 `off%4==0 && len%4==0`，\n否则整次提交返回 `RC::IO`。"
+},
+{
+"id": 13,
+"title": "游标跨版本要按 run 的 ver 过滤",
+"body": "；记录版本已经不在记录头里了。"
+},
+{
+"id": 14,
+"title": "异步写的页在提交点之前不能复用",
+"body": "`commit(false)` 已经把页交给后台线程，\n但清单还在旧状态上；若此时 `free_page` 让它被重新分配，后台线程会把新内容写到\n\"还挂在旧清单上\"的页 → 崩溃后旧态也坏了。异步 flush 因此**只做 flush**，\n回收/合并一律留到提交点（`pending_free_` 之后才 promote）。"
+},
+{
+"id": 15,
+"title": "记账只能有一条算术",
+"body": "`live/dead/pages` 由 `recount(cell)` 从段集合直接算出，\n结构性改写（挂段、摘段、升层、压缩、分裂）之后统一重算。散在五六个地方的增量补丁\n漏一处就是一次\"live 漂移\"——现象是 cell 该分裂不分裂、空间虚高、压实选错受害者，\n而且 `verify` 一开始查不出来（因为两边用的是同一份错账）。"
+},
+{
+"id": 16,
+"title": "胜者规则只能有一条",
+"body": "可见版本最大者胜，同版本 seq 新者胜。段在 cell 里的排列\n只表示归属；按\"段的先后\"读会在\"低 seq + 高版本\"的合并产物上读到旧值。"
+},
+{
+"id": 17,
+"title": "收缩会被清单卡住",
+"body": "数据都搬到低处了，高水位还是下不来 —— 清单链的页是当年\n随手分配的，飘在高处。必须先 `checkpoint()` 重写清单，`shrink()` 才有意义。"
+},
+{
+"id": 18,
+"title": "空闲表要按地址索引",
+"body": "原来是 `multimap<长度, 起始页>`（按大小最优适配），\n搬家/收缩恰恰要\"最低地址\"，于是改成 `map<起始页, 页数>`：低地址优先分配、\n邻居合并只需看一眼后继。同一个数据结构，两个用途。"
+},
+{
+"id": 19,
+"title": "异步写的收益不在吞吐峰值，而在停顿分布",
+"body": "页写本来就是一个批次一次顺序写，\n前台 CPU 才是瓶颈；把 I/O 挪到后台换到的是\"工作区 8.4 MB → 2.8 MB\"和更平缓的停顿，\n吞吐只能做到持平（4.3 vs 4.1 µs/op）。**落盘粒度必须按字节而不是按提交**：每 8192 条\n落一段就是 24 条与全键域重叠的 run，实测反而慢 2.3 倍（4.6 → 10.7 µs/op）。"
+},
+{
+"id": 20,
+"title": "切分单元必须同时收紧页区间",
+"body": "`split()` 只改键域不动页区间（零数据搬移），\n但页区间不收窄的话，每个单元都要从 run 的首页开始扫 —— 单元数 × 页数，四舍五入就是\nO(n²)。实测 30k 条全扫：698 → 68 ns/条（10×），一次 50k 提交 195 → 22.6 ms（8.6×），\n`verify` 74 → 6.5 ms。**这是本轮最大的一个 bug**，而它不违反任何不变量，只是慢。"
+},
+{
+"id": 21,
+"title": "CRC 要走硬件",
+"body": "查表实现 374 MB/s，一页 4 KB 是 11 µs；x86 的 `crc32` 指令 7.5 GB/s，\n一页 0.6 µs。每页一次校验，这条差 20 倍，直接决定 verify/mount/每次提交的常数项。"
+},
+{
+"id": 22,
+"title": "`truncate()` 只能减不能增 = 一次性的永久封顶",
+"body": "`shrink()` 之后设备就再也长不回去，\n库会在某天写到 `NOSPACE` 之后**永远**写不进（连删都删不掉，因为删除也要落页）。\n修法：`BlockDev::max_pages` 记设备上限，逻辑容量取上限、物理长度单独记，\n分配时按需 `truncate()` 增长。"
+},
+{
+"id": 23,
+"title": "满库必须\"删得掉\"",
+"body": "只给用户 7/8 的容量还不够 —— 一批全是覆盖/删除的写不增长存活集，\n必须允许它动用预留区。否则\"满了 → 要删 → 删也要空间 → 还是满\"死锁。\n判据是\"新字节 ≤ 被替换字节\"（`flush_mem` 里一次 `probe_prev` 求和即可）。"
+},
+{
+"id": 24,
+"title": "维护不能把提交搞失败",
+"body": "压实/合并/清单页都是机会性的，拿不到空间就跳过本轮。\n旧实现里 `merge_run_set` 一次 `NOSPACE` 就把整个用户提交带崩，用户看到的是\n\"库满了\"，实际上是内存里的垃圾没地方腾。"
+},
+{
+"id": 25,
+"title": "异步在飞时重建状态 = 用旧页覆盖新页",
+"body": "`rollback()`/`reload()` 不 `wait_io()` 的话，\nworker 手里还握着旧分支的页，写下去正好落进刚回收重分配的位置。\n症状是**随机坏清单项**（`npages` 变成天文数字），追了整整一轮。规矩：\n**任何\"按盘重建内存\"之前，先把在飞的 I/O 等干净**。"
+},
+{
+"id": 26,
+"title": "清单项必须自证清白",
+"body": "`apply_man` 里照着 `m.npages` 分配就是给了坏数据一个\n申请 9 GB 内存的机会。越界条目一律丢弃 + 计数，挂载永远不会因为一条坏记录失败。"
+},
+{
+"id": 27,
+"title": "\"脏不脏\"要用精确账，不能用保守估计",
+"body": "`run->live_bytes` 是合并时用布隆算的\n**上界**（只会多算），拿它判断\"这条 run 值不值得重写\"，结果垃圾越多越不肯重写，\n空间放大卡在 3× 不动。改成 `Σ cell->live`（精确、`verify` 每轮都核对）。"
+},
+{
+"id": 28,
+"title": "`compact_file` 要归一两次",
+"body": "第一次归一时旧段还占着低位，合并出来的 run 只能落在\n高处；收完一遍之后再归一次，低位全空 ⇒ 一条 run 能整块搬到最前面。\n一次归一时 `used` 停在 3×live，两次之后 `used ≈ live + 4` 页。"
+},
+{
+"id": 29,
+"title": "页缓存是直映的，\"页指针\"活不过一次 `page()` 调用",
+"body": "`page(pid)` 把要读的页拷进\n`cache_[pid % N]` 的缓冲并返回它的首地址。若在遍历某一页的过程中再读别的页，\n手里那个指针会**原地变成另一页的内容**。`replay_manifest` 就是这么在清单页里\n\"读到一条来自数据页的记录\"的（随机坏清单项的真凶）；`exact_live_recs` 也踩了同一个坑\n（存活数恒为 0）。规矩：**跨页操作必须先把当前页拷出来**。"
+},
+{
+"id": 30,
+"title": "64 位哈希被截成 32 位 ⇒ Bloom 恒假",
+"body": "`Bloom::add` 用完整 64 位哈希落 4 个位，\n查询侧却写成 `u32 hk = khash(k)`，于是 `may()` 几乎总是 false。后果不是\"读错数据\"，\n而是**存活账永远算满**：零写回收从不触发、分层合并觉得\"没垃圾不用合并\"，\nrun 越堆越多、读页从 8 万涨到 20 万、同一负载 0.95 s → 16.29 s（17×）。\n教训：**布隆是\"保守过滤器\"，它的错误方向只会让最优路径失效，不会报错** ——\n所以存活账必须在回收前用精确复核兜底（见 31）。"
+},
+{
+"id": 31,
+"title": "回收前必须精确复核",
+"body": "`retire_dead_runs` 判\"整条 run 全死\"时，不能只听增量计数，\n要 `exact_live_recs()` 扫一遍确认。计数是提示值（只会偏低），复核把\"误删活数据\"这条\n最可怕的路彻底堵死，代价是每轮多扫一遍待回收的 run。"
+},
+{
+"id": 32,
+"title": "回退必须让逻辑时钟继续前进",
+"body": "`rollback` 把 `vers_` 恢复到快照点，另一个超级块槽里\n\"版本更高的旧分支\"就会在下次挂载时胜出 —— 回退被静默复活。现在是\n`vers_ = 回退前的时钟 + 1`：回退的是**状态**，不是历史。`r2` 阶段 4 守着这条。"
+},
+{
+"id": 33,
+"title": "回退要一起还原回收账",
+"body": "`pending_free_`/`deferred_` 里装的是\"还没归位\"的页。\n不还原，回退后它们会被 `promote_pending()` 放进空闲表 —— 而那些页属于被回退掉的分支，\n于是同一页被分配两次。快照现在把它们整体存下来，回退时按内容还原。"
+},
+{
+"id": 34,
+"title": "合并产物的存活账不能\"事后按自己的 seq 反推\"",
+"body": "合并后的 run 只有一个 seq（= 源里\n最新的那个），拿它去问\"这条记录有没有更新副本\"会把从旧源搬来的记录算成新的。实测热点\n覆盖负载里一条 run 记 118 条活、真值 40 ⇒ 永远不满足\"全死可回收\"，空间只涨不降。\n→ 判据必须用**产物自己的段身份 `(seq, page0)`**，而且要等 `finish_run` 分配完页号\n之后再判（`(seq,rid)` 才是读路径的全序）。"
+},
+{
+"id": 35,
+"title": "切分/摘段时段的存活计数要\"退回\"",
+"body": "段级记账里 `run->live_recs` 是它在所有单元里的\n`live` 之和。切分用 `segs.swap()` 换掉整张表，原 `Seg` 对象连同计数一起被丢掉；不先\n`seg_set_live(sg, 0)` 退回，随后两次 `recount`（父子各一次）就会把同一批记录加两遍 ——\n现象是 `live_recs` 恰好是 nrec 的 2 倍，`verify` 的 `run live recs` 直接报错。"
+},
+{
+"id": 36,
+"title": "压实产物的 seq 要在\"删除源 run 之前\"取",
+"body": "`compact_cell` 原来在释放源 run 之后才去\n`runs_` 里找它们的 seq/lvl，删掉的自然找不到，于是拿到的是一条无关 run 的 seq ——\n产物和一条还活着的 run 撞号，`(seq,rid)` 的胜负随手一翻就变，账跟着漂。\n（第 10 轮后此坑成为历史：产物不再沿用源的 seq，见坑 90。）"
+},
+{
+"id": 37,
+"title": "`sp.packed` 的截断是静默的",
+"body": "`packed = 页<<16|偏移` 在页号 >65535 时把页号截成\n余数 —— 不报错、不崩，只是**读错了页**。所以容量改造的顺序不能反：先改打包\n（`页<<12|偏移`，20 位页号），再放宽 `PageId`。反过来做的话，中间态的库看上去\n一切正常，只是超过 65535 页之后开始返回别的键的值。"
+},
+{
+"id": 38,
+"title": "`PageId=uint16_t` 还会污染\"设备容量\"这个入参",
+"body": "`RamDev(200000)` 被隐式截成\n`200000&0xFFFF = 3392` 页，`RamDev(65536)` 直接截成 0 页。调试时这个现象会被\n误判成\"元数据页把设备占满了\"（当年就是这么走的弯路）。**任何\"页数\"参数都必须先\n确认类型够宽**，别等写到一半才 `NOSPACE`。"
+},
+{
+"id": 39,
+"title": "`heal_missing_meta` 不能边遍历边 `runs_.erase`",
+"body": "第一遍收集候选时顺手 `erase`，\n第二遍 `begin()` 会用到已经失效的 `end()` 快照，于是**一个候选都跳过**\n（现象：`heal` 返回 0，看起来像\"没找到需要补的 run\"）。必须先收集 `page0` 列表再循环。"
+},
+{
+"id": 40,
+"title": "`read_ovfl` 会踢掉页缓存，遍历中拿着的 `p` 立刻失效",
+"body": "`verify` 原来在\"逐页解析记录\"\n的循环里直接调 `read_ovfl`，之后继续用同一个 `p` 往下走 → 读到的是**溢出页的内容被当成\n数据页**，`recs` 从 2000 变成 2918、报 `run unsorted`。正确写法：先把 16 B 描述符\n`memcpy` 到局部，读完链再 `p = page(run->page0 + i)` 重新定位。这就是\"页指针只活到\n下一次 `page()`\"的第 N 次咬人。"
+},
+{
+"id": 41,
+"title": "`std::map::erase(it)` 之后不能再用 `it->second`",
+"body": "`heal_missing_meta` 里\n`free_.erase(it); if (it->second > mn) ...` 是 use-after-free（ASan 直接抓到，\n普通构建下只是\"偶尔算出个荒唐的剩余块长度\"）。先存 `u32 blk = it->second;` 再 erase。"
+},
+{
+"id": 42,
+"title": "memtable 里的大值必须",
+"body": "只**落一次链**：`put_raw` 已经写好了链并留下 16 B 描述符，\n`flush_mem` 若再走 `w.add()`（按值长度判断）就会**再写一条链**，而描述符里的那条成了孤儿。\n→ `Rec` 加 `bool ovfl`，flush 时走 `add_desc()`（所有权转移，不再复制值）。"
+},
+{
+"id": 43,
+"title": "`del_range` 只改内存时会被\"空提交\"快路径吞掉",
+"body": "`commit()` 里\n`if (delta.empty() && pend_ranges_.empty())` 才是真的没事；原来只判 `delta.empty()`，\n于是\"只删了一个范围\"的提交被当成\"没东西可提交\"，墓碑永远不落盘（重开后全部复活）。"
+},
+{
+"id": 44,
+"title": "全量清单快照会重放超级块里的内联增量",
+"body": "`write_man_snapshot()` 之后没清 `pend_`，\n而 SB 里的内联增量是在清单链**之后**应用的 —— `M_RUN_ADD` 重放无害，`M_RANGE`\n重放会把刚清掉的墓碑**复活**。→ 快照写完先 `pend_.clear()` 再 `write_sb()`。"
+},
+{
+"id": 45,
+"title": "溢出链的空间也要在\"全死可回收\"里算",
+"body": "摘 run 只 `free_pages(page0, npages+mnpg)`\n会把链落成孤儿（`verify` 干净，但 `used` 只涨不降）。→ 摘链前 `free_ovfl_of(r)`；\n挂载时 `rebuild_free()` 也要把活 run 的链算作已用，否则会被二次分配。"
+},
+{
+"id": 46,
+"title": "写失败要把已经分配的链还回去",
+"body": "`RunWriter` 逐条 `w.add()`，第 k 条 `NOSPACE` 时\n前 k-1 条链已经落盘，但 run 没建成 ⇒ 没有清单项引用它们。→ `RunWriter::chains`\n记着本次写过的链，失败路径 `abandon()` 全退。否则要靠下次挂载的 `rebuild_free()` 兜底\n（能兜住，但那段时间的盘是白占的）。"
+},
+{
+"id": 47,
+"title": "`throw` 不出细节，`assert` 只在 debug",
+"body": "溢出值的所有边界（3000/3001/4080/8160）\n都必须有测试，否则\"恰好跨页\"这种 off-by-one 会一路带到线上。\n\n---"
+},
+{
+"id": 48,
+"title": "快照判据的方向",
+"body": "`snap_min` 是\"最老\"，可快照视图要看的是 `ver <= 快照版本`，\n所以\"老快照还需要的版本\"上界是**最年轻**的快照 ⇒ 判别式必须是 `snap_max()`。\n写成 `min` 的后果不是\"慢\"，是**较新快照整段丢版本**（s4 的 B 视图 2000/2000 错）。"
+},
+{
+"id": 49,
+"title": "`clear_state()` 不清 `ranges_/pend_ranges_`",
+"body": "回退（rollback）后墓碑还在，\n于是\"删掉的范围\"继续遮蔽回退之后重新写进去的数据。回退必须把范围墓碑一起回到当时。"
+},
+{
+"id": 50,
+"title": "`forget_snapshots()` 不能\"直接把页塞回空闲表\"",
+"body": "它原来无锁、且用\n`free_[p0] = n` 覆盖，和现有空闲块重叠时会**重复计数**（空闲页比实际多，分配器\n发出两张票）。正确顺序：跳过 `>= tail_`、先 `carve_free()` 从现有块里挖掉、\n再插入、最后 `coalesce()`。"
+},
+{
+"id": 51,
+"title": "链的所有权是\"按 run\"记的，不是\"按页\"",
+"body": "接管链之前必须确认源 run **这次一定死**\n（`take_set_`：`compact_cell` 里是 `count_refs(rid) <= 1`，`merge_run_set` 里是全部 src）。\n只看 `nsnap_==0` 就接管，会让\"同一次压实里还活着的另一条 run\"的链被转走。"
+},
+{
+"id": 52,
+"title": "\"摘链\"之后不能用\"表空\"当\"还没建表\"",
+"body": "`chain_taken()` 把 `ovfl_loc` 清空，\n而 `ensure_ovfl_loc()` 原来的守卫是 `!ovfl_loc.empty()` ⇒ 摘完立刻**重扫数据页**，\n把刚交出去的链又找回来，接着当自己的还掉。表现是 `compact_file()` 之后\n`verify` 报 `ovfl data`（链被后续分配覆写）。修法：`Run::loc_ready` 一次性标志，\n空表也算\"建过了\"。"
+},
+{
+"id": 53,
+"title": "接管的链归接管者所有",
+"body": "`RunWriter::add_take()` 只把描述符写进页，链记在\n`w.takes` 里；`finish_run` 把它记进 `ovfl_ref` 就再也不释放 ⇒ 每压实一次漏一份大值。\n正确做法：`own_chains` 里同时收 `w.chains` 与 `w.takes`（所有权已经转过来），\n`collect_ovfl()` 不再按 `ovfl_ref` 排除。"
+},
+{
+"id": 54,
+"title": "只算账的遍历不该读大值",
+"body": "`recount` / `verify` / `check_liveness` 走 `merge_emit`\n时传 `need_vals=false`，否则压实会把每个大值读两遍（`bench5 consol`：读页 2004 → 4，\n接管之后连一遍都不用读）。"
+},
+{
+"id": 55,
+"title": "\"物化过的值\"和\"接管来的描述符\"只能二选一",
+"body": "`merge_emit` 原来按 `is_ovfl` 交描述符，\n可\"没接管\"时值已经被读成字节了——回调仍然 `add_take`，新 run 把**不属于自己**的链\n记进 `ovfl_ref`，源 run 接着把链还了。表现同上（`compact_file` 后 `ovfl data`）。\n修法：单独一个 `took` 布尔，只有真接管才交 `dsc`。"
+},
+{
+"id": 56,
+"title": "`read_ovfl` 会踢页缓存",
+"body": "`verify`/`scrub` 里\"读描述符 → 读链 → 再用原页指针\"\n必须重新取页（先把 16 B 拷出来）。这条在坑 40 记过一次，本轮在 `scrub` 里又踩了一次。"
+},
+{
+"id": 57,
+"title": "`live_top()` 必须把溢出链算进来",
+"body": "`shrink()` 用它做截断点，漏了链就会把高水位\n截到链中间——下一次写入压在链上，数据**静默消失**（不是 CRC 错，是读出别人的数据）。"
+},
+{
+"id": 59,
+"title": "范围墓碑的读路径不能是 O(墓碑数)",
+"body": "`ranges_` 按 `lo` 有序，`hi` 无序，\n一个个往回走就是\"几千个墓碑 × 每次点查\"。每条目多存 8 B 的**前缀最大 hi**，\n一旦 `maxhi <= k` 立刻停（`g2`：5000 墓碑下 0.25 µs/次）。\n这份前缀和还要**按需**算：每次插入都全量重算是 O(n²)（5000 个墓碑插入 54 ms → 4 ms）。"
+},
+{
+"id": 60,
+"title": "逻辑删除不改存活账",
+"body": "`del_range` 一个字节都没重写，但一批记录\"变成不可见\"了。\n不 `recount` 的话 `cell->live` 与 `verify` 的口径立刻分家（`live mismatch`），\n这些单元还永远不会被当成有垃圾。重算要**先收集受影响的 cell 再统一重算**：\n5000 个墓碑 × 逐个 recount 是 O(n²)（实测 66 ms → 496 ms）。"
+},
+{
+"id": 61,
+"title": "`compact_file()` 对大值库不保证\"变小\"",
+"body": "run 块要连续、链只能随它所在的 run 搬\n（描述符在数据页里），所以 66000×3900 B 这种库归一之后 `96905 → 127795` 页\n（**+31%**），活页 96901。这是\"显式维护调用的最坏情况\"，不是数据出错；\n断言写成 `used <= live + live/2 + 64`，并在 §14 第 5 条记下真正解法（链的引用计数）。\n**第 7 轮（M1）已解**，而且没用引用计数：根因不是\"链被共享\"，而是 `relocate()`/`consolidate`\n把链**全部接管** ⇒ 链永远不动、`shrink()` 截不到。解法是 `compact_file` 第二遍只物化\n\"末页 > `take_limit_`（= 活页 + 32）\"的链（新链经 `alloc_pages` 落到低位的洞里），其余照旧接管。\n`cfcurve`：ratio 1.31 → **1.01**；`b1`：+31% → **+0.8%**（§10.14）。"
+},
+{
+"id": 62,
+"title": "同 `lo` 的范围墓碑不能互相顶替",
+"body": "`ranges_` 原来按 `lo` 做键，`del_range(10,90)` 之后\n`del_range(10,20)` 把宽的那条**换掉** ⇒ 21..89 复活。键改成 `(lo, ver)`，插入走 `add_tomb`。"
+},
+{
+"id": 63,
+"title": "任何判\"死/活\"的路径都必须同时看范围墓碑",
+"body": "（这是 L4 最大的教训，三处各踩一次）：\n(a) `exact_live_recs`/`retire_dead_runs` 只看\"有没有更新版本\" ⇒ 被整条盖住的 run 永远\n`live=nrec`、永不退休，而且每次提交都被\"校准\"重扫一遍（`delloop`：runs 20→138、del 提交 2→68 ms）；\n修法 `run_fully_hidden()`（整条 run 的键域被同一条 `ver >= run.ver` 的墓碑盖住 ⇒ 一页不读）\n+ 逐条 `range_hidden`。(b) `probe_prev` 命中旧版本却不看墓碑 ⇒ `flush_mem` 二次扣减。\n(c) 墓碑原来在 `commit_delta` 才落账 ⇒ 被盖 run 要**晚一次提交**才退休；`apply_ranges(delta)`\n提前到 `rebalance` 之前。"
+},
+{
+"id": 64,
+"title": "未提交的大值 `get` 返回了 16 B 描述符",
+"body": "`MemTable` 里溢出条目存的是描述符（len=16），\n`get_at` 原样抄给了调用方。修法：`desc_of` + `read_ovfl`。"
+},
+{
+"id": 65,
+"title": "结构化整数键别用乘法散列的高位做小表索引",
+"body": "L2 的 ghost 表初版用乘法散列高 8 位映射 256 槽，\n链首页等差（步长 377）两两碰撞 ⇒ `bigget 16` 命中率 0、pread 仍 15008。改 `khash(pg0) & 1023`。"
+},
+{
+"id": 66,
+"title": "归并物化不能走读缓存",
+"body": "`merge_emit` 读大值走 `read_ovfl(cacheable=true)` 会把冷扫描的\n~40% 链灌进 ghost 表、误准入 ⇒ 冷读 +8~10%。`Cur::val(..., cacheable=false)`。\n同理 `verify`/`scrub` 也不缓存（它们要看介质）。"
+},
+{
+"id": 67,
+"title": "预取绕过了 `wait_page`",
+"body": "（第 5 轮 B2 埋的雷）：`prefetch()` 直接 `read_multi` 落盘字节填页缓存。\n`commit(false)` 刚把 run 交给后台线程、立刻 `select` ⇒ 预取读到的是该位置**上一任**的旧页/零页，\n却以\"有效缓存\"身份留下；随后 `page()` 等写落地后**命中缓存**返回旧页。`g4` 第 1 段用慢写设备\n把窗口放大：旧版 `select` 只回 **80/3000** 行、之后 `get` 坏 1610 个键、`verify` 报 `page kind`。\n修法：在飞的页一律不预取（截到第一张在飞页为止）；`scrub`/`raw_dump` 裸读前 `wait_io()`。"
+},
+{
+"id": 68,
+"title": "\"已落页、未入账\"的 run 必须先于引用它的 DEL 入账",
+"body": "`commit(false)` 刷出的 run 的 `M_RUN_ADD`\n暂存在 `pend_delta_`，只有 durable `commit()` 会并入清单；而 `consolidate`/`relocate`/`checkpoint`/\n层合并直接走 `commit_delta`，先把那条 run **合并掉（DEL 入账）**，下一次 `commit()` 才把过期的 ADD\n追加进去 ⇒ 重放（回退/重开）复活一条指向**已释放页**的僵尸 run。s2 长跑里它表现为两种面孔：\n僵尸 run 与清单页/另一条 run 共用页 ⇒ 双重释放 ⇒ 两条活 run 重叠 ⇒ **丢 14 个键**（op 7310）；\n僵尸的页后来被 meta 页覆盖 ⇒ 回退 `CORRUPT`、**库被清空**（op 14599）。\n修法：`commit_delta` 统一先并入 `pend_delta_`；`write_man_snapshot` 清 `pend_delta_`\n（全量快照来自内存 `runs_`，已含这些 run）。`commit()` 的\"没事可做\"早退也要看 `pend_delta_`。"
+},
+{
+"id": 69,
+"title": "快照点必须是一个提交点",
+"body": "`snapshot()` 只抓 `pend_`，不抓 `pend_delta_`、也不抓 `mem_` 里的\n逻辑提交 ⇒ `commit(false)` 之后立刻 `snapshot()`，回退会把这些**已对读者可见**的写丢掉。\n现在 `snapshot()` 先 `commit()` 再抓（语义：快照 = 持久提交点；没东西可提交时是空操作）。"
+},
+{
+"id": 70,
+"title": "压实搬家的两个布局坑",
+"body": "(a) `relocate()` 判\"有更低的洞\"用的是 `npages`，不是 `run_block`\n（数据 + meta + 附件）⇒ 洞装不下整块，搬家又落回尾部，白写一遍。(b) run 搬到低位后，`checkpoint`\n的新清单页按\"最低空闲页\"分配，正好卡进低位大洞 ⇒ 洞 = 块 − 1 页，之后每一遍都搬不下去\n（s2：used 386 vs live 184）。修法：`compact_file` 期间清单页放到**最高 run 块之上**\n（`man_high_` / `alloc_man_page`），收尾时若清单页还能更低就再写一次（1 页 + SB）。\n`g4` 第 4 段：6 轮搬家后 `used == live`、0 个空闲碎片。"
+},
+{
+"id": 71,
+"title": "洞比块小一点时的\"弹跳\"",
+"body": "b1 的洞 30155 页就在 30890 页的 run 块正下方 —— 直接搬搬不下去，\n但强制重写一次会先落到尾部、再由 `relocate` 落进合并后的大洞（2 次重写换回整个洞）。\n无条件 force 在小库上是纯浪费（s2 写页 +23%），所以判据是 `bounce_gain() >= 32 && >= 块/8`\n或 `chain_top() > take_limit_`。代价：compact_file 密集的 s2 无回退长跑写页 +7%。"
+},
+{
+"id": 72,
+"title": "测试方法论：回退后\"resync 真值\"等于没测",
+"body": "。s2 以前每次 `rollback` 后用 `get` 重建真值再往下跑，\n坑 67/68/69 全在它眼皮底下跑了两轮。现在 `snapshot()` 时存一份真值，回退后**逐键比对**；\n`make test` 每一段\"回退/重开后对拍\"的都应如此。"
+},
+{
+"id": 73,
+"title": "大值覆盖/删除漏链",
+"body": "（A2 第一次跑就抓到）：同一批里把大值覆盖成别的值 / `del` 掉，`mem_` 里 16 B 描述符\n被覆盖，链既不属于任何 run、也不在空闲表 —— 进程活着就一直漏，重开后 `rebuild_free` 才收回。\n修法 `drop_mem_chain`（`free_pages(..., snap_safe=true)`：链写在上个提交点之后，没有快照能引用它）。\nB3 的分配规则在这之后还试了三版才定：① 最低空闲页 ⇒ `compact_file` 的清单页卡进低位洞（坑 70）；\n② 最高活 run 块之上 ⇒ 平时也抬高水位；③ 纯大小规则 ⇒ 搬家期清单页仍挡路；④ 定稿 = 平时大小规则 +\n搬家期位置规则（`man_high_`）。"
+},
+{
+"id": 74,
+"title": "`shrink()` 截断未提交大值的链",
+"body": "（g5 seed 1 第 303 步）：大值在 `put` 时就落成链，只有内存表的描述符引用它，\n`live_top()`/`rebuild_free()` 只看 run 和清单 ⇒ `SHRINK tail 37 -> 34` 把链截掉、下一次分配盖住它，\n提交后 run 的描述符指向别人的页（`get` NOTFOUND）。修法：`for_each_mem_chain` 进 `live_top`/`rebuild_free`/\n`ownership_check`（所有者 kind 7）。规则：**新的页引用来源必须同步这三处**（旧规则只说\"新页类型\"）。"
+},
+{
+"id": 75,
+"title": "`del_range` 之后同批的 `put` 丢失",
+"body": "墓碑版本取提交版本，和同一次 flush 出来的 run 版本相等，\n`>=` 规则把 del_range **之后**写的键一起盖掉（`del_range(1,10); put(5); commit(); get(5)` → NOTFOUND）。\n修法：墓碑版本定在**发出时刻**的 `open_vers()`（`PendRange{lo,hi,ver}` 带进清单），`range_hidden` 改成\n严格 `>`；`run_fully_hidden`/`settle_ranges` 快路径同步（单元里有 run 版本 ≥ 墓碑版本就老老实实 recount）。"
+},
+{
+"id": 76,
+"title": "`del_range` 提交前对 `get` 不可见",
+"body": "以前只进 `pend_ranges_`。现在 `del_range` 立即 `add_tomb` 进 `ranges_`，\n内存表里已有的同范围条目就地改成点墓碑（它们比墓碑早，且 `get`/游标的内存表路径不查范围墓碑）；\n存活账**攒到**提交/`verify` 时一起结（`settle_ranges`，`PendRange.acct`），否则 5000 条墓碑 × 单元的逐条\nrecount 又回到 66 → 496 ms 那条老路。`abort()` 要撤掉这些墓碑只能 `reload()`（`add_tomb` 会吃掉被支配的旧条目，\n不可逆）。"
+},
+{
+"id": 77,
+"title": "`select`/`count`/`scan` 不读内存表",
+"body": "`get` 看得见未提交的 put/del，`select` 看不见，直到数据进 run\n（同步模式下连 `commit(false)` 之后都看不见）。`Cursor::next` 现在多归并一路内存表（同键内存表赢、墓碑不吐、\n未提交大值物化到游标缓冲、`view` 过滤）；`scan` 改走游标并加锁。键序视图 `mem_sorted()`：按 `MemTable::gen()`\n缓存，`epoch`（clear 计数）不变且条目只追加时只排新尾巴再 `inplace_merge` —— 第一版全量重排在 g5 的\n写/查交错下 100k 条要 6 ms/次，增量后 0.06 ms；中间还踩了一脚：没看 epoch，clear 之后长度又长回去就把\n新条目当成旧前缀（g5 八个种子全红）。"
+},
+{
+"id": 78,
+"title": "维护操作把未提交的范围墓碑\"半持久化\"",
+"body": "坑 76 让墓碑立即生效之后，`compact_file` 的归并把被盖住的记录丢了，\n墓碑本身却没进清单 ⇒ 重开后是\"部分删除\"，既不是上个提交点也不是现在（g5：352 个键缺失的前身）。\n两条路：维护只看已提交的墓碑（要把\"已提交视图\"穿过 merge/retire/recount 全部路径），或**维护先提交**。\n选了后者（`maint_commit`：有未提交的写才真提交），顺手把 L2 的残留「consolidate 不先 flush mem」也关了。\n代价：维护极密的 s2 CPU +20%（§10.15）。"
+},
+{
+"id": 79,
+"title": "范围墓碑下的点墓碑，两套口径",
+"body": "`merge_emit`/`verify` 从不把点墓碑算作被范围墓碑盖住（`blen &&`），\n它的字节一直记在 live；`probe_prev`/`exact_live_recs` 按\"被盖\"算 ⇒ 覆盖这种键时少扣一次，**账差 4 B/条**\n（g5 seed 7：`live mismatch` 24046 vs 24050，`FCS_VERIFY_DBG=1` 逐条对出来的）。统一成归并口径。"
+},
+{
+"id": 80,
+"title": "重放时同 `(seq, page0)` 的段删除串代",
+"body": "（g5 seed 36，reopen 后 352 个键 NOTFOUND）：合并产物继承源的最大 seq、\n搬迁保留 seq，B3 又让低位页立刻复用 ⇒ run 6 → 合并进 58 → 搬回 6，新旧两代 `(seq, page0)` **完全相同**；\n清单里老一代的 `M_SEG_DEL` 在重放时把新一代的段摘掉。修法：`apply_man` 处理 `M_RUN_DEL` 时作废该 page0\n的所有待摘段（run 死了，它的段无所谓了；后面新一代的 SEG_DEL 在日志里更晚，不受影响）。\n方法论：这类 bug 只有\"随机交错 + 重开 + 逐键比对\"抓得到，单元测试永远不会恰好把一条 run 搬回原地。"
+},
+{
+"id": 81,
+"title": "`write_sb()` 前没有持久化屏障",
+"body": "（g6 seed 1）：数据页 `write` 了但没 `sync` 就写 SB ⇒ SB 落盘、数据页没落 ⇒ 重开\n指向半空的 run。现在 `write_sb()` = `wait_io + sync → 写 SB → sync`，每个持久提交点 2 次 fdatasync。"
+},
+{
+"id": 82,
+"title": "`shrink()` 同版本重写同一个 SB 槽",
+"body": "（g6 seed 2）：掉电在写到一半 ⇒ 两个槽一个坏一个旧，旧的那个 tail 还是截断前的\n⇒ 挂载后 `tail_ > 设备长度`。`shrink` 现在也 `++vers_`、换槽写。"
+},
+{
+"id": 83,
+"title": "槽位 = `vers_ & 1` 被 `commit(false)` 破坏",
+"body": "（g6 seed 3）：逻辑提交也加 `vers_` 但不写 SB ⇒ 连续两次持久提交落到\n同一个槽 ⇒ 掉电把唯一有效的 SB 砸了。槽位改用独立的 `sb_slot_`，每次 SB 写才翻。"
+},
+{
+"id": 84,
+"title": "截断到了、SB 没到",
+"body": "（g6 seed 4）：`shrink` 先截断设备再写 SB，掉电在两者之间 ⇒ 老 SB 的 tail 超过设备长度 ⇒\n`alloc_pages` 往设备外写（RamDev 报 IO；FileDev 会悄悄把文件撑回去）。挂载时 `dev_pages_ >= tail_` 不成立就按 SB\n把设备截/扩回去。\ng6 本身也踩了一脚：设备\"死后\"的截断不能改介质镜像（第一版把 `do_truncate` 当成持久，误报）。\n排查掉电失败的顺序：MOUNT 行的 `oa/ob vers` + 上一个掉电点的追踪环 → 哪个 SB 应该活着；`[dev] write FAILED` → 越界写；\n`G6_WATCH=<pid>` 看某页在介质上的变化；`oa=0 vers=977` = 槽读到了但 CRC 无效。"
+},
+{
+"id": 85,
+"title": "`scrub()` 公开入口不持 `mtx_`",
+"body": "（g7 seed 1 首跑）：单线程无感；并发读者在时 `scrub` 的 `page()`/`ensure_ovfl_loc`\n和读者的 `page()` 互相踢缓存 ⇒ 读者拿到别人的页。同类：`get()` 在锁外取 `open_vers()`、`index_scan` 整个无锁。\nTSan 又抓 3 类：`wait_page` 锁外早退读 `inflight_` 必须 acquire 原子读；`RamDev::np_` 要原子（异步写线程 truncate）；\n`Run::meta_pending` 读写竞争（P1 一起改成三态原子）。教训：**所有公开入口第一行持锁**，`g7`（含 TSan 版）固化。"
+},
+{
+"id": 86,
+"title": "`std::shared_mutex` 写者饥饿",
+"body": "（g7 `3 6000 4`，4 读者 2 核跑 15 分钟不结束，CPU 198%）：glibc 的 rwlock 默认读者\n优先，读者前赴后继地 `lock_shared`，写者**永远**拿不到；2 读者时碰巧能插进去，4 读者就饿死。`XLock` 自己写：\n有写者在等（`wwait_>0`）新读者退让、自旋 64 次后睡 cv；最后一个读者出门叫醒写者；写者出门 `notify_all`。\n取舍：写者优先意味着写极密时读者吞吐下降；嵌入式存储里\"写必须推进\"比\"读吞吐最大\"重要。\n**第二脚**（P5 之后 g7 的写者满负荷）：写者优先 + 读者睡在 cv 上 ⇒ 写者 unlock → notify → 读者醒来要 50 µs，\n写者早又 lock 了 ⇒ 读者 10 s 只做了 **314 次** get。修法\"让一手\"：写者举牌前若有睡过的读者（`rwait_`）还没拿到\n共享锁，等它们进来（上界 200 µs）。g7 读者 get 314 → 12~19 万（2 读者）/ 85 万（4 读者），写者仍按时完成。\n`make test` 的 g7 段加了 `3 4000 4` 回归。"
+},
+{
+"id": 87,
+"title": "`rebuild_free()` 把 deferred_/pending_free_ 当空闲页",
+"body": "（P5 放开快照期 shrink 后 g5 seed 1 第 556 步\n`rollback(0)` CORRUPT）：trace 是 `SNAP tail=16 man_last=6` → checkpoint `FREE [6] deferred` → `SHRINK`（里面\n`rebuild_free`）→ `RELOC ALLOC [6] user` —— 快照的清单页被当空闲页发给了新 run，回退点重放到一页数据。\n以前只有 `rollback` 记得在 rebuild 之后 carve 这两张表；`shrink`/`reload` 走到这里就漏。现在 `rebuild_free`\n自己把两张表算作已用（rollback 顺手简化：先决定 deferred_ 再 rebuild）。这也修了一个没被抓到的老洞：快照存活时\n提交失败 → `reload()` → deferred 页流入空闲表。"
+},
+{
+"id": 88,
+"title": "`count_refs` 是 O(段² × 单元) 而且在 `compact_pass` 里每次提交调两遍",
+"body": "（第 10 轮悬崖的第一层，`gprof` 两处各 19.6 s / 20 s\n墙钟）：`Run::refs` 字段声明了却没人维护，取段集合/释放判定每次都遍历全部单元的全部段去数。单元 1500 × 段 12 时\n每次提交 ~30 ms，5500 单元 × 93 段时 1.5 s。现在 `refs` 由 9 个插/删段落点 O(1) 维护（`attach_run` 新插 `++`、\n`detach_seg`/retire/归并摘段/压实摘段/`M_SPLIT_DEL`/`segdels_` 回放 `--`、`split_pass` 父子同引用 `++`），\n`verify()` 用慢路 `count_refs` 交叉核对（\"run refs\"）。"
+},
+{
+"id": 89,
+"title": "压实产物的层号 = `best_lvl + 1`，没有上界",
+"body": "（悬崖的第二层）：`level_pass` 只看 `lvl < LVL_MAX(4)` 的层，\n产物压实两代就到 5/6/7 层，再没有任何合并路径接手；又因为每个单元各产一条私有 run，run 数趋向单元数\n（20k 键 × 500 B × 200 次提交：685 条 run，605 条在 lvl 5；320 次 851 条），每条 run 一张 bloom/元数据，\nget 要逐条探，`compact_pass` 的候选集也跟着膨胀。挂载时把老库的 5/6/7 层夹回 `LVL_MAX`（`apply_man`），\n`verify()` 加 \"run lvl\" 检查；产物现在进 **L0**（见坑 90）。"
+},
+{
+"id": 90,
+"title": "压实产物沿用最新源的 seq ⇒ 读到过期值",
+"body": "（修悬崖时 `bench6 ovw` 回读抓到的，**老代码同样有**，\n`ovw 5000 500 200 200` 老引擎 22% 的键回读是旧版本；g5 的工况从来没走到这里）。机制：产物 O 取\n`seq = best_seq`，最新源 F 还活着（别的单元仍引用），O 和 F 同 seq；O 进入一次层合并后，合并产物 M 的\nseq = 组内最大 = F.seq，而 F 不在组内；M 的 rid 若比 F 大，对 F 仍最新的键，M 会以组内老 run 的版本胜出。\n追踪到的实例：cell[0,19) 里 F(rid 116, seq …910, lvl 0) 持 tag 12857，M(rid 312, seq …910, lvl 1) 持 tag 12611，\n`seg_key` 顺序 M > F ⇒ get 返回 12611。修法：**产物保留 `finish_run` 分配的新鲜 seq（全局最大），层号 0**。\n这是名副其实的：单元的段集合覆盖本单元所有键的全部已提交版本（含本单元键的 run 一定被 `attach_run` 挂到本单元，\n直到被某次压实消费），产物里每个版本都是该键此刻最新的；之后刷盘的 run seq 更大、自然压过它。从此不存在\n同 seq 的两条 run，\"同 seq 看 rid\" 只剩兼容意义。**老库遗留**：升级前就存在的同 seq 对（产物 + 还活着的源）\n在它们被合并掉之前仍可能触发本坑；升级后跑一次 `compact_file()`/`consolidate()` 即清零。"
+},
+{
+"id": 91,
+"title": "快照钉住的最老 run 让合并组跨过中间 run ⇒ 同样读到过期值",
+"body": "（g8 关掉连续性检查后 3 个种子都在第 18 次提交失败，\n即\"第 5 次提交抓快照、第 17 次释放、第 18 次合并\"）。`level_pass` 跳过 `ver ≤ snap_max` 的 run，组从它后面开始：\nL0 = [P(9, 钉住), F10..F17] ⇒ 并出 M(17) 到 L1；快照释放后 L0 = [P(9), F18..F25] 并出 M'(25)，\nM' 里 P 的老版本以 seq 25 压过 M(17) 里的新版本。根因是合并的安全条件本来就是**组在全库 seq 顺序上连续**\n（组外不能有 seq 落在组内区间的 run），老代码靠\"每层按 seq 取最老 n\"隐含保证，快照把它打破了。\n现在显式检查：组在第一个夹缝处截断；若最老那条自己就被隔开，把它**提升**到下一层（只改内存层号，层号只是分组提示，\n不入清单、重开后回到原层也无妨 —— 安全性靠检查而不靠层号），下次它和下一层的老 run 组队。\n教训：**验证正确性的测试必须有逐键模型回读**，`verify()` 只查结构账，查不出\"读到旧版本\"；g8 每次提交全量比对。"
+},
+{
+"id": 92,
+"title": "悬空点墓碑把全死的 run 钉住",
+"body": "（第 11 次讨论；老代码同样有）：单元压实把某键整个丢掉（被范围墓碑盖住）之后，老 run 里\n这个键的点墓碑不在任何段里，`exact_live_recs` 整条扫描却把它算活 ⇒ `retire_dead_runs` 把 live 校准成 1，永不退休，\n`verify` 报 `run live recs`。修法：只扫本 run 仍被引用的段的页。"
+},
+{
+"id": 93,
+"title": "`add_tomb` 同 lo 支配规则删旧墓碑时不看存活快照 ⇒ 快照视图里被删键复活",
+"body": "（老代码同样有）：S0 钉住老 run，A = del_range(100,105)，\nS1，B = del_range(100,110) 支配 A 并删掉它 ⇒ S1 视图（ver 在 A、B 之间）看不到 A，key 100 复活。修法：快照期并存，\n`forget_snapshots` 后 `prune_tombs()`。"
+},
+{
+"id": 94,
+"title": "点墓碑从不被清除",
+"body": "（老代码同样有）：连全库 `consolidate()` 也把墓碑原样写进产物，写一次/删一次的队列负载库线性增长\n（5 轮 5000→25000 条、36→180 页）。修法见 §10.18：「下面没有更老的物理副本」时丢。"
+},
+{
+"id": 95,
+"title": "`settle_ranges` 整盖快路径把点墓碑记 0 字节、归并口径算活 ⇒ 快照钉住 run 时 `live mismatch`",
+"body": "。修法：口径统一为\n「赢家就算活」。"
+},
+{
+"id": 96,
+"title": "坑 94 的第一版按「单元里有没有更老的段」判「更老」⇒ 老值复活",
+"body": "（落地前 g9 t94c 第 30 次提交抓到）：被单元压实摘了段的\n老 run 本体还在，悬空老值随后续层合并进产物、重新挂回单元，墓碑已丢。教训：**「存在更老版本」必须按物理存在判**，\n段只是可见性索引，不是存在性索引。"
+},
+{
+"id": 97,
+"title": "分步归一的收尾清范围墓碑时没有重写最后那条 run",
+"body": "（落地前 g5 seed 3 抓到）：`consolidate(0)` 是「全部归并一遍再清」，\n分步的最后一步可能一次归并都没做（上一步之后新来了 del_range），清了墓碑 ⇒ `rollback` 后被盖住的键复活。\n不变量：**范围墓碑只能在被盖住的记录物理消失之后清**（现在：收尾步有墓碑就强制重写；归并组恰好是全部 run 时才顺手清）。"
+},
+{
+"id": 98,
+"title": "`~Store()` 什么都不释放",
+"body": "（第 12 次讨论；新老同在）：`Run` 对象、tls 槽、I/O 线程都靠进程退出收尸，反复 open/close 的进程\n每次 +8 MB；LSan 因此一直是 `detect_leaks=0`。修法：析构 = `wait_io(true)` + 停线程 + `clear_state()`；`detect_leaks=1` 常开。"
+},
+{
+"id": 99,
+"title": "NOSPACE / abort 路径提前放页",
+"body": "（第 12 轮 L1 落地时）：失败路径里 `promote_pending()` 把本应等下一个超级块的页放回 `free_`，\n下一批 flush 复用它们，老提交点的数据被覆盖。修法：`pend_need_gen_` 闸（只有 `sb_gen_` 真前进到那一代才放）；99b：NOSPACE\n重试再失败必须 `dirty_=true`，NOSPACE 的中间提交点不得持久化 `pend_ranges_`。回归 g11 `t_nospace`。\n同族：类内「抓状态当提交点」的路径（`snapshot()` / `abort()` / `maint_commit()`）必须走 `commit_locked(true)`，不能走公开\n`commit()`——否则 mode 1 下在持锁状态里再跑放锁的维护循环（g5 种子 2 \"page owned twice\"）。"
+},
+{
+"id": 100,
+"title": "`split_pass` 每轮 128 刀切不完不吭声",
+"body": "（第 12 轮 M2 验收时）：批量加载（一次提交 50k 条）关库时一堆单元 > BMAX，B1 不变量\n只在下次维护才补齐。修法：`split_pending_` ⇒ `maint_unit` 报 MORE 并在下一单元继续 rebalance。"
+},
+{
+"id": 101,
+"title": "mode 0 下分步作业每轮 guard 只推进一片",
+"body": "（第 12 轮 M2 验收时）：一次提交 ≤ 16 片，40 片的大合并拖 3 次提交，新 run 堆积到\n1201 条、avg 64 ms。修法：提交点之前（非 one 模式）不开作业、手头作业一口气推完——同一把锁里切片没有意义。"
+},
+{
+"id": 102,
+"title": "逻辑提交版本是 16 位、没有回绕处理",
+"body": "（第 12 轮全量评估的边界探针 `bench/probe/verswrap.cpp` 发现；v3 从第一天起就有）：\n`xdb::Vers = uint16_t`，每次 `commit(false)` / `commit()` 都 `++vers_`，第 65536 次回到 0。盘上的 SB.vers / 清单 ver / 页头 ver\n全是 32 位，**只有内存里的时钟是 16 位**。后果（70000 次逻辑提交、第 65000 次后持一个快照）：快照视图 2000/2000 个键看见\n\"未来\"的写（`ver <= view` 对回绕后的小 ver 恒成立）、`verify` 报 `future ver` 2539 处（库其实没坏）、快照钉住所有新 run\n（8 → 29 条）、重开后 `vers_` 跳回 max(run ver)=65281。不持快照时 get/verify/重开碰巧都对（读赢家靠 seq 不靠 ver），\n所以 11 轮测试都没撞到。修法：引擎内版本一律 `u32`（`get_at` 的 view 参数同步放宽；**不是格式变更**），\n\"看全部版本\"的哨兵从 `0xFFFF` 改成 `~0u`。回归 `tests/g12.cpp`（老头 FAIL / 新头 PASS，≈ 4 s）。"
+},
+{
+"id": 103,
+"title": "run 序号 `seq` 是 u32、只增不减、没有回绕处理",
+"body": "（同一张边界表的第二项；探针 `bench/probe/seqwrap.cpp` 用 `#define private public`\n把 `next_seq_` 预置到离 2^32 差 50 个号）：回绕后新 run 的 seq 最小 ⇒ 全序里被当成**最老** ⇒ 覆盖写**静默读到旧值**\n（3000 键里 2493 个旧值）、verify `live mismatch`、重开照旧（重开按盘上 seq 重建，回绕后的 run 落进\"向下区间\"）。\n每次 flush 占一个号（归并产物沿用源的最大 seq，压实产物取新号）⇒ 32 亿次提交：1000 次/s 连续 ≈ 37 天、100 次/s ≈ 1 年。\n本轮只做**响亮失败**：`finish_run` 在 `next_seq_ ≥ 0xFFFFFF00` 时返回 `FULL`（`commit()` 的批次仍在内存、可 `abort`；维护路径不动账），\n探针确认 FULL 之后数据 / verify / 重开全对。彻底修法 = 提交点重编号（全部活 run 按 seq 排序重新从 0x40000000 编号、重写全量清单、\n重建单元段键；**不改格式**，需要无快照、无作业在飞），列为下一轮首项（`docs/EVAL12.md` §6 #1）。\n→ 第 13 轮已做：提交点自动重编号（§10.20 ①），`seqwrap 50 400` 回绕 400 次全对。"
+},
+{
+"id": 104,
+"title": "`shrink()` 在\"提交点之外的维护\"之后丢已提交数据",
+"body": "（第 13 轮 g6 seed 2 掉电注入抓到；**第 12 轮的头就有**——M2 的 `maintain()`\n与 mode 1 的提交后维护都走这条路）：维护把源 run 的 DEL 留在 `pend_delta_`、页留在 `pending_free_`（坑 99 的闸关着），**盘上的 SB\n还引用这些 run**；`shrink()` 只看 `live_top()`（内存里已没有这些 run）就截断，再 `++vers_; write_sb()` 写一个**不含 DEL** 的 SB\n（shrink 不是提交点——g5 明确依赖\"shrink 之后重开 == 上一个提交点\"）⇒ 掉电挂到的提交点引用着设备之外的页，键 NOTFOUND。\ntrace：`FREE [104] safe → SHRINK 105→104 → COMMIT(不含 DEL) → 掉电 → MOUNT → REPLAY rid=104`。两处修：shrink 的活区算上\n`pending_free_`（闸没开 = 盘上可能还引用）；`write_sb` 只在 `pend_delta_` 为空时 `++sb_gen_`（**\"只写 SB\" ≠ \"提交点\"**：\n否则下一次 `promote_pending` 把盘上仍被引用的页放行复用，是同一个坑的第二张脸）。不变量：**放行 `pending_free_` / 下调高水位，\n前提都是\"盘上 SB 不再引用这些页\"，而这只有折叠了 `pend_delta_` 的 SB 才成立**。"
+},
+{
+"id": 105,
+"title": "同一个 `Store` 对象 `open()` 重开保留了上一会话的 `pend_delta_`",
+"body": "（q1 async2）：`clear_state()` 故意不清它（同会话 IO 错误后的\n`reload()` 要把后台已落页的 run 重新挂上），但 `open()` 是新挂载：上一会话没过提交点的合并产物（分配在 SB 高水位之上）被重新挂上、\n源被摘掉、高水位按 SB 回退 ⇒ 产物页被当空闲页分出去（verify `owner beyond tail`，`compact_file` 后 400 行剩 240）。\n修：`open()` 清 `pend_delta_`/`gpend_`；`reload()` 若 `pend_delta_` 非空把 `tail_` 抬到这些 run 之上。第 12 轮没撞上是因为\nq1 的 20 条单页 run 不触发合并，cheap 规则让它合了。"
+},
+{
+"id": 106,
+"title": "范围墓碑从不扣 run 级 `live_bytes`",
+"body": "它由 flush 的 `probe_prev`、归并产物、压实搬运维护，`settle_ranges` 只结单元级 live/dead\n⇒ 层合并的脏度规则对 `del_range` 全盲（删掉半库的 run 脏度仍是 0，只有单元压实按预算慢慢啃）。修：`settle_ranges` 按\n\"段字节 × 活条数占比\"（`seg_totals` memo，至多读两张边界页）估计墓碑前后的活字节差从 `live_bytes` 扣；惰性账不碰\n（补算时 `lb_acc` 自然按墓碑后的赢家算）。`live_bytes` 本就是只会高估的估计量，估多了最多多并一次。"
+},
+{
+"id": 107,
+"title": "归并不丢被组外更新盖住的记录",
+"body": "只丢组内被盖副本 / 可丢墓碑 / 范围墓碑盖住的记录 ⇒ 按脏度触发的 (d)(e) 规则只会白写\n（顶层 422 页重写后还是 422 页、每次维护再写一遍）。修：回调里布隆 `newer_may_contain` 命中才 `newer_has(k, maxseq, …)` 精确\n确认，确认了跳过（`shadow_dropped()`）；probe 对墓碑返回非 OK 时不丢（安全不回收）。`page()` 指针即取即用的老约束在这里成立：\n`Cur::buf` 是私有拷贝、`merge_emit` 的描述符已拷出，所以回调内可以安全探测别的 run。"
+},
+{
+"id": 108,
+"title": "分步作业的流式预留跨提交点",
+"body": "`FCS_MERGE_BUDGET_DEFAULT=256` ⇒ mode 1 默认就会开作业；作业 `RunWriter` 的预留页既不在清单\n也不在 `free_` ⇒ verify `page unowned`；`shrink()` 截掉预留后作业写到设备之外。修：verify 认 owner 8（作业预留）；\n`shrink()` 开头 `abandon_job()`。g11 没撞上：源 < 512 页不预留。"
+},
+{
+"id": 109,
+"title": "mode 3 之后结构型观测接口的无锁读",
+"body": "（TSan，第 13 轮收尾）：`run_count / lvl_hist / cell_count / seg_max / max_segs_per_cell`\n一直不拿锁——mode 3 之前只有调用线程改账，这是对的；mode 3 维护线程在 `merge_job_step` 里 `runs_.erase`，主线程同时读\n`runs_.size()` 就是 data race。间歇：裸跑 6 次不出，旁边跑 `g6` 抢 CPU 第 1 次就抓到。修：这 5 个接口拿 `RGuard`\n（本线程已持独占 ⇒ 空操作，select 回调里也能叫）。教训：**加后台线程时要把\"只读账\"的接口全部过一遍**，不能只看数据路径。"
+}
+]

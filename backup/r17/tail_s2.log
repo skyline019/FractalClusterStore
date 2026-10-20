@@ -1,0 +1,31 @@
+    compact_file OK op=24 used=5 live=2 runs=1
+    compact_file OK op=48 used=11 live=5 runs=3
+    compact_file OK op=55 used=11 live=5 runs=3
+    compact_file OK op=56 used=11 live=5 runs=3
+    compact_file OK op=100 used=8 live=3 runs=1
+    compact_file OK op=121 used=8 live=4 runs=1
+    compact_file OK op=128 used=7 live=4 runs=1
+    compact_file OK op=170 used=13 live=6 runs=1
+  op=  4000 used=  96/2048 runs=  1 extents=  0 live=  89 mem=     0KB cells=14
+          上次成功 compact_file op=3992
+  op=  8000 used= 146/2048 runs=  1 extents=  0 live= 137 mem=     0KB cells=23
+          上次成功 compact_file op=7969
+  op= 12000 used= 180/2048 runs=  1 extents=  0 live= 170 mem=     0KB cells=30
+          上次成功 compact_file op=11976
+  op= 16000 used= 193/2048 runs=  1 extents=  0 live= 183 mem=     0KB cells=34
+          上次成功 compact_file op=15949
+  op= 20000 used= 206/2048 runs=  1 extents=  0 live= 195 mem=     0KB cells=34
+          上次成功 compact_file op=19905
+  op= 24000 used= 216/2048 runs=  1 extents=  0 live= 205 mem=     0KB cells=37
+          上次成功 compact_file op=23977
+  op= 28000 used= 222/2048 runs=  1 extents=  1 live= 203 mem=     0KB cells=37
+          上次成功 compact_file op=27993
+  op= 32000 used= 215/2048 runs=  1 extents=  0 live= 204 mem=     0KB cells=37
+          上次成功 compact_file op=31987
+  op= 36000 used= 220/2048 runs=  1 extents=  0 live= 209 mem=     0KB cells=38
+          上次成功 compact_file op=35986
+  op= 40000 used= 219/2048 runs=  1 extents=  0 live= 208 mem=     0KB cells=38
+          上次成功 compact_file op=39988
+  漂移检查: used 96 -> 219, live 89 -> 208, 垃圾 7 -> 11, runs 1 -> 1, extents 0 -> 0
+  每 4k 次操作耗时: 首段 138.5 ms → 末段 390.6 ms（2.82x）
+PASS

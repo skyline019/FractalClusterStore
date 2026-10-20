@@ -1,0 +1,38 @@
+== ubsan g14 full ==
+  作业增量账：120 次提交 job_fast=14212 job_slow=0（提交后有欠账 0 次、提交 max 17.1 ms）；清账后账零漂移  ok
+  预留按存活估：源 2400 页（80% 脏）⇒ 产物 480 页，峰值增长 603 页（1.26× 产物；老估法 ≈ 5.62×）stream=1 moves=0 extends=0  ok
+  估小就地续租：extends=2 moves=0 stream=1  ok
+  高水位：默认 tail 4801 / 活页 2919 (1.64x, 写 18.8 MB)；pct=150 mode 1: tail 4635 (1.74x, 回收 5 次, 写 25.5 MB)；mode 3: tail 2951 (1.03x, 回收 2 次)  ok
+  顶部释放回落：t0 237 → 尾部分配 300 页 → 释放 + 提交点 ⇒ tail_ 237；清单页簇在顶（1）不回落；重开一致  ok
+  读者让路 pass 0（quantum 1 ms）：读 135744 次、单元 258、让路 80 次、unit_max 6.1 ms、>4ms 单元 1；账零漂移  ok
+  读者让路 pass 1（quantum 0）：读 105344 次、单元 337、让路 0 次、unit_max 8.1 ms、>4ms 单元 3；账零漂移  ok
+g14 第 14 轮：作业增量账 + 文件高水位 + 读者让路: PASS (7.4 s)
+f1: scan=1
+round 0: bad=0 verify=OK cells=1 segs=3 runs=3 recs=466 bytes=9742 err=0(-)
+round 1: bad=0 verify=OK cells=1 segs=4 runs=4 recs=932 bytes=19238 err=0(-)
+round 2: bad=0 verify=OK cells=1 segs=5 runs=5 recs=1388 bytes=28606 err=0(-)
+round 3: bad=0 verify=OK cells=2 segs=10 runs=6 recs=1851 bytes=37860 err=0(-)
+round 4: bad=0 verify=OK cells=2 segs=11 runs=6 recs=2313 bytes=47156 err=0(-)
+round 5: bad=0 verify=OK cells=2 segs=12 runs=6 recs=2770 bytes=56448 err=0(-)
+reopen OK
+after reopen bad=0 scan=1668
+PASS
+f4: pre-reopen: verify=OK bad=0 scan=25611 oracle=25611 cells=51 runs=9 pages=363/16384
+post-reopen: open=OK verify=OK bad=0 scan=25611 cells=51 runs=9
+after more writes: verify=OK bad=0 scan=27290 oracle=27290 cells=52
+PASS
+f6:   键空间 2000 / 每轮 4000 次 / 每 200 次提交：60 次提交，1994 键，bad=0，used 77 页
+  键空间 300 / 每轮 3000 次 / 每 100 次提交：120 次提交，300 键，bad=0，used 23 页
+  键空间 20000 / 每轮 4000 次 / 每 400 次提交：20 次提交，6569 键，bad=0，used 78 页
+PASS
+g15:   fmt: disk_fmt=2 MENT=48 ok
+  trim_unit: drop=2 trims=1 ok
+  trim_replay: ok
+  job_peak: trims=0 runs=2 ok
+  snap: pinned no-trim ok
+  bad_trim: bad_man=1 ok
+g15 P2 fmt+TRIM: PASS
+h2:   h2 small      20 页 runs=6：当前视图 627 键 verify=OK  ok
+  h2 bigval    120 页 runs=5：当前视图 129 键 verify=OK  ok
+  h2 tomb_snap  19 页 runs=5：当前视图 637 键 + 快照视图 657 键 verify=OK  ok
+h2 golden 镜像兼容: PASS

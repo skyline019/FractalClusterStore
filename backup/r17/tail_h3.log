@@ -1,0 +1,7 @@
+  h3 seed 1 span 1500: async=1 io_threads=2 whole=0 | 10 轮 掉电 10 次 | put 23481 del 4010 commit 3383 lcommit 2710 | 撕裂 3 页  ok
+  h3 seed 1 span 60: async=1 io_threads=2 whole=0 | 40 轮 掉电 40 次 | put 2883 del 475 commit 381 lcommit 328 | 撕裂 17 页  ok
+  h3 seed 2 span 1500: async=0 io_threads=1 whole=1 | 10 轮 掉电 10 次 | put 26003 del 4527 commit 3766 lcommit 3045 | 撕裂 3 页  ok
+  h3 seed 2 span 60: async=0 io_threads=1 whole=1 | 40 轮 掉电 40 次 | put 4372 del 722 commit 621 lcommit 495 | 撕裂 13 页  ok
+  h3 seed 3 span 1500: async=1 io_threads=2 whole=0 | 10 轮 掉电 10 次 | put 20314 del 3610 commit 2893 lcommit 2400 | 撕裂 3 页  ok
+  h3 seed 3 span 60: async=1 io_threads=2 whole=0 | 40 轮 掉电 40 次 | put 2821 del 491 commit 414 lcommit 324 | 撕裂 17 页  ok
+h3 多写者 × 异步 × 掉电: PASS

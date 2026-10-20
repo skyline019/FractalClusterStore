@@ -1,0 +1,59 @@
+PASS
+PASS
+PASS
+PASS
+PASS
+scale: pages=289 leaves=286 inners=3 pubs=18085 orphans=0 err=0()
+  keys=17142 scan=17142 leaves=286
+  snapshot at vers=42 (open=42) snaps=1
+  chain dup pages=0
+  after rollback: err=0() firstpage=0
+  reopen: err=0() pages=230 firstpage=0
+FAILURES: 0
+round 0 ok: pages=6 leaves=5 inners=1 pubs=291 orphans=0 keys=218 free=1
+round 1 ok: pages=8 leaves=7 inners=1 pubs=436 orphans=0 keys=294 free=1
+  reopened ok (vers=22)
+round 2 ok: pages=9 leaves=8 inners=1 pubs=475 orphans=0 keys=339 free=1
+round 3 ok: pages=10 leaves=9 inners=1 pubs=559 orphans=0 keys=342 free=1
+  reopened ok (vers=44)
+round 4 ok: pages=10 leaves=9 inners=1 pubs=577 orphans=0 keys=384 free=1
+round 5 ok: pages=10 leaves=9 inners=1 pubs=543 orphans=0 keys=371 free=1
+  reopened ok (vers=66)
+FAILURES: 0
+PASS
+PASS
+PASS
+PASS
+PASS
+PASS
+PASS
+PASS
+PASS
+PASS (fails=0)
+g9 墓碑账目口径（坑 92/93/94/95）+ 风暴 6 组: PASS (15.8 s)
+g10 R2 层合并预算 + 分步维护 + R7 墓碑自动归一 + R8 局部 TRIM: PASS (1.8 s)
+g11 第 12 轮：提交后维护 + 分步层合并作业 + 坑 99 + 并发 + 惰性存活账: PASS (18.6 s)
+g12 坑 102 版本回绕（70000 次逻辑提交 + 跨回绕快照）: PASS
+g13 第 13 轮：流式产物 + 重编号 + 层合并规则 + 维护预算 / mode 3: PASS (35.2 s)
+g14 第 14 轮：作业增量账 + 文件高水位 + 读者让路: PASS (16.3 s)
+h1 挂载模糊: PASS (3.6 s)
+h2 golden 镜像兼容: PASS
+h3 多写者 × 异步 × 掉电: PASS
+PASS
+PASS
+PASS
+PASS
+PASS
+PASS
+g11 第 12 轮：提交后维护 + 分步层合并作业 + 坑 99 + 并发 + 惰性存活账: PASS (31.4 s)
+g13 第 13 轮：流式产物 + 重编号 + 层合并规则 + 维护预算 / mode 3: PASS (4.9 s)
+g14 第 14 轮：作业增量账 + 文件高水位 + 读者让路: PASS (15.2 s)
+PASS
+PASS
+PASS
+PASS
+
+real	26m48.339s
+user	25m47.237s
+sys	1m10.011s
+ASAN_EXIT=0

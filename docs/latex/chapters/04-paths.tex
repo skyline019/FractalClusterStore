@@ -1,0 +1,34 @@
+\section{写路径、读路径与空间}
+
+\subsection{写路径}
+\begin{enumerate}[leftmargin=1.8em]
+  \item \texttt{put}/\texttt{del}/\texttt{del\_range} 进入 MemTable（及待提交范围墓碑）。
+  \item \texttt{commit}：\textbf{阶段一}（持锁）\texttt{flush\_mem} 编码并投递写、更新清单内存视图、抓 SB 载荷并发票号。
+  \item \textbf{阶段二}（\textbf{锁外}，按票号串行）：\texttt{wait\_io} $\to$ \texttt{sync} $\to$ 写 SB $\to$ \texttt{sync}。
+  \item \textbf{阶段三}（持锁）：发布 \texttt{sb\_synced\_}/\texttt{durable\_vers\_}，\texttt{promote\_pending}，可选自动归一。
+\end{enumerate}
+语义不变：\texttt{commit} 返回 $\Rightarrow$ 已持久；读者可见性本就可早于持久（未提交 mem 可读）。
+变宽的是阶段二失败窗口：内存可能已切新视图而盘仍旧点 $\Rightarrow$ \texttt{dirty\_} + 按盘重建。
+
+异步写：后台 IO 线程写页；同页顺序由入队保证；设备须支持异页并发。
+
+\subsection{读路径}
+\begin{enumerate}[leftmargin=1.8em]
+  \item 目录二分定位 cell。
+  \item 段按版本/全序从新到旧探测；Bloom 过滤负查。
+  \item fence / sp 定位页；解码记录（含前缀还原）；溢出则跟链。
+  \item 范围墓碑与点墓碑参与可见性；快照视图用 \texttt{view} 过滤。
+\end{enumerate}
+家族虚拟源（ROUND17）：同 \texttt{seq} 且键域不相交的片串成链，一链一游标顺序读，避免源 $>64$ 时掩码溢出导致 live 账漂移。
+
+\subsection{空间与高水位}
+\begin{itemize}[leftmargin=1.6em]
+  \item 空闲表内存重建；快照 pin 的页不回收。
+  \item 用户写入预留约 $1/8$ 容量给维护（历史规矩）。
+  \item 高水位回收：ROUND15 \textbf{二步搬家}——规划与「一提交点搬一条」分离；快照钉住记入 \texttt{hw\_blockers}。
+  \item \texttt{shrink} 必须落在提交点之后（坑~104：否则掉电可丢已提交数据）。
+\end{itemize}
+
+\subsection{范围墓碑要点}
+墓碑是清单项，不进键空间。同 \texttt{lo} 多条须按 $(\mathrm{lo},\mathrm{ver})$ 索引，避免窄墓碑顶掉宽墓碑。
+P2b 同 \texttt{seq} 家族片打破「组内 seq 连续 $\Rightarrow$ 更老」假设，探测改为 \texttt{older\_may\_contain\_grp}（坑~112 / g16 tomb）。

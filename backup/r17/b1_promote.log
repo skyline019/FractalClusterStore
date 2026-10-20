@@ -1,0 +1,6 @@
+A: 66000×3900B（溢出链）device max=400000 高水位=66949 (262 MB) 活页=66773 (261 MB) runs=5 verify=0(-)
+B: 30000×2900B（内联）高水位=97069 (379 MB) 活页=96527 (377 MB) runs=11 verify=0(-)
+compact_file: rc=OK  高水位 97069 → 97817（活页 96902，含链）
+reopen 7522.2 ms  verify 36829.6 ms  errors=0 回读坏=0 meta_hits=10 runs=1
+total 266.9 s
+PASS

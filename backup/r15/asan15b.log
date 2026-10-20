@@ -1,0 +1,122 @@
+== asan g14 ==
+  作业增量账：120 次提交 job_fast=14205 job_slow=16（提交后有欠账 4 次、提交 max 25.5 ms）；清账后账零漂移  ok
+  预留按存活估：源 2400 页（80% 脏）⇒ 产物 480 页，峰值增长 603 页（1.26× 产物；老估法 ≈ 5.62×）stream=1 moves=0 extends=0  ok
+  估小就地续租：extends=2 moves=0 stream=1  ok
+  高水位：默认 tail 4956 / 活页 2895 (1.71x, 写 18.7 MB)；pct=150 mode 1: tail 4619 (1.84x, 回收 7 次, 写 26.0 MB)；mode 3: tail 2951 (1.03x, 回收 2 次)  ok
+  顶部释放回落：t0 237 → 尾部分配 300 页 → 释放 + 提交点 ⇒ tail_ 237；清单页簇在顶（1）不回落；重开一致  ok
+  读者让路 pass 0（quantum 1 ms）：读 163968 次、单元 307、让路 151 次、unit_max 9.7 ms、>4ms 单元 4；账零漂移  ok
+  读者让路 pass 1（quantum 0）：读 99840 次、单元 337、让路 0 次、unit_max 15.4 ms、>4ms 单元 23；账零漂移  ok
+g14 第 14 轮：作业增量账 + 文件高水位 + 读者让路: PASS (9.9 s)
+== asan g15 ==
+  fmt: disk_fmt=2 MENT=48 ok
+  trim_unit: drop=2 trims=1 ok
+  trim_replay: ok
+  job_peak: trims=0 runs=2 ok
+  snap: pinned no-trim ok
+  bad_trim: bad_man=1 ok
+g15 P2 fmt+TRIM: PASS
+  h1 挂载模糊 400 次（seed 1，镜像 49 页）：OK 400 / CORRUPT 0 / IO 0 / 其它 0；成功挂载后 verify 报错 331 次、同时 get 读到假版本 24 次（都查得出来）
+h1 挂载模糊: PASS (2.6 s)
+  h1 挂载模糊 400 次（seed 2，镜像 49 页）：OK 400 / CORRUPT 0 / IO 0 / 其它 0；成功挂载后 verify 报错 341 次、同时 get 读到假版本 25 次（都查得出来）
+h1 挂载模糊: PASS (2.6 s)
+== asan h2 ==
+  h2 small      20 页 runs=6：当前视图 627 键 verify=OK  ok
+  h2 bigval    120 页 runs=5：当前视图 129 键 verify=OK  ok
+  h2 tomb_snap  19 页 runs=5：当前视图 637 键 + 快照视图 657 键 verify=OK  ok
+h2 golden 镜像兼容: PASS
+== asan h3 ==
+  h3 seed 1 span 1500: async=1 io_threads=2 whole=0 | 10 轮 掉电 10 次 | put 16497 del 2821 commit 2361 lcommit 1917 | 撕裂 2 页  ok
+  h3 seed 1 span 60: async=1 io_threads=2 whole=0 | 40 轮 掉电 40 次 | put 2835 del 489 commit 383 lcommit 336 | 撕裂 9 页  ok
+  h3 seed 2 span 1500: async=0 io_threads=1 whole=1 | 10 轮 掉电 10 次 | put 24514 del 4244 commit 3573 lcommit 2897 | 撕裂 3 页  ok
+  h3 seed 2 span 60: async=0 io_threads=1 whole=1 | 40 轮 掉电 40 次 | put 4130 del 705 commit 602 lcommit 499 | 撕裂 16 页  ok
+  h3 seed 3 span 1500: async=1 io_threads=2 whole=0 | 10 轮 掉电 10 次 | put 16955 del 3046 commit 2421 lcommit 1968 | 撕裂 5 页  ok
+  h3 seed 3 span 60: async=1 io_threads=2 whole=0 | 40 轮 掉电 40 次 | put 2903 del 493 commit 473 lcommit 345 | 撕裂 14 页  ok
+h3 多写者 × 异步 × 掉电: PASS
+== asan s3 ==
+快照期间 used=94 live=67 ratio=1.40（峰值 94）
+快照期间：used 44 -> 94（峰值 94），2.1 倍；老快照读错 0 条
+当前视图读错 0 条
+verify errors=0 runs=2
+释放快照后 used=94 runs=1
+PASS
+== asan s4 ==
+V(A)=2 V(B)=4
+覆盖 11 轮后：used 50 → 130，runs=3
+  A(gen0): n=2000 bad=0
+  B(gen1): n=2000 bad=0
+  当前(gen12): n=2000 bad=0
+used=130 live=99 ratio=1.31
+  回退后当前(gen1): n=2000 bad=0
+  回退后 A(gen0): n=2000 bad=0
+forget 后：used=142 live=52 runs=1
+compact_file 后：used=27 live=27 runs=1
+PASS
+== asan c1 ==
+clean: rc=OK bad=0
+flip page 2: rc=CORRUPT bad=1 first=2
+reopen rc=OK
+reopen scrub: rc=CORRUPT bad=1 first=2
+verify errors=1 first=page crc
+溢出链载荷翻位：scrub bad=1 first=2
+PASS
+== asan w1 ==
+4 线程 × 5000 条：504 ms  verify errors=0  回读坏=0  自动组提交省掉的提交=76  runs=11
+PASS
+== asan r2 ==
+-- 灌满小设备（RamDev 96 页）
+  停在第 379 次写，RC=NOSPACE（79 页）
+  compact_file: NOSPACE（91 页）
+  回收后又写了 140 次（91 页）
+-- 异步写 + 灌满（RamDev 128 页，2 线程）
+  停在第 399 次写，RC=NOSPACE（109 页，后台完成 187 次页写）
+  compact_file: NOSPACE（109 页）
+-- 写失败注入（异步，每 7 次提交坏一笔写）
+  提交成功 343 次、失败 57 次；恢复提交：OK
+-- 回退后重挂载（逻辑时钟必须单调）
+-- 慢设备（写卡 3 s）+ 有界等待 150 ms
+  卡住时的提交：TIMEOUT（160 ms，超时计数 1）
+  恢复后提交：OK
+PASS
+== asan s2 ==
+    compact_file OK op=24 used=5 live=2 runs=1
+    compact_file OK op=48 used=11 live=5 runs=3
+    compact_file OK op=55 used=11 live=5 runs=3
+    compact_file OK op=56 used=11 live=5 runs=3
+    compact_file OK op=100 used=8 live=3 runs=1
+    compact_file OK op=121 used=8 live=4 runs=1
+    compact_file OK op=128 used=7 live=4 runs=1
+    compact_file OK op=170 used=13 live=6 runs=1
+  op=  4000 used=  96/2048 runs=  1 extents=  0 live=  89 mem=     0KB cells=14
+          上次成功 compact_file op=3992
+  op=  8000 used= 146/2048 runs=  1 extents=  0 live= 137 mem=     0KB cells=23
+          上次成功 compact_file op=7969
+  op= 12000 used= 180/2048 runs=  1 extents=  0 live= 170 mem=     0KB cells=30
+          上次成功 compact_file op=11976
+  op= 16000 used= 193/2048 runs=  1 extents=  0 live= 183 mem=     0KB cells=34
+          上次成功 compact_file op=15949
+  op= 20000 used= 207/2048 runs=  1 extents=  1 live= 195 mem=     0KB cells=34
+          上次成功 compact_file op=19905
+  op= 24000 used= 216/2048 runs=  1 extents=  0 live= 205 mem=     0KB cells=37
+          上次成功 compact_file op=23977
+  op= 28000 used= 222/2048 runs=  1 extents=  1 live= 203 mem=     0KB cells=37
+          上次成功 compact_file op=27993
+  op= 32000 used= 215/2048 runs=  1 extents=  0 live= 204 mem=     0KB cells=37
+          上次成功 compact_file op=31987
+  op= 36000 used= 220/2048 runs=  1 extents=  0 live= 209 mem=     0KB cells=38
+          上次成功 compact_file op=35986
+  op= 40000 used= 219/2048 runs=  1 extents=  0 live= 208 mem=     0KB cells=38
+          上次成功 compact_file op=39988
+  漂移检查: used 96 -> 219, live 89 -> 208, 垃圾 7 -> 11, runs 1 -> 1, extents 0 -> 0
+  每 4k 次操作耗时: 首段 624.5 ms → 末段 1588.8 ms（2.54x）
+PASS
+== tsan g15 ==
+  fmt: disk_fmt=2 MENT=48 ok
+  trim_unit: drop=2 trims=1 ok
+  trim_replay: ok
+  job_peak: trims=0 runs=2 ok
+  snap: pinned no-trim ok
+  bad_trim: bad_man=1 ok
+g15 P2 fmt+TRIM: PASS
+== tsan g14 yield ==
+FATAL: ThreadSanitizer: unexpected memory mapping 0x70b3f1672000-0x70b3f1b00000
+SAN_FAIL=1

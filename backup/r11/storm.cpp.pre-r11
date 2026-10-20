@@ -1,0 +1,207 @@
+// storm —— 第 11 次讨论的"老正确性缺陷"探针（只读引擎；不是回归段）
+//
+// g8 抓到坑 90/91 的方式是"规模化工况 + 每次提交逐键全量比对"。这里把同一套方法推到 g5 覆盖的其它特性组合上：
+//   r  del_range（每次提交 1~3 段随机小范围）        d  点删除 5%
+//   s  长快照（最多 2 个同时持有、各 5~40 次提交；每次提交用 get_at 全量比对快照时刻的模型）
+//   b  rollback 到随机存活快照（模型回到快照副本）     o  每 20 次提交重开（析构再 open）
+//   a  异步写 + 2 个 IO 线程 + flush_min=1              l  混入 commit(false)（逻辑提交）
+//   c  每 15 次提交轮流 consolidate / relocate / checkpoint / compact_file / shrink
+//   v  更多溢出大值（10%）
+// 用法：storm <flags> [seed] [nkeys] [commits] [per]
+// 环境开关：STORM_VERIFY_EVERY=1  每次提交后 verify()，报首个出错的提交（找"账分家"的那一步）
+//           STORM_MAX_FAILS=N     累计 N 次失败才停（默认 6；老引擎读错早停时用大数看后面的 verify）
+//           STORM_WATCH=<key>     打印覆盖该键的 del_range / 快照 / 回退事件；配 -DSTORM_DBG 与带 dbg_key 的调试头
+//                                 （bench/probe/dbg_hooks.patch 打在 include/ 的副本上）还会在首个坏键处 dump 该键所在单元
+//           STORM_WATCH_EVERY=1   （同上条件）每次提交后 dump 被监视键所在单元的全部段与各 run 中该键的版本
+// 退出码 1 = 某次提交后 get/get_at 与模型不一致（打印首个坏键、读到/期望的序号、当时的 runs/层级）或 verify 报错。
+#include "fcs.h"
+#include <cstdio>
+#include <cstring>
+#include <cstdlib>
+#include <vector>
+#include <random>
+#include <string>
+using namespace fcs;
+
+struct Model { std::vector<u32> tag; std::vector<u16> len; };
+static void mkval(std::vector<u8>& v, u64 k, u32 tag, u16 len) {
+    v.resize(len); std::memcpy(v.data(), &tag, 4);
+    for (size_t i = 4; i < v.size(); ++i) v[i] = (u8)(k * 31 + i * 7 + tag * 131);
+}
+static bool val_ok(const u8* p, u16 len, u64 k, u32 tag, u16 want) {
+    if (len != want || len < 4) return false;
+    u32 t = 0; std::memcpy(&t, p, 4); if (t != tag) return false;
+    for (size_t i = 4; i < len; ++i) if (p[i] != (u8)(k * 31 + i * 7 + tag * 131)) return false;
+    return true;
+}
+static u32 compare_all(Store& s, const Model& m, u32 nkeys, Vers view, u64* first, u32* first_tag, RC* first_rc) {
+    static std::vector<u8> buf(16384);
+    u32 bad = 0;
+    for (u64 k = 1; k <= nkeys; ++k) {
+        u16 len = 0;
+        RC rc = view ? s.get_at(k, view, buf.data(), (u16)buf.size(), &len) : s.get(k, buf.data(), (u16)buf.size(), &len);
+        bool ok = !m.tag[k] ? (rc == RC::NOTFOUND) : (rc == RC::OK && val_ok(buf.data(), len, k, m.tag[k], m.len[k]));
+        if (!ok) { if (!bad) { *first = k; u32 t = 0; if (rc == RC::OK && len >= 4) std::memcpy(&t, buf.data(), 4); *first_tag = t; *first_rc = rc; } ++bad; }
+    }
+    return bad;
+}
+
+int main(int argc, char** argv) {
+    std::string flags = argc > 1 ? argv[1] : "";
+    int seed = argc > 2 ? std::atoi(argv[2]) : 1;
+    u32 nkeys = argc > 3 ? (u32)std::atoi(argv[3]) : 3000;
+    u32 commits = argc > 4 ? (u32)std::atoi(argv[4]) : 160;
+    u32 per = argc > 5 ? (u32)std::atoi(argv[5]) : 200;
+    auto F = [&](char c) { return flags.find(c) != std::string::npos; };
+    const u32 arena_pages = 256;
+    std::vector<u8> arena((size_t)arena_pages * PAGE);
+    RamDev dev(32768);
+    Store* s = nullptr;
+    auto setup = [&]() {
+        s = new Store();
+        if (s->open(&dev, arena.data(), arena_pages) != RC::OK) return false;
+        if (F('a')) { s->set_async_flush_min(1); s->set_io_threads(2); s->set_async_writes(true); }
+        return true;
+    };
+    if (!setup()) { std::printf("open fail\n"); return 1; }
+
+    std::mt19937 rng(seed);
+    auto R = [&](u64 n) { return (u64)(rng() % n); };
+    Model m; m.tag.assign(nkeys + 1, 0); m.len.assign(nkeys + 1, 0);
+    Model durable = m;                                    // 上一个持久提交点
+    struct Snap { Model m; Vers v; u32 at, hold; };
+    std::vector<Snap> snaps;                              // 与引擎 nsnap_ 对齐
+    std::vector<u8> v;
+    u32 tag = 0, fails = 0, n_rng = 0, n_snap = 0, n_rb = 0, n_reopen = 0, n_maint = 0, n_busy = 0, n_lcommit = 0, n_snapcmp = 0;
+    u32 max_runs = 0;
+    auto report = [&](const char* what, u32 c, u32 bad, u64 fk, u32 ft, RC frc, u32 want) {
+        ++fails;
+        if (fails <= 6) {
+            auto h = s->lvl_hist();
+            std::printf("  FAIL[%s] commit %u: %u keys wrong; first key %llu rc=%d got tag %u want %u | runs=%u cells=%u lvl=%u/%u/%u/%u/%u tombs=%u snaps=%zu\n",
+                        what, c, bad, (unsigned long long)fk, (int)frc, ft, want, s->run_count(), s->cell_count(), h[0], h[1], h[2], h[3], h[4],
+                        s->range_tombstones(), snaps.size());
+        }
+    };
+    auto full_check = [&](const char* what, u32 c) {
+        u64 fk = 0; u32 ft = 0; RC frc = RC::OK;
+        u32 bad = compare_all(*s, m, nkeys, 0, &fk, &ft, &frc);
+        if (bad) {
+            report(what, c, bad, fk, ft, frc, m.tag[fk]);
+#ifdef STORM_DBG
+            if (fails == 1) s->dbg_key(fk);
+#endif
+        }
+        for (size_t i = 0; i < snaps.size(); ++i) {
+            u32 sbad = compare_all(*s, snaps[i].m, nkeys, snaps[i].v, &fk, &ft, &frc);
+            ++n_snapcmp;
+            if (sbad) {
+                char b[64]; std::snprintf(b, sizeof b, "%s/snap%zu@%u", what, i, snaps[i].at); report(b, c, sbad, fk, ft, frc, snaps[i].m.tag[fk]);
+#ifdef STORM_DBG
+                if (fails <= 2) { std::printf("  snap view=%u; current model tag=%u\n", snaps[i].v, m.tag[fk]); s->dbg_ranges(fk); s->dbg_key(fk); }
+#endif
+            }
+        }
+    };
+
+    const u32 max_fails = std::getenv("STORM_MAX_FAILS") ? (u32)std::atoi(std::getenv("STORM_MAX_FAILS")) : 6;
+    for (u32 c = 1; c <= commits && fails < max_fails; ++c) {
+        for (u32 i = 0; i < per; ++i) {
+            u64 k = R(nkeys) + 1; ++tag;
+            u64 r = R(100);
+            if (F('d') && r < 5) { s->del(k); m.tag[k] = 0; m.len[k] = 0; continue; }
+            u16 len = r < 70 ? (u16)(16 + R(200)) : r < (u32)(F('v') ? 90 : 97) ? (u16)(200 + R(1200)) : (u16)(2000 + R(6000));
+            mkval(v, k, tag, len);
+            if (s->put(k, v.data(), len) != RC::OK) { std::printf("put fail at commit %u\n", c); return 1; }
+            m.tag[k] = tag; m.len[k] = len;
+        }
+        if (F('r')) {
+            u32 n = 1 + (u32)R(3);
+            for (u32 j = 0; j < n; ++j) {
+                u64 lo = R(nkeys) + 1, w = 1 + R(50), hi = std::min<u64>(lo + w, nkeys + 1);
+                if (s->del_range(lo, hi) != RC::OK) { std::printf("del_range fail\n"); return 1; }
+#ifdef STORM_DBG
+                { static long wk = std::getenv("STORM_WATCH") ? std::atol(std::getenv("STORM_WATCH")) : -1;
+                  if (wk >= 0 && (u64)wk >= lo && (u64)wk < hi) std::printf("  [watch] commit %u: del_range [%llu,%llu) covers %ld (vers before commit=%u)\n", c, (unsigned long long)lo, (unsigned long long)hi, wk, s->last_commit()); }
+#endif
+                for (u64 k = lo; k < hi; ++k) { m.tag[k] = 0; m.len[k] = 0; }
+                ++n_rng;
+            }
+        }
+        bool logical = F('l') && R(3) == 0;
+        RC rc = s->commit(!logical);
+        if (rc != RC::OK) { std::printf("commit %u rc=%d\n", c, (int)rc); return 1; }
+        if (logical) ++n_lcommit; else durable = m;
+        max_runs = std::max(max_runs, s->run_count());
+        full_check(logical ? "lcommit" : "commit", c);
+#ifdef STORM_DBG
+        { static long wk2 = std::getenv("STORM_WATCH") ? std::atol(std::getenv("STORM_WATCH")) : -1;
+          if (wk2 >= 0 && std::getenv("STORM_WATCH_EVERY")) { std::printf("  [watch] after commit %u:\n", c); s->dbg_key((u64)wk2); } }
+#endif
+        if (std::getenv("STORM_VERIFY_EVERY")) {          // 找"账分家"的那一步
+            static bool reported = false;
+            Report vr; RC rc2 = s->verify(&vr);
+            if (!reported && (rc2 != RC::OK || vr.errors)) {
+                reported = true; ++fails;
+                std::printf("  FAIL verify at commit %u: rc=%d errors=%u first=%s key=%llu (tombs=%u runs=%u)\n", c, (int)rc2, vr.errors, vr.first_err,
+                            (unsigned long long)vr.first_key, s->range_tombstones(), s->run_count());
+            }
+        }
+
+        // 快照 / 回退
+        if (F('s')) {
+            for (size_t i = 0; i < snaps.size();) {
+                if (c - snaps[i].at >= snaps[i].hold) {
+                    if (F('b') && R(2) == 0) {            // 回退到它（丢掉它之后的一切）
+                        RC rr = s->rollback((u32)i);
+                        if (rr != RC::OK) { std::printf("rollback rc=%d\n", (int)rr); return 1; }
+                        m = snaps[i].m; durable = m; snaps.resize(i); ++n_rb;
+#ifdef STORM_DBG
+                        std::printf("  [watch] commit %u: rollback(%zu) -> vers=%u\n", c, i, s->last_commit());
+#endif
+                        full_check("rollback", c);
+                        break;
+                    }
+                    // 只能整体 forget：引擎没有"释放单个快照"的接口 ⇒ 最老的到期就全放
+                    if (i == 0) { s->forget_snapshots(); snaps.clear(); break; }
+                    ++i;
+                } else ++i;
+            }
+            if (snaps.size() < 2 && R(4) == 0) {
+                if (s->snapshot() == RC::OK) { snaps.push_back(Snap{m, s->last_commit(), c, 5 + (u32)R(36)}); durable = m; ++n_snap;
+#ifdef STORM_DBG
+                    std::printf("  [watch] commit %u: snapshot #%zu vers=%u\n", c, snaps.size() - 1, s->last_commit());
+#endif
+                }
+            }
+        }
+        // 维护
+        if (F('c') && c % 15 == 0) {
+            u32 which = (c / 15) % 5; RC mr = RC::OK; const char* nm = "";
+            if (which == 0) { nm = "consolidate"; mr = s->consolidate(); }
+            else if (which == 1) { nm = "relocate"; mr = s->relocate(); }
+            else if (which == 2) { nm = "checkpoint"; mr = s->checkpoint(); }
+            else if (which == 3) { nm = "compact_file"; mr = s->compact_file(); }
+            else { nm = "shrink"; mr = s->shrink(); }
+            if (mr == RC::BUSY) ++n_busy;
+            else if (mr != RC::OK) { std::printf("%s rc=%d at commit %u\n", nm, (int)mr, c); return 1; }
+            else { ++n_maint; if (which != 4) durable = m; full_check(nm, c); }
+        }
+        // 重开
+        if (F('o') && c % 20 == 0) {
+            delete s;
+            if (!setup()) { std::printf("reopen fail\n"); return 1; }
+            snaps.clear();                                // 快照不跨重开
+            m = durable; ++n_reopen;
+            full_check("reopen", c);
+        }
+    }
+    Report rep; RC vr = s->verify(&rep);
+    if (vr != RC::OK || rep.errors) { ++fails; std::printf("  FAIL verify rc=%d errors=%u first=%s key=%llu\n", (int)vr, rep.errors, rep.first_err, (unsigned long long)rep.first_key); }
+    auto h = s->lvl_hist();
+    std::printf("storm[%s] seed=%d nkeys=%u commits=%u per=%u: rng=%u snaps=%u snapcmps=%u rb=%u reopen=%u maint=%u busy=%u lcommit=%u | runs=%u(max %u) cells=%u lvl=%u/%u/%u/%u/%u tombs=%u %s\n",
+                flags.c_str(), seed, nkeys, commits, per, n_rng, n_snap, n_snapcmp, n_rb, n_reopen, n_maint, n_busy, n_lcommit,
+                s->run_count(), max_runs, s->cell_count(), h[0], h[1], h[2], h[3], h[4], s->range_tombstones(), fails ? "FAIL" : "PASS");
+    delete s;
+    return fails ? 1 : 0;
+}

@@ -1,0 +1,7 @@
+本目录保留：
+  layout.cpp   — ROUND16–18 盘面峰值探针（产品入口）
+  storm.cpp    — g9 `#include` 依赖（覆盖风暴；勿再扫走）
+  README.md / ARCHIVE.txt
+
+其余历史探针（wprof / tomb_* / stall / famw / …）在：
+  backup/r18/swept/bench-probe/

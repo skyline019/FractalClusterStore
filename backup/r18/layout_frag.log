@@ -1,0 +1,332 @@
+=== frag=0 det200k rep=1 ===
+== after insert: tail=2328 live_pages=1778 used=2328 runs=8 grows=23 grown=2326
+== after update: tail=3495 peak_tail=3495 live_pages=1925 used=3495 runs=23 grows=27 grown=3493  hw 13.7 MB live 7.5 MB (1.82x) peak 1.82x  stream runs=5 moves=0 extends=0 reclaims=0 blockers=0  dev writes 41.8 MB
+== merge width: src_max=8 cur_max=8  hole_fits=1  hole_protect_skips=0 protect=0  part_frags=0 frag=0
+== runs by address (page0 npages lvl seq):
+   [hole 84 pg]
+        86     40 L1 seq=683
+       126     41 L1 seq=692
+       167     41 L1 seq=701
+   [hole 48 pg]
+       256     85 L3 seq=581
+       341     30 L2 seq=672
+   [hole 10 pg]
+       381     73 L3 seq=581
+       454    139 L3 seq=581
+   [hole 99 pg]
+       692     73 L3 seq=581
+       765     70 L3 seq=581
+   [hole 209 pg]
+      1044     74 L3 seq=581
+   [hole 237 pg]
+      1355     76 L3 seq=581
+      1431    261 L2 seq=672
+   [hole 15 pg]
+      1707    127 L3 seq=581
+   [hole 184 pg]
+      2018    127 L3 seq=581
+   [hole 184 pg]
+      2329    126 L3 seq=581
+   [hole 163 pg]
+      2618    127 L3 seq=581
+   [hole 160 pg]
+      2905     91 L3 seq=581
+      2996     92 L3 seq=581
+      3088     93 L3 seq=581
+   [hole 32 pg]
+      3213     72 L3 seq=581
+      3285     72 L3 seq=581
+      3357     69 L3 seq=581
+      3426     69 L3 seq=581
+== free holes by size class: [1,2):1 [4,8):2 [8,16):4 [16,32):1 [32,64):3 [64,128):1 [128,256):6
+=== frag=0 det200k rep=2 ===
+== after insert: tail=2328 live_pages=1778 used=2328 runs=8 grows=23 grown=2326
+== after update: tail=3495 peak_tail=3495 live_pages=1925 used=3495 runs=23 grows=27 grown=3493  hw 13.7 MB live 7.5 MB (1.82x) peak 1.82x  stream runs=5 moves=0 extends=0 reclaims=0 blockers=0  dev writes 41.8 MB
+== merge width: src_max=8 cur_max=8  hole_fits=1  hole_protect_skips=0 protect=0  part_frags=0 frag=0
+== runs by address (page0 npages lvl seq):
+   [hole 84 pg]
+        86     40 L1 seq=683
+       126     41 L1 seq=692
+       167     41 L1 seq=701
+   [hole 48 pg]
+       256     85 L3 seq=581
+       341     30 L2 seq=672
+   [hole 10 pg]
+       381     73 L3 seq=581
+       454    139 L3 seq=581
+   [hole 99 pg]
+       692     73 L3 seq=581
+       765     70 L3 seq=581
+   [hole 209 pg]
+      1044     74 L3 seq=581
+   [hole 237 pg]
+      1355     76 L3 seq=581
+      1431    261 L2 seq=672
+   [hole 15 pg]
+      1707    127 L3 seq=581
+   [hole 184 pg]
+      2018    127 L3 seq=581
+   [hole 184 pg]
+      2329    126 L3 seq=581
+   [hole 163 pg]
+      2618    127 L3 seq=581
+   [hole 160 pg]
+      2905     91 L3 seq=581
+      2996     92 L3 seq=581
+      3088     93 L3 seq=581
+   [hole 32 pg]
+      3213     72 L3 seq=581
+      3285     72 L3 seq=581
+      3357     69 L3 seq=581
+      3426     69 L3 seq=581
+== free holes by size class: [1,2):1 [4,8):2 [8,16):4 [16,32):1 [32,64):3 [64,128):1 [128,256):6
+=== frag=0 800k ===
+== after insert: tail=8063 live_pages=7208 used=8063 runs=32 grows=44 grown=8061
+== after update: tail=11760 peak_tail=11760 live_pages=7835 used=11760 runs=43 grows=60 grown=11994  hw 45.9 MB live 30.6 MB (1.50x) peak 1.50x  stream runs=17 moves=0 extends=1 reclaims=0 blockers=0  dev writes 171.0 MB
+== merge width: src_max=9 cur_max=8  hole_fits=1  hole_protect_skips=0 protect=0  part_frags=0 frag=0
+== runs by address (page0 npages lvl seq):
+   [hole 193 pg]
+       195    145 L3 seq=581
+   [hole 5 pg]
+       345     33 L3 seq=1165
+   [hole 4 pg]
+       382     41 L1 seq=2760
+   [hole 3 pg]
+       426     70 L3 seq=581
+       496     41 L1 seq=2770
+   [hole 200 pg]
+       737     84 L3 seq=581
+       821    205 L3 seq=1165
+   [hole 26 pg]
+      1052     71 L3 seq=581
+      1123    204 L3 seq=1165
+   [hole 40 pg]
+      1367     84 L3 seq=581
+      1451    204 L3 seq=1165
+   [hole 27 pg]
+      1682     84 L3 seq=581
+      1766     41 L1 seq=2738
+      1807     41 L1 seq=2747
+   [hole 190 pg]
+      2038     83 L3 seq=581
+      2121    209 L3 seq=1165
+   [hole 23 pg]
+      2353     83 L3 seq=581
+      2436    208 L3 seq=1165
+   [hole 24 pg]
+      2668     83 L3 seq=581
+      2751    203 L3 seq=1165
+   [hole 41 pg]
+      2995   1188 L3 seq=1749
+      4183    597 L3 seq=1749
+   [hole 123 pg]
+      4903    306 L2 seq=2435
+      5209    309 L2 seq=2512
+      5518    309 L2 seq=2585
+      5827    309 L2 seq=2658
+      6136   1186 L3 seq=2354
+      7322    561 L3 seq=2354
+      7883    305 L2 seq=2730
+   [hole 2075 pg]
+     10263     74 L3 seq=581
+   [hole 32 pg]
+     10369     70 L3 seq=581
+   [hole 32 pg]
+     10471     70 L3 seq=581
+   [hole 32 pg]
+     10573     70 L3 seq=581
+   [hole 32 pg]
+     10675     70 L3 seq=581
+   [hole 32 pg]
+     10777     69 L3 seq=581
+   [hole 32 pg]
+     10878     69 L3 seq=581
+     10947     83 L3 seq=581
+     11030     82 L3 seq=581
+     11112     82 L3 seq=581
+     11194     82 L3 seq=581
+     11276     82 L3 seq=581
+     11358    202 L3 seq=1165
+     11560    200 L3 seq=1165
+== free holes by size class: [2,4):3 [8,16):2 [16,32):7 [32,64):9 [64,128):1 [128,256):2 [2048,4096):1
+=== frag=1 det200k rep=1 ===
+== after insert: tail=2328 live_pages=1778 used=2328 runs=8 grows=23 grown=2326
+== after update: tail=3299 peak_tail=3299 live_pages=1928 used=3299 runs=32 grows=27 grown=3297  hw 12.9 MB live 7.5 MB (1.71x) peak 1.71x  stream runs=5 moves=0 extends=0 reclaims=0 blockers=0  dev writes 41.8 MB
+== merge width: src_max=8 cur_max=8  hole_fits=1  hole_protect_skips=0 protect=0  part_frags=2 frag=1
+== runs by address (page0 npages lvl seq):
+   [hole 59 pg]
+        61     22 L3 seq=581
+   [hole 3 pg]
+        86     40 L1 seq=692
+       126     41 L1 seq=701
+   [hole 39 pg]
+       206     23 L3 seq=581
+       229     24 L3 seq=581
+   [hole 3 pg]
+       256     85 L3 seq=581
+       341     22 L3 seq=581
+   [hole 18 pg]
+       381     27 L3 seq=581
+       408     25 L3 seq=581
+       433     85 L3 seq=581
+       518     39 L3 seq=581
+       557     41 L1 seq=710
+   [hole 94 pg]
+       692     24 L3 seq=581
+       716     22 L3 seq=581
+       738     86 L3 seq=581
+   [hole 80 pg]
+       904     76 L2 seq=681
+   [hole 64 pg]
+      1044     55 L3 seq=581
+      1099     87 L3 seq=581
+   [hole 169 pg]
+      1355     55 L3 seq=581
+      1410     88 L3 seq=581
+   [hole 209 pg]
+      1707     57 L3 seq=581
+      1764    136 L3 seq=581
+   [hole 118 pg]
+      2018     59 L3 seq=581
+      2077    137 L3 seq=581
+   [hole 115 pg]
+      2329     56 L3 seq=581
+      2385    216 L2 seq=681
+   [hole 17 pg]
+      2618     55 L3 seq=581
+   [hole 232 pg]
+      2905     91 L3 seq=581
+      2996     92 L3 seq=581
+      3088     93 L3 seq=581
+      3181     59 L3 seq=581
+      3240     59 L3 seq=581
+== free holes by size class: [1,2):2 [4,8):2 [16,32):4 [32,64):2 [64,128):4 [128,256):3
+=== frag=1 det200k rep=2 ===
+== after insert: tail=2328 live_pages=1778 used=2328 runs=8 grows=23 grown=2326
+== after update: tail=3299 peak_tail=3299 live_pages=1928 used=3299 runs=32 grows=27 grown=3297  hw 12.9 MB live 7.5 MB (1.71x) peak 1.71x  stream runs=5 moves=0 extends=0 reclaims=0 blockers=0  dev writes 41.8 MB
+== merge width: src_max=8 cur_max=8  hole_fits=1  hole_protect_skips=0 protect=0  part_frags=2 frag=1
+== runs by address (page0 npages lvl seq):
+   [hole 59 pg]
+        61     22 L3 seq=581
+   [hole 3 pg]
+        86     40 L1 seq=692
+       126     41 L1 seq=701
+   [hole 39 pg]
+       206     23 L3 seq=581
+       229     24 L3 seq=581
+   [hole 3 pg]
+       256     85 L3 seq=581
+       341     22 L3 seq=581
+   [hole 18 pg]
+       381     27 L3 seq=581
+       408     25 L3 seq=581
+       433     85 L3 seq=581
+       518     39 L3 seq=581
+       557     41 L1 seq=710
+   [hole 94 pg]
+       692     24 L3 seq=581
+       716     22 L3 seq=581
+       738     86 L3 seq=581
+   [hole 80 pg]
+       904     76 L2 seq=681
+   [hole 64 pg]
+      1044     55 L3 seq=581
+      1099     87 L3 seq=581
+   [hole 169 pg]
+      1355     55 L3 seq=581
+      1410     88 L3 seq=581
+   [hole 209 pg]
+      1707     57 L3 seq=581
+      1764    136 L3 seq=581
+   [hole 118 pg]
+      2018     59 L3 seq=581
+      2077    137 L3 seq=581
+   [hole 115 pg]
+      2329     56 L3 seq=581
+      2385    216 L2 seq=681
+   [hole 17 pg]
+      2618     55 L3 seq=581
+   [hole 232 pg]
+      2905     91 L3 seq=581
+      2996     92 L3 seq=581
+      3088     93 L3 seq=581
+      3181     59 L3 seq=581
+      3240     59 L3 seq=581
+== free holes by size class: [1,2):2 [4,8):2 [16,32):4 [32,64):2 [64,128):4 [128,256):3
+=== frag=1 800k ===
+== after insert: tail=8104 live_pages=7208 used=8104 runs=32 grows=45 grown=8102
+== after update: tail=11678 peak_tail=11678 live_pages=7843 used=11678 runs=54 grows=57 grown=11774  hw 45.6 MB live 30.6 MB (1.49x) peak 1.49x  stream runs=20 moves=0 extends=1 reclaims=0 blockers=0  dev writes 171.1 MB
+== merge width: src_max=9 cur_max=8  hole_fits=1  hole_protect_skips=0 protect=0  part_frags=9 frag=1
+== runs by address (page0 npages lvl seq):
+   [hole 115 pg]
+       117     41 L1 seq=2771
+       158     41 L1 seq=2781
+       199    141 L3 seq=581
+   [hole 41 pg]
+       381     24 L3 seq=581
+   [hole 45 pg]
+       450      9 L3 seq=581
+   [hole 82 pg]
+       541     41 L1 seq=2758
+   [hole 155 pg]
+       737     28 L3 seq=581
+       765     52 L3 seq=581
+       817    210 L3 seq=1165
+   [hole 25 pg]
+      1052     24 L3 seq=581
+      1076     52 L3 seq=581
+      1128    215 L3 seq=1165
+   [hole 24 pg]
+      1367     34 L3 seq=581
+      1401     52 L3 seq=581
+      1453    208 L3 seq=1165
+   [hole 21 pg]
+      1682     39 L3 seq=581
+      1721     52 L3 seq=581
+   [hole 41 pg]
+      1814     41 L1 seq=2749
+   [hole 183 pg]
+      2038     54 L3 seq=581
+      2092     52 L3 seq=581
+      2144    207 L3 seq=1165
+   [hole 2 pg]
+      2353     47 L3 seq=581
+      2400     52 L3 seq=581
+      2452    217 L3 seq=1165
+   [hole 40 pg]
+      2709     64 L3 seq=581
+      2773    230 L3 seq=1165
+      3003   1189 L3 seq=1749
+      4192    594 L3 seq=1749
+   [hole 41 pg]
+      4827    306 L2 seq=2446
+      5133    309 L2 seq=2523
+      5442    309 L2 seq=2596
+      5751    309 L2 seq=2669
+      6060   1186 L3 seq=2366
+      7246    562 L3 seq=2366
+      7808    305 L2 seq=2741
+   [hole 2192 pg]
+     10305     74 L3 seq=581
+   [hole 32 pg]
+     10411     70 L3 seq=581
+   [hole 32 pg]
+     10513     70 L3 seq=581
+     10583     52 L3 seq=581
+     10635     51 L3 seq=581
+     10686     51 L3 seq=581
+     10737     52 L3 seq=581
+     10789     51 L3 seq=581
+     10840     52 L3 seq=581
+     10892     51 L3 seq=581
+     10943     51 L3 seq=581
+     10994     51 L3 seq=581
+     11045     51 L3 seq=581
+     11096     51 L3 seq=581
+     11147     51 L3 seq=581
+     11198     50 L3 seq=581
+     11248     50 L3 seq=581
+     11298    205 L3 seq=1165
+     11503    175 L3 seq=1165
+== free holes by size class: [2,4):3 [8,16):3 [16,32):4 [32,64):7 [64,128):1 [128,256):2 [2048,4096):1
+DONE

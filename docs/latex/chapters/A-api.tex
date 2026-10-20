@@ -1,0 +1,30 @@
+\section{公开 API 速查（部署相关）}
+\label{app:api}
+
+下列为部署与整理相关入口摘要；完整签名以 \texttt{include/fcs.h} 为准。
+
+\begin{lstlisting}[language=fcsapi,caption={整理与养洞旋钮}]
+void configure_deploy(bool async = true, u32 hw_pct = 150);
+RC   polish();
+void set_tidy_policy(TidyPolicy p);
+TidySnap tidy_snap() const;
+RC   maybe_tidy();
+
+void set_part_hole_fit(bool on);
+void set_part_frag(bool on);
+void set_part_frag_floor(u32 n);
+void set_part_coalesce(bool on);      // 默认建议关
+void set_protect_merge_holes(bool on);
+
+void set_async_writes(bool on);
+void set_merge_cheap_pages(u32 n);
+void set_hw_reclaim_pct(u32 pct);
+void set_maint_mode(int mode);        // 0 / 1 / 3
+u64  durable_vers() const;
+\end{lstlisting}
+
+\begin{description}[leftmargin=1.4em]
+  \item[\texttt{configure\_deploy}] Soft 一揽子：async、cheap、hole\_fit、frag~A、护洞、hw；必要时把 maint 从 0 提到 1。
+  \item[\texttt{polish}] 全库归一 + 尾部回落；写放大高，用于发布前。
+  \item[\texttt{maybe\_tidy}] Soft 直接 OK；Hard/Periodic 在 runs 或 layout\% 超阈时步进。
+\end{description}
