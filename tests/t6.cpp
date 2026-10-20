@@ -39,7 +39,7 @@ int main(int argc, char** argv) {
     u32 cnt = 0; e.scan([&](u64, const u8*, u16) { ++cnt; return true; });
     std::printf("scan=%u\n", cnt);
     // 列出所有叶页及其链接
-    u32 nleaf = 0, total = 0, sum = 0;
+    u32 nleaf = 0, total = 0;
     for (u16 p2 = 2; p2 < dev.capacity(); ++p2) {
         const u8* b = dev.raw(p2);
         if (!page_ok(b) || page_kind(b) != PK_LEAF) continue;

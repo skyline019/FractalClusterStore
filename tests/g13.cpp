@@ -27,6 +27,7 @@
 #undef private
 #define G6_NO_MAIN
 #include "g6.cpp"              // VolDev（易失页缓存 + 掉电 + 撕裂）
+static int (*const g13_keep_g6_run)(int, int) = run;  // 压掉 g6::run 未使用（同 h3）
 using namespace fcs;
 
 namespace {

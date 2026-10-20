@@ -20,7 +20,6 @@ int main() {
         }
         s.commit();
     }
-    u32 snap_id = 0;
     if (s.snapshot() != RC::OK) { printf("snapshot fail\n"); return 1; }
     u32 used0 = s.used_pages();
     u32 max_used = used0;
