@@ -134,10 +134,21 @@ backup/             各轮快照与清扫归档（r18/swept/CLEAN_MANIFEST.md）
 ```sh
 make          # 全部测试
 make t3       # 单个测试
-make bench    # v3 写放大矩阵 + 组提交 + v2/v1 对照 + bench6（点读扩展/大值热点/长删循环/压实曲线/文件写合并 fwrite）
-make asan     # ASan+UBSan
+make ci-smoke # 快速门：f1 + g16–g18 + h2（与 CI smoke 对齐）
+make ci       # bins + smoke + 全量 test（本地对齐严格 CI，不含 sanitizers）
+make bench    # v3 写放大矩阵 + 组提交 + v2/v1 对照 + bench6
+make asan     # ASan+UBSan+TSan（严格 CI 第四门）
 make dbg      # 打开断言与追踪宏
 ```
+
+**严格 CI**（GitHub Actions：`.github/workflows/ci.yml`）四门全过才算绿：
+
+1. **Compile** — `-Werror`（仅放行 sign-compare / format / narrowing）
+2. **Smoke** — `make ci-smoke`
+3. **Full test** — `make test`
+4. **Sanitizers** — `make asan`（ASan / UBSan / TSan）
+
+聚合检查名：**Strict CI OK**。建议在仓库 Settings → Branches 将 `main` 的 required status 设为该检查。
 
 单独跑对比基准：
 

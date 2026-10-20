@@ -30,8 +30,22 @@ BINS     := $(addprefix $(BIN)/,$(TESTS))
 #   -DXDB_CORRUPT_TRACE   CORRUPT 返回点定位
 #   -DXDB_COMMIT_CHECK    每次提交后全量校验（极慢）
 
-.PHONY: all test bench asan dbg clean
+.PHONY: all test bins ci-smoke ci asan dbg clean
 all: test
+
+# 仅编译全部测试二进制（CI compile 门）
+bins: $(BINS)
+
+# 快速门：格式 / 近轮回归（CI smoke）
+ci-smoke: $(BIN)/f1 $(BIN)/g16 $(BIN)/g17 $(BIN)/g18 $(BIN)/h2
+	$(BIN)/f1
+	$(BIN)/g16
+	$(BIN)/g17
+	$(BIN)/g18
+	$(BIN)/h2
+
+# 本地对齐严格 CI（不含 sanitizers；那些用 make asan）
+ci: bins ci-smoke test
 
 $(BIN):
 	@mkdir -p $(BIN)
