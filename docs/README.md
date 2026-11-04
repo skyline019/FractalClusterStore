@@ -22,7 +22,8 @@ docs/
 |---|---|
 | [`../README.md`](../README.md) | **产品介绍**（定位 / 对比 / 上手） |
 | [`00-entry/DETAIL.md`](00-entry/DETAIL.md) | **详情手册**（原根 README：API / 基准 / 轮次 / 测试） |
-| [`00-entry/EVAL17.md`](00-entry/EVAL17.md) | **冻结全量评估**（滚动结论；含 Soft peers） |
+| [`00-entry/EVAL17.md`](00-entry/EVAL17.md) | **滚动全量评估**（含 Soft+Post peers · 坑 151） |
+| [`../backup/peers-post/PEERS_POST.md`](../backup/peers-post/PEERS_POST.md) | 现行 Soft Post vs SQLite/LMDB 全表 |
 | [`00-entry/BATTLE.md`](00-entry/BATTLE.md) | 包 A/B/L 对照与升格说明 |
 | [`00-entry/RELEASE_NOTES_v0.1.0.md`](00-entry/RELEASE_NOTES_v0.1.0.md) | v0.1.0 发布说明 |
 
@@ -65,6 +66,12 @@ docs/
 | 路径 | 用途 |
 |---|---|
 | [`30-discuss/DISCUSS15_FSYNC.md`](30-discuss/DISCUSS15_FSYNC.md) | fsync 出锁讨论（R17 已落地） |
+| [`30-discuss/DISCUSS_RANGE_ROOT.md`](30-discuss/DISCUSS_RANGE_ROOT.md) | Soft range 根源（路径 C） |
+| [`30-discuss/DISCUSS_RANGE_IDLE.md`](30-discuss/DISCUSS_RANGE_IDLE.md) | Idle/Post · **Post 已升 Soft 默认** |
+| [`30-discuss/DISCUSS_RANGE_DYNAMIC.md`](30-discuss/DISCUSS_RANGE_DYNAMIC.md) | 动态整理消融（写中 duty 否定） |
+| [`30-discuss/DISCUSS_SYNC_WORK_RHYTHM.md`](30-discuss/DISCUSS_SYNC_WORK_RHYTHM.md) | Soft sync 写峰/谷节奏 |
+| [`30-discuss/DISCUSS_HARNESS_AB_SPACE.md`](30-discuss/DISCUSS_HARNESS_AB_SPACE.md) | 空间峰 harness |
+| [`30-discuss/ENG_DEBT_SOAK_CRC.md`](30-discuss/ENG_DEBT_SOAK_CRC.md) · [`ENG_DEBT_SPLIT.md`](30-discuss/ENG_DEBT_SPLIT.md) | soak/CRC、拆头 |
 
 更早 DISCUSS / EVAL12 等已扫入归档（见下 §5）。
 

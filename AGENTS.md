@@ -16,9 +16,11 @@
 - 新坑 → **先** PIT_LOG 占号，再改代码，再补回归测
 - **收工** → 有坑/近误判/环境注意就更新 `PIT_LOG.md`（同轮，勿只留聊天）
 - **根因** → 复现 + 排除竞品假说 + 独立复核；未验证前写 leading，不宣称「就是根源」
-- Soft 是产品默认；不要把 mode 0 / 关护洞设回默认
-- 大改拆头 / P2c / 双 memtable：先讨论稿，后薄切片
+- Soft / `configure_deploy` 是产品默认：**护洞 + P2 + SoftCons::Post**；勿退回 mode 0 / 关护洞 / 关 Post 当默认
+- 读 SLA：写后 `soft_cons_repay()` 或 `polish()`；消融用 `set_soft_cons(Off)`
+- Eager `soft_consolidate` / 写中 duty tidy：**勿**升 Soft 默认（坑 147）
+- 大改拆头 / P2c / 双 memtable：先讨论稿，后薄切片；热路径 peers：`make peers-post`
 
 ## 非目标
 
-SQL、多进程共享同一打开库、把「未整理 range≈LMDB」当必须 KPI。
+SQL、多进程共享同一打开库、把「未 repay 的 Soft live range≈LMDB」或「单 run range 追平 LMDB」当必须 KPI。

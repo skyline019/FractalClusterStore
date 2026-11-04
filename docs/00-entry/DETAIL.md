@@ -64,13 +64,14 @@ s.index_get(idx, skey, pk);
 
 s.commit(false);  ...  s.commit();              // 组提交：N 次逻辑提交 → 1 次物理提交
 
-// —— 部署整理 / 常驻整理态 ——
-s.set_tidy_policy(Store::TidyPolicy::Soft);    // Soft=configure_deploy+护洞；Hard/Periodic 再配 maybe_tidy()
-s.configure_deploy();                          // async + cheap + hole_fit + 护洞 + hw_reclaim 150
-s.commit(false);  ...  s.commit();             // 组提交仍由应用拼
+// —— 部署整理 / 常驻整理态（坑 144/151）——
+s.configure_deploy();                          // Soft + async + cheap + hole_fit + 护洞 + hw + P2 + SoftCons::Post
+s.commit(false);  ...  s.commit();             // 组提交仍由应用拼；Post 写中只记债
+s.soft_cons_repay(64);                         // 读服务前还债（consolidate→relocate→checkpoint→shrink）
+// 或：s.polish();                             // 全库归一重锤
 auto sn = s.tidy_snap();                       // runs / layout_pct / protect_holes …
-while (s.maybe_tidy() == RC::MORE) {}          // Hard=consolidate_step；Periodic=compact_file_step
-s.polish();                                    // 对外读服务前重锤：consolidate(0)+shrink
+// while (s.maybe_tidy() == RC::MORE) {}       // Hard/Periodic/Eager；Post 上 maybe_tidy 为 no-op
+s.set_soft_cons(Store::SoftCons::Off);         // 消融：live 写换读
 s.set_protect_merge_holes(true);               // 护洞：用户 flush 不吃 ≥floor 中部大洞（合并仍可进）
 s.set_part_frag(true);                         // 养洞合并 A：洞碎时降片下限（默认开；part_frags() 观测）
 s.set_part_frag_floor(16);                     // 碎片态最小片（页）

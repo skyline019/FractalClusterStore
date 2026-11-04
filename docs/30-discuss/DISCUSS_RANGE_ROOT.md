@@ -51,8 +51,8 @@ Soft A1 峰：**未跑**（实验臂无稳定 range 胜，不值得先烧峰）�
 
 ## 4. 路径 B：可选项（已落地）· 默认待门禁
 
-API：`set_soft_consolidate(true)`（**默认 false**）。Soft + `maybe_tidy` 在 `tidy_soft_runs_` / layout 压力下走 `consolidate_step`（与 Hard 同刀、Soft 阈值）。  
-`configure_deploy` / Soft 默认 **不**打开。另：`polish()` / `TidyPolicy::Hard|Periodic` 仍可用。
+API：`set_soft_consolidate(true)` → **Eager**（写税高；**勿**当 Soft 默认，坑 147）。  
+**现行 Soft 默认**：`SoftCons::Post`（坑 151）+ 读前 `soft_cons_repay` / `polish`。详见 [`DISCUSS_RANGE_IDLE.md`](DISCUSS_RANGE_IDLE.md)。
 
 ### 4.1 消融（`scripts/ablate_range_b.sh` · 一次）
 

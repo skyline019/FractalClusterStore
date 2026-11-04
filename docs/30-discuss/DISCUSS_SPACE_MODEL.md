@@ -130,7 +130,7 @@ M_{\mathrm{dead}}(t) \approx \underbrace{u\cdot\alpha}_{\text{点覆盖率}} \cd
 | hole_fit / frag A | **已收一刀** | 残差=养洞 |
 | P2c 打峰 | **闭合（不对症）** | 峰 DATA_DEAD=0 |
 | **分配器：合并洞不被 L0/L1 啃光** | **半开（P1d 最优臂实验）** | 坑 135：mode2+skip180；Soft 勿升；可转 P2 |
-| **分片跨提交 + 预算（P2 starve）** | **半开（Soft A1 both）** | 坑 138：fit+promote 峰↓；勿升 Soft；A2/A3 开放 |
+| **分片跨提交 + 预算（P2 starve）** | **Soft 默认开（坑 144）** | fit+promote 峰↓；消融可 set false |
 | **空闲 dense-run 重写** | **开放（薄）** | 降合前/ MIX 税，不保证峰 |
 | 键级活链 | **闭合（禁）** | I2 |
 

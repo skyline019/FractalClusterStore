@@ -23,3 +23,12 @@ make asan     # ASan + UBSan + TSan
 ## Known gaps
 
 单进程、键固定 u64；无小时 soak / 真拔电 / 多进程锁；合并峰与 LMDB range 读仍是「写换读」权衡（细节见 EVAL17）。
+
+## 主树滚动（v0.1.0 之后 · 2026-11-04）
+
+未另切版本号；产品 Soft 已累计：
+
+- **P2 Soft-on**（坑 144）：`configure_deploy` 默认洞饿 fit+promote  
+- **SoftCons::Post**（坑 150/151）：写中只记债；读前 `soft_cons_repay()`（或 `polish()`）  
+- peers 全表：`backup/peers-post/PEERS_POST.md` · 门禁：`backup/soft-a1/VERDICT_POST_SOFT_ON.md`  
+- 契约：`CONSTRAINTS.md` · 滚动评估：`EVAL17.md`（至 2026-11-04）

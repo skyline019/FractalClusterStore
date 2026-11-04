@@ -66,7 +66,7 @@ FractalClusterStore（**FCS**）面向嵌入式设备与单进程服务，提供
 |:---|:---|
 | **耐久** | 双槽超级块与提交点同步；页复用与可见性以已同步超级块及 `durable_vers()` 为准 |
 | **提交** | 可将 fsync 移出排他锁，降低读者被提交阶段长时间阻塞的概率 |
-| **部署** | `TidyPolicy::Soft` / `configure_deploy()`：异步写、护洞、按洞分片等默认组合 |
+| **部署** | `TidyPolicy::Soft` / `configure_deploy()`：异步写、护洞、P2 洞饿、**SoftCons::Post**（写中记债）；对外读前 `soft_cons_repay()` 或 `polish()` |
 
 规格与缺陷登记：[`DESIGN3.md`](docs/10-design/DESIGN3.md)  
 轮次落地与取舍：[`EVAL17.md`](docs/00-entry/EVAL17.md)
@@ -75,23 +75,23 @@ FractalClusterStore（**FCS**）面向嵌入式设备与单进程服务，提供
 
 ## 3. 性能对照（摘要）
 
-与 SQLite 3.46 **同批、同负载** 的 bench4 对照：50 000 键、32 B 值、每 500 次操作提交；FCS 为异步写加整理形态；SQLite 为 `WAL + synchronous=FULL`。完整条件、方差与复现命令见 [DETAIL](docs/00-entry/DETAIL.md)、[EVAL17](docs/00-entry/EVAL17.md)。
+与 SQLite / LMDB **同批、同负载** peers（50 000 键、32 B 值、每 500 次提交）。**产品 Soft** = Post + 写后 `soft_cons_repay`（坑 151）。全文表：[PEERS_POST](backup/peers-post/PEERS_POST.md)、[EVAL17](docs/00-entry/EVAL17.md)。
 
-| 指标 | FCS（异步 + Soft） | SQLite 3.46 |
-|:---|---:|---:|
-| 写入（含提交） | 0.51 µs/op | 2.1–2.2 |
-| 覆盖写（含提交） | 0.83 | 10.8–18.2 |
-| 点查 | 0.55 | 1.5–1.9 |
-| 区间扫描（100 行） | 0.57 | 1.5–1.9 |
-| 每记录占用 | 41.9 B | 46.9 B |
+| 指标（Soft async+cons+shr · Post） | FCS | SQLite | LMDB | FCS÷SQL | FCS÷LMDB |
+|:---|---:|---:|---:|---:|---:|
+| 写入 µs/op | 0.32 | 5.17 | 6.04 | **0.06×** | **0.05×** |
+| 覆盖写 | 0.66 | 10.1 | 11.7 | **0.06×** | **0.05×** |
+| 点查 | 0.40 | 1.69 | 0.31 | **0.24×** | ~1.0× |
+| 区间（100 行） | 1.00 | 1.73 | 0.32 | **0.57×** | ~2–3× |
+| 空间 MB | **2.15** | 2.24 | 5.29 | **0.96×** | **0.41×** |
+
+Soft sync + repay：range 可 **反超 SQLite**（~0.44×），对 LMDB 仍约 **2.5×**（单 run 地板，坑 145）。未 repay 的 live Soft 仍是「写换读」。
 
 | 世代 | 可比写负载下的写放大（约） |
 |:---|---:|
 | v1 | 56× |
 | v2 | 22× |
 | **v3（FCS）** | **2.7×** |
-
-相对 LMDB 等偏只读优化的引擎，文档将读路径定位为「写换读」权衡；整理前后区间扫描差异显著，选型以 EVAL17 全表为准。
 
 ---
 
@@ -101,7 +101,7 @@ FractalClusterStore（**FCS**）面向嵌入式设备与单进程服务，提供
 |:---|:---|
 | **数据操作** | `put` / `del` / `del_range` / `get`；可重定位游标；`select`、前缀扫描、按版本快照视图；二级索引与主记录同一次提交，语义原子 |
 | **事务与持久化** | 逻辑组提交、可选异步刷盘；`durable_vers()`；崩溃后按超级块与清单恢复 |
-| **空间与维护** | 分层合并、分片 TRIM、护洞；Soft / Hard / Periodic；`polish()` 对外读前收口；提交后预算 / 调用方驱动 / 后台线程 |
+| **空间与维护** | 分层合并、分片 TRIM、护洞、P2；Soft（默认 Post）/ Hard / Periodic；`soft_cons_repay()` / `polish()` 对外读前收口 |
 | **校验与观测** | `verify` / `verify_ownership` / `scrub`；追踪环与维护统计；掉电、挂载模糊、多写者、黄金镜像等回归 |
 | **容量** | 页号 32 位 × 页 4 KB → 单库寻址约 16 TB；单值上限 65 534 字节 |
 
@@ -127,9 +127,10 @@ Store s;
 u8 arena[512 * PAGE];
 if (s.open(&dev, arena, 512) != RC::OK) return 1;
 
-s.set_tidy_policy(Store::TidyPolicy::Soft);
+s.configure_deploy();   // Soft + 护洞 + P2 + SoftCons::Post
 s.put(42, "hello", 5);
 if (s.commit() != RC::OK) return 1;
+s.soft_cons_repay();    // 读服务前还债（或 polish）
 
 u8 buf[64];
 u16 n = 0;

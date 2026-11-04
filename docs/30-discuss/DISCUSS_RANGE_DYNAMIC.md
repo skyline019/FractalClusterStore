@@ -1,8 +1,8 @@
 # 动态整理探讨（坑 147 续）
 
-> 目标：在 **不升 Soft 默认** 的前提下，用**限速 / 滞后 / 写后补做** 的整理，看能否改善 eager `soft_consolidate` 的写税与峰。  
+> 目标：用**限速 / 滞后 / 写后补做**改善 eager 写税与峰（当时未升 Soft 默认）。  
 > 探针：`scripts/ablate_range_dyn.sh` → `backup/range-opt/root/dyn_tidy.*`  
-> 前提：路径 B 可选项已存在（`set_soft_consolidate`）；eager 每 commit drain 已证 200k insert/peak 不合格。
+> 后续：写后语义落地为 **SoftCons::Post**（坑 150/151 已升 Soft 默认）。本文保留 duty/hyst **否定**证据。
 
 ## 1. 策略定义（应用侧，引擎默认不变）
 
@@ -57,7 +57,7 @@ Assumption：动态 = 控制「何时付 consolidate 写」，不是改 `(a)(b)(
 | 候选 | 是否靠近 §4.2 门禁 |
 |------|-------------------|
 | Soft 默认 eager/duty | **否**（税或 range 回归） |
-| Soft 默认 post 语义（commit 后自动补步） | 须单独测「谁调用、峰、与 maint 抢预算」；未过门前勿进 `configure_deploy` |
+| Soft 默认 Post（写中记债 + 显式 `soft_cons_repay`） | **已落地**（坑 151）；非写中 auto-step |
 | 文档：应用写完 `maybe_tidy` 循环 / `polish` | **已满足可选项叙事** |
 
 ## 5. 非目标 / 下一步
