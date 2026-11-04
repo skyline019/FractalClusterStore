@@ -38,12 +38,13 @@ page & 页内记录 & 二分 / 线性 + 可选前缀压缩 \\
 \subsection{文档范围与冻结线}
 \begin{itemize}[leftmargin=1.6em]
   \item \textbf{代码}：\texttt{embdb/x/include/\{fcs,common,blockdev,layout\}.h}（产品主树）。
-  \item \textbf{冻结轮次}：ROUND16（P2a+P2b）$\to$ ROUND17（fsync 出锁 / hole\_fit / 家族游标）$\to$ ROUND18（护洞 / 碎片 A / 整理态；并洞 B 默认关）。
-  \item \textbf{评估主文}：\texttt{docs/00-entry/EVAL17.md}；升格对照：\texttt{docs/00-entry/BATTLE.md}。
-  \item \textbf{非产品默认}：本机「小预留、TRIM 关」分叉已归档，不与主树混编。
+  \item \textbf{轮次链}：ROUND16（P2a+P2b）$\to$ ROUND17（fsync 出锁 / hole\_fit / 家族游标）$\to$ ROUND18（护洞 / 碎片 A / 整理态；并洞 B 默认关）$\to$ \textbf{P2 Soft-on（坑 144）} $\to$ \textbf{SoftCons::Post（坑 150/151）}。
+  \item \textbf{公开标签}：\texttt{v0.2.0}（\texttt{RELEASE\_NOTES\_v0.2.0.md}）；前序 \texttt{v0.1.0}。
+  \item \textbf{评估主文}：\texttt{docs/00-entry/EVAL17.md}；peers：\texttt{backup/peers-post/}；契约：\texttt{CONSTRAINTS.md}。
+  \item \textbf{非产品默认}：本机「小预留、TRIM 关」分叉已归档；\texttt{space\_accel} Soft 默认关。
 \end{itemize}
 
-\subsection{一页结论（摘自 EVAL17）}
+\subsection{一页结论（摘自 EVAL17 · Soft=Post）}
 \begin{table}[ht]
 \centering
 \small
@@ -52,13 +53,13 @@ page & 页内记录 & 二分 / 线性 + 可选前缀压缩 \\
 维度 & 结论 & 最大缺口 \\
 \midrule
 定位 & 追加 run + 单元目录 + 分层归并 + 分片 TRIM & 键固定 u64；单进程 \\
-正确性 & 回归含 g15--g18；格式/墓碑/宽家族 & 无小时 soak；无真拔电 \\
-耐久 & 双槽 SB；页复用看 \texttt{sb\_synced\_} & 阶段二失败窗口变宽 \\
-写 & 整理后 $\ll$ SQLite / LMDB & 默认同步时写接近 SQLite \\
-读 & 点查追平 LMDB；range 整理后仍慢于 LMDB & 未整理 range 差距大 \\
-空间 & 整理后紧；合并峰 det200k $\sim 1.71\times$ & 养洞；P2c 未做 \\
-延迟 & fsync 出锁；读者残余 $\sim$ 维护单元 & 锁内仍有 \texttt{flush\_mem} \\
+正确性 & Strict CI 四门绿；g15--g18；PIT$\le$155 & 无小时 soak；无真拔电合同 \\
+耐久 & 双槽 SB；页复用看 \texttt{sb\_synced\_} & 阶段二失败窗口变宽；默认 get 不 CRC \\
+写 & Soft async $\sim 0.05$--$0.06\times$ SQL/LMDB & Soft sync 与 SQL 同量级抖动 \\
+读 & Post+repay：点查$\approx$LMDB；range 可反超 SQL & 对 LMDB range $\sim 2.5\times$（单 run 地板） \\
+空间 & async $\sim 2.15\,\mathrm{MB}$@50k；A1 峰$\sim 1.65\times$ & P2c 未做 \\
+部署 & Soft$=$Post：写中记债；读前 repay/polish & 调用方须记得读前收口 \\
 \bottomrule
 \end{tabular}
-\caption{产品冻结时的能力边界（细节见第~\ref{sec:eval}~章）。}
+\caption{v0.2.0 能力边界（细节见第~\ref{sec:eval}~章）。}
 \end{table}

@@ -65,3 +65,9 @@ frag=1 det200k & $\mathbf{1.71}$ & 2 & $41.8\,\mathrm{MB}$ \\
 
 A/B 表明：skips 计数生效，但\textbf{200k 峰值几乎不动}（峰主因仍是养洞长尾等）；
 800k 约 $-0.04\times$。故护洞作 Soft 默认（零写放大、机制正确），\textbf{不当作 200k KPI}。
+
+\subsection{P2 洞饿刀 Soft-on（坑 138--144）}
+洞饿时 \texttt{starve\_fit}（紧余量切片）+ \texttt{starve\_promote}（封口后锁外放行 PEND）。
+税刀：\texttt{STARVE\_FLOOR}/\texttt{MAX\_SLICES}/\texttt{PROM\_MIN\_PEND} 等；β fsync 出 XLock（坑 141）。
+Soft A1 峰约 $-13\%$。\textbf{坑 144：显式升入 Soft / \texttt{configure\_deploy} 默认开}；消融可 \texttt{set\_*} false。
+详见 \texttt{VERDICT\_P2\_SOFT\_ON.md} · \texttt{c6}。

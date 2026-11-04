@@ -553,7 +553,7 @@ s.polish();                     // 可选：对外服务前整理
 \begin{itemize}[leftmargin=1.4em]
   \item 覆盖写与删除会让旧 Run 变成垃圾；段数变多会让读变慢。
   \item 引擎在提交后按策略做\textbf{维护}：把多个旧 Run 归并成更少、更新的 Run（分层 / 压实），并更新目录。
-  \item \texttt{configure\_deploy()} / Soft 整理态：常驻轻量整理；\texttt{polish()}：发布前重锤。
+  \item \texttt{configure\_deploy()} / Soft：默认 \texttt{SoftCons::Post} + P2 洞饿；读前 \texttt{soft\_cons\_repay()} 或 \texttt{polish()}。
   \item 养洞（hole\_fit、碎片感知切片等）影响「新页落在文件中部还是尾部」，从而影响峰值空间——这是空间议题，不改变 get/put 语义。
 \end{itemize}
 

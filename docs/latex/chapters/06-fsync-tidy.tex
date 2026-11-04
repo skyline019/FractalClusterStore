@@ -26,25 +26,42 @@ phase3 & 内 & 发布 \texttt{sb\_synced\_}、\texttt{durable\_vers\_}、\texttt
 阶段二失败后空提交短路、\texttt{cfail\_} 粘性、空票发布版本、\texttt{open}/\texttt{reload} 与顺序器交互等——均有 g17 段覆盖。
 \textbf{未做}：组提交流水线、双 MemTable（锁内 \texttt{flush\_mem} 仍在）。
 
-\subsection{整理状态机（ROUND18）}
+\subsection{整理状态机（ROUND18 $\to$ v0.2.0）}
 部署侧需要「日常读友好」与「对外服务前重锤」的一等公民策略，避免漏开 hole\_fit/护洞等旋钮。
 
 \begin{description}[style=nextline,leftmargin=1.6em]
   \item[\texttt{TidyPolicy::Off}] 不自动整理。
-  \item[\texttt{Soft}] 调用 \texttt{configure\_deploy}：async + cheap 合并 + hole\_fit + 碎片 A + 护洞 + 可选 hw\_reclaim；组提交仍由应用拼。
+  \item[\texttt{Soft}] \texttt{configure\_deploy}：async + cheap + hole\_fit + 碎片 A + 护洞 + \textbf{P2 洞饿} + \textbf{\texttt{SoftCons::Post}}；组提交仍由应用拼。
   \item[\texttt{Hard}] 压力下 \texttt{maybe\_tidy}$\to$\texttt{consolidate\_step}。
   \item[\texttt{Periodic}] \texttt{maybe\_tidy}$\to$\texttt{compact\_file\_step}。
   \item[\texttt{polish()}] \texttt{consolidate(0)} + \texttt{shrink()}：发布前重锤。
 \end{description}
 
+\subsubsection{SoftCons（坑 146--151）}
+路径 B 整理节奏与 Soft 正交；\textbf{v0.2.0 产品默认 Post}：
+\begin{center}
+\small
+\begin{tabular}{@{}llp{7.2cm}@{}}
+\toprule
+枚举 & Soft 默认？ & 语义 \\
+\midrule
+\texttt{Off} & 消融臂 & Soft \texttt{maybe\_tidy} no-op；写换读 live \\
+\texttt{Eager} & 否 & 压力下可逐步 consolidate（写税高；坑 147 勿升默） \\
+\texttt{Idle} & 否 & 连续维护谷满 streak 才迈一步 + 冷却 \\
+\texttt{Post} & \textbf{是} & 写中只按压力记债；\texttt{soft\_cons\_repay} 还债（consolidate$\to$relocate$\to$checkpoint$\to$shrink） \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+写税刀：\texttt{min\_gap}$=32$、\texttt{run\_hi}$=16$。门禁见 \texttt{VERDICT\_POST\_SOFT\_ON.md}。
+
 观测：\texttt{tidy\_snap()} 返回 policy、runs、used/live、layout 百分比、阈值、\texttt{protect} 等。
 
-\begin{lstlisting}[language=fcsapi,caption={部署侧最小用法示意}]
+\begin{lstlisting}[language=fcsapi,caption={部署侧最小用法示意（v0.2.0）}]
 Store s;
 s.open(dev);
-s.configure_deploy();              // Soft 常驻
+s.configure_deploy();              // Soft + Post + P2
 // ... 业务写入与组提交 ...
-s.polish();                        // 对外读服务前
-// 或：s.set_tidy_policy(TidyPolicy::Periodic);
-// while (s.maybe_tidy() == RC::MORE) { }
+s.soft_cons_repay();               // 对外读前收口（或 polish）
+// 消融：s.set_soft_cons(SoftCons::Off);
 \end{lstlisting}

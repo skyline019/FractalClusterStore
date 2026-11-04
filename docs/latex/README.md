@@ -1,12 +1,14 @@
 # FCS 技术文档（XeLaTeX）
 
+对齐公开标签 **v0.2.0**（Soft 默认 Post · P2 Soft-on · peers-post）。
+
 ## 依赖（WSL）
 
 - TeX Live：`xelatex`
-- 中文字体：`Noto Serif CJK SC` / `Noto Sans CJK SC`（本机已有则无需安装）
+- 中文字体：`Noto Serif CJK SC` / `Noto Sans CJK SC`
 
 ```bash
-sudo apt-get install -y texlive-xetex texlive-lang-chinese fonts-noto-cjk
+sudo apt-get install -y texlive-xetex texlive-lang-chinese fonts-noto-cjk fonts-dejavu
 ```
 
 ## 编译
@@ -22,9 +24,13 @@ make
 | 文件 | 内容 |
 |---|---|
 | `main.tex` | 导言区与总装 |
-| `chapters/01-overview` | 概述 |
-| `chapters/11-code-deep` | **代码详解**（自底向上，面向基础 DB 读者；图 + 示例剧本） |
-| `chapters/02`--`10` | 架构 → 格式 → 路径 → 合并 → fsync → 图示 → 踩坑 → 评估 → 工程 |
-| `chapters/A-api` / `B-repro` | 附录 |
+| `chapters/01-overview` | 概述（含 v0.2.0 一页结论） |
+| `chapters/11-code-deep` | **代码详解**（自底向上） |
+| `chapters/02`--`05` | 架构 → 格式 → 路径 → 合并/P2 Soft-on |
+| `chapters/06-fsync-tidy` | fsync 出锁 · SoftCons::Post · repay |
+| `chapters/07-evaluation` | peers-post 对标 · 峰值刀 |
+| `chapters/08-engineering` | CONSTRAINTS · PIT · Strict CI |
+| `chapters/09`--`10` | 图示 · 踩坑（含 150--154） |
+| `chapters/A-api` / `B-repro` | API · 复现 |
 
-Markdown 正文分类见上一级 [`../README.md`](../README.md)（`00-entry` / `10-design` / `20-rounds` / `30-discuss`）。
+Markdown 正文分类见上一级 [`../README.md`](../README.md)。

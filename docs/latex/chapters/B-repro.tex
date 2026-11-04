@@ -4,17 +4,18 @@
 均在 \texttt{embdb/x} 下、WSL 环境：
 
 \begin{lstlisting}[language=bash,caption={回归与关键探针}]
+make ci-smoke                 # 与 CI 烟雾门对齐
+make -j2 -s test              # 全量较久
+make asan                     # ASan/UBSan + TSan 子集
 make -j2 -s build/g18 && ./build/g18
-make -j2 -s test          # 全量较久
 # layout 峰值（需先编 probe）
 g++ -std=c++17 -O2 -pthread -Iinclude \
   bench/probe/layout.cpp -o build/layout
-# det 口径示例：budget=0 units=8
 ./build/layout 200000 500 32 1 1 0 0 0 0 8
-# 护洞 / 碎片：见 backup/r18/run_layout_*.sh
-bash backup/peers-r17/run_peers_r17.sh      # R17 基线
-bash backup/peers-soft/run_peers_soft.sh    # Soft 产品形态
-# 或：bash backup/peers-soft/run_all.sh     # make test + Soft peers
+# Soft Post peers（现行产品）
+bash scripts/peers_post_ab.sh
+# 或：make peers-post
+# 历史基线：backup/peers-r17/ · backup/peers-soft/
 \end{lstlisting}
 
 \begin{lstlisting}[language=bash,caption={本文档编译}]
@@ -26,11 +27,12 @@ make          # xelatex ×2
 \subsection*{参考文献（仓库内）}
 \begin{itemize}[leftmargin=1.6em]
   \item \texttt{docs/README.md} — Markdown 分类索引
+  \item \texttt{docs/00-entry/RELEASE\_NOTES\_v0.2.0.md} — 现行发布说明
+  \item \texttt{docs/00-entry/EVAL17.md} — 滚动全量评估（Soft+Post）
+  \item \texttt{CONSTRAINTS.md} · \texttt{docs/10-design/PIT\_LOG.md}
+  \item \texttt{backup/peers-post/PEERS\_POST.md} · \texttt{backup/soft-a1/VERDICT\_POST\_SOFT\_ON.md}
   \item \texttt{docs/10-design/DESIGN3.md} — 设计与历史坑清单 §12
-  \item \texttt{docs/00-entry/EVAL17.md} — 冻结全量评估
-  \item \texttt{docs/20-rounds/ROUND15.md}--\texttt{docs/20-rounds/ROUND18.md} — 各轮执行与数字
-  \item \texttt{docs/30-discuss/DISCUSS15\_FSYNC.md} — fsync 出锁讨论稿
-  \item \texttt{docs/10-design/P2\_DESIGN.md} — 格式 v2 设计
-  \item \texttt{docs/00-entry/BATTLE.md} — 升格与分叉对照
+  \item \texttt{docs/20-rounds/ROUND15.md}--\texttt{ROUND18.md}
+  \item \texttt{docs/30-discuss/DISCUSS\_RANGE\_*.md} — range / Post 消融讨论
   \item \texttt{backup/README.md} — 归档 / peers 日志分类
 \end{itemize}

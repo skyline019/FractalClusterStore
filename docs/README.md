@@ -82,9 +82,9 @@ docs/
 
 | 路径 | 用途 |
 |---|---|
-| [`latex/README.md`](latex/README.md) | 编译说明 |
-| `latex/chapters/` | 概述 · **代码详解** · 架构 · 踩坑… |
-| `latex/build/main.pdf` | 编译产物（`cd latex && make`） |
+| [`latex/README.md`](latex/README.md) | 编译说明（XeLaTeX / WSL） |
+| `latex/chapters/` | 概述 · **代码详解** · Soft Post · 架构 · 踩坑…（对齐 v0.2.0） |
+| `latex/build/main.pdf` | 编译产物（`cd latex && make`；约 37 页） |
 
 面向「基础数据库知识」读者：先读 PDF 第「代码详解」章，再对 `include/fcs.h`。
 

@@ -167,25 +167,35 @@
 \draw[arr] (off) -- node[above,font=\scriptsize]{configure} (soft);
 \draw[arr] (soft) -- node[above,font=\scriptsize]{压力} (hard);
 \draw[arr] (hard) -- node[above,font=\scriptsize]{发布前} (per);
-\node[below=0.85cm of soft,st,fill=cyan!10,minimum width=3.2cm] (dep) {configure\_deploy\\async+cheap+hole\_fit\\frag+protect+hw};
-\node[below=0.85cm of per,st,fill=red!8,minimum width=2.4cm] (pol) {polish\\consolidate+shrink};
+\node[below=0.85cm of soft,st,fill=cyan!10,minimum width=3.6cm] (dep) {configure\_deploy\\async+cheap+hole\_fit\\frag+protect+P2\\\textbf{SoftCons::Post}};
+\node[below=0.85cm of per,st,fill=red!8,minimum width=2.6cm] (pol) {polish /\\soft\_cons\_repay};
 \draw[arr] (soft) -- (dep);
 \draw[arr] (per) -- (pol);
+\draw[arr,dashed] (dep.east) -- ++(0.6,0) |- (pol.west);
 \end{tikzpicture}
-\caption{TidyPolicy：Soft 常驻读友好；Hard/Periodic 步进；polish 重锤。}
+\caption{TidyPolicy：Soft 默认 Post；读前 repay/polish；Hard/Periodic 步进。}
 \label{fig:tidy-sm}
 \end{figure}
 
 \begin{algorithm}[H]
-\caption{maybe\_tidy}
+\caption{maybe\_tidy（Soft+Post 路径）}
 \begin{algorithmic}[1]
-\If{$policy \in \{Off, Soft\}$} \Return OK
+\If{$policy = Off$}
+  \State \Return OK
+\EndIf
+\If{$policy = Soft$ \textbf{and} $soft\_cons \in \{Off, Post\}$}
+  \State \Return OK \Comment{Post：写中记债；还债走 soft\_cons\_repay}
 \EndIf
 \State $sn \gets$ tidy\_snap()
-\If{$sn.runs$ 与 $sn.layout\_pct$ 均未超阈} \Return OK
+\If{$sn.runs$ 与 $sn.layout\_pct$ 均未超阈}
+  \State \Return OK
 \EndIf
-\If{$policy = Hard$} \Return consolidate\_step()
-\Else \Return compact\_file\_step()
+\If{$policy = Soft$ \textbf{and} $soft\_cons = Idle$}
+  \State 谷 streak / 冷却通过后 consolidate\_step
+\ElsIf{$policy = Hard$ \textbf{or} Soft+Eager}
+  \State \Return consolidate\_step()
+\Else
+  \State \Return compact\_file\_step()
 \EndIf
 \end{algorithmic}
 \end{algorithm}

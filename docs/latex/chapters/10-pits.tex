@@ -279,12 +279,43 @@ coalesce: OFF by default   // 1.71→1.74
 \paragraph{验证}
 famw / g17 \texttt{t\_wide\_family}。
 
+% ---------- Soft Post / CI ----------
+\subsection{坑 150/151：Post 写税 $\to$ Soft 默认升 Post}
+\paragraph{现象}
+Idle/Post 谷还曾把整理塞进写路径，insert 税高；Eager 整理炸峰。
+
+\paragraph{根因}
+写中还债 $=$ 写税；产品需要「写中轻、读前收口」。
+
+\begin{fixnew}
+Post：commit 后只记债；\texttt{soft\_cons\_repay} $=$ consolidate$\to$relocate$\to$checkpoint$\to$shrink。
+门禁：消融 insert$\approx$Soft、cursors$\sim 1.3$；peers sync range 反超 SQL。\textbf{坑 151 升 Soft 默认}。
+\end{fixnew}
+
+\paragraph{验证}
+\texttt{g18}、\texttt{ablate\_range\_idle}、\texttt{VERDICT\_POST\_SOFT\_ON.md}、\texttt{PEERS\_POST.md}。
+
+\subsection{坑 153/154：TSan 多写者 maint / tsan\_g17}
+\paragraph{现象}
+CI \texttt{make asan}：\texttt{tsan\_w1} 报 \texttt{starve\_prom\_defer\_} data race；随后 \texttt{tsan\_g17} 逻辑 FAIL（\texttt{tail -1} 吞子段）。
+
+\paragraph{根因}
+多写者 commit 放锁后并发进 \texttt{maint\_loop}；mode~3 try\_lock 失败时未 kick 后台。
+
+\begin{fixnew}
+\texttt{ml\_mu\_} 串行 maint\_loop/maintain/soft\_idle；commit try\_lock 失败仍 \texttt{kick\_maint\_thread}；
+TSan 下放宽 g17 sync-window 预算；asan 目标失败保留全文日志。
+\end{fixnew}
+
+\paragraph{验证}
+\texttt{TSAN\_OPTIONS=halt\_on\_error=1} \texttt{tsan\_w1}；Strict CI run 绿；标签 \texttt{v0.2.0}。
+
 % ---------- 小结 ----------
 \subsection{对照方法论（可迁移）}
 \begin{enumerate}[leftmargin=1.6em]
   \item \textbf{主口径唯一}：读路径、退休、verify 必须共用可见性定义（坑 92/95）。
   \item \textbf{持久点分明}：页复用与 shrink 只能看见已 sync 的 SB（坑 99/104/R17）。
   \item \textbf{假设写进测试}：同 seq 片打破「连续 seq」就要改探测并加判别力用例（坑 112）。
-  \item \textbf{KPI 用 A/B 证伪}：护洞叙事正确但 200k 峰不动；并洞机制对但默认关（R18）。
-  \item \textbf{锁内只留 CPU}：IO 等待出锁（R17），别用「再加锁」治延迟。
+  \item \textbf{KPI 用 A/B 证伪}：护洞叙事正确但 200k 峰不动；并洞机制对但默认关（R18）；Post 升默靠消融门禁（坑 151）。
+  \item \textbf{锁内只留 CPU}：IO 等待出锁（R17）；维护外层互斥防 TSan 竞态（坑 153）。
 \end{enumerate}
