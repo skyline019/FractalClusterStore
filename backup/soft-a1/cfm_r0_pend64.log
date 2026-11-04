@@ -1,0 +1,22 @@
+# Soft A1: N=200000 B=500 VSZ=32 protect=1 p1=0 bf_mode=0 bf_skip=0 starve_fit=1 starve_promote=1 floor=32 slices=12 max_prom=1 min_pend=64 hw=150 space_accel=0 frag=1
+ins #66 tail 429->504 (+75) r0=1.111 r1=1.133 holes=10/59 maxh=35 pend=69 L0=2 L1=8 L2=3 L3=0 dead_est=4 owned=462 ATTR=HOLE_STARVE
+ins #68 tail 539->609 (+70) r0=1.296 r1=1.327 holes=10/150 maxh=25 pend=66 L0=4 L1=8 L2=6 L3=0 dead_est=7 owned=577 ATTR=HOLE_STARVE
+ins #129 tail 739->1050 (+311) r0=1.051 r1=1.073 holes=5/71 maxh=35 pend=328 L0=1 L1=0 L2=10 L3=0 dead_est=1 owned=644 ATTR=HOLE_STARVE
+ins #193 tail 1007->1318 (+311) r0=1.006 r1=1.032 holes=4/41 maxh=20 pend=328 L0=1 L1=0 L2=12 L3=0 dead_est=11 owned=939 ATTR=HOLE_STARVE
+ins #259 tail 1445->1518 (+73) r0=1.042 r1=1.086 holes=13/120 maxh=11 pend=67 L0=3 L1=8 L2=17 L3=0 dead_est=39 owned=1473 ATTR=HOLE_STARVE
+ins #261 tail 1554->1625 (+71) r0=1.133 r1=1.148 holes=12/210 maxh=24 pend=67 L0=5 L1=8 L2=20 L3=0 dead_est=87 owned=1590 ATTR=HOLE_STARVE
+ins #321 tail 1666->1977 (+311) r0=1.013 r1=1.030 holes=9/57 maxh=18 pend=328 L0=1 L1=0 L2=22 L3=0 dead_est=47 owned=1576 ATTR=HOLE_STARVE
+ins #386 tail 1977->2288 (+311) r0=1.028 r1=1.022 holes=7/49 maxh=18 pend=328 L0=2 L1=0 L2=23 L3=0 dead_est=77 owned=1892 ATTR=HOLE_STARVE
+== after insert: tail=2288 live=1785 peak=2288 runs=25
+== PHASE_US insert_total=7144746 insert_us_op=35.724
+upd #451 tail 2288->2577 (+289) r0=1.026 r1=1.021 holes=9/53 maxh=18 pend=322 L0=2 L1=0 L2=24 L3=0 dead_est=304 owned=2181 ATTR=HOLE_STARVE
+upd #516 tail 2577->2864 (+287) r0=1.020 r1=1.016 holes=9/45 maxh=15 pend=321 L0=3 L1=0 L2=25 L3=0 dead_est=599 owned=2473 ATTR=HOLE_STARVE
+upd #546 tail 2864->2968 (+104) r0=1.082 r1=1.110 holes=17/294 maxh=34 pend=0 L0=9 L1=3 L2=25 L3=2 dead_est=747 owned=2762 ATTR=HOLE_STARVE
+upd #569 tail 2966->3111 (+145) r0=1.215 r1=1.101 holes=16/286 maxh=36 pend=908 L0=24 L1=4 L2=0 L3=38 dead_est=36 owned=1887 ATTR=HOLE_STARVE
+== PHASE_US update_total=12332984 update_us_op=123.330
+== SUMMARY Soft A1 peak_tail=3111 peak_x=1.666 end_tail=2732 end_x=1.463 live_logic=1867 live_phys=2057
+== ATTR_COUNTS big_grows=12 PRE_DIRTY=0 HOLE_STARVE=12 SB_LAG=11 sum_delta=3585
+== MERGE_START tail=739 live=703 ratio=1.051 (first big L2/L3 wave)
+== AT_PEAK commit=569 dead_est=36 owned=1887 dead/live=0.019 maxh=36 pend=908 L0=24 L1=4 L2=0 L3=38
+== DECOMP leading: pre_dirty≈1.051 + residual≈0.615 (peak_x)  P2c_gate dead/live=0.019 →勿开P2c(死页不足)
+== maint hole_fits=4 hw_reclaims=10 part_frags=19 stream_extends=0 hole_protect_skips=62 p1=0 stream_best_fits=0 bf_mode=0 bf_skip=0 starve_fits=7 starve_promotes=1

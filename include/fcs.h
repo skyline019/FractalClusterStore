@@ -104,17 +104,35 @@ enum : u32 {
 #ifndef FCS_PROTECT_MERGE_HOLES
 #define FCS_PROTECT_MERGE_HOLES 0          // 0 = 关（老行为）；configure_deploy / Soft 会打开
 #endif
+#ifndef FCS_RANGE_FAMILY_CHAIN
+#define FCS_RANGE_FAMILY_CHAIN 1           // 坑 145：Cursor::prime 按 seq 串家族链（0 = 消融）
+#endif
 #ifndef FCS_PART_FRAG
 #define FCS_PART_FRAG 1                    // 养洞合并 A：碎片感知切片（默认开）
 #endif
 #ifndef FCS_PART_FRAG_FLOOR
 #define FCS_PART_FRAG_FLOOR 16             // 碎片态允许的最小片（页）；仍须 part_cap(p) ≤ 最大洞
 #endif
+#ifndef FCS_PART_STARVE_FLOOR
+#define FCS_PART_STARVE_FLOOR 32           // 坑 139：洞饿紧切下限（>frag_floor）——16 片过碎写税大
+#endif
+#ifndef FCS_PART_STARVE_MAX_SLICES
+#define FCS_PART_STARVE_MAX_SLICES 12      // 坑 139：洞饿最多切成几片（防 run 暴涨 / β 连发 commit_delta）
+#endif
+#ifndef FCS_PART_STARVE_MAX_PROMOTES
+#define FCS_PART_STARVE_MAX_PROMOTES 1     // 坑 139：每作业 β 插提交次数（消融：1 保峰≈−8%+税；4 峰近平）
+#endif
+#ifndef FCS_PART_STARVE_PROM_MIN_PEND
+#define FCS_PART_STARVE_PROM_MIN_PEND 64  // 坑 140：β 仅当 pending_free≥此页（矩阵胜者；0=不门槛）
+#endif
 #ifndef FCS_PART_COALESCE
 #define FCS_PART_COALESCE 0                // 养洞合并 B：默认关（layout 实测抬峰，见 ROUND18 §6）
 #endif
 #ifndef FCS_PART_COALESCE_MAX
 #define FCS_PART_COALESCE_MAX 4            // 每个合并作业最多搬开几条挡路 run
+#endif
+#ifndef FCS_SPACE_ACCEL_PCT
+#define FCS_SPACE_ACCEL_PCT 85             // 近满加速推荐实验值；Harness 消融无峰增益 ⇒ Soft 默认关（坑 125）
 #endif
     SMAX        = FCS_SMAX,    // B2：单元段数上限（读放大上界）
     MAX_SNAP    = 8,
@@ -740,6 +758,18 @@ public:
     // 约束：开启后**不要在 select/scan 回调里写**（同一线程持共享再要独占 ⇒ 写入口返回 BUSY，不会死锁）。
     void set_shared_reads(bool on) { WGuard g(this); if (!g.busy) shared_reads_ = on; }
     bool shared_reads() const { return shared_reads_; }
+    // 坑 120：读路径可选校验数据页 CRC（默认关 —— miss 时硬件 CRC 有成本）。
+    // 开启后 page()/prefetch 装填时验 PK_DATA；失败不入缓存、返回 nullptr（get/probe 不静默吐坏页）。
+    // 打开时清空页缓存：否则 mount/先前 miss 已缓存的坏页会在 hit 路径上永远躲过校验。
+    // Soft 不强制开。回归：tests/c2.cpp。
+    void set_verify_reads(bool on) {
+        WGuard g(this); if (g.busy) return;
+        verify_reads_ = on;
+        if (on && cache_ && cache_n_) {
+            for (u32 i = 0; i < cache_n_; ++i) cache_[i].pid.store(NIL, std::memory_order_relaxed);
+        }
+    }
+    bool verify_reads() const { return verify_reads_; }
 
     // ------------------------------------------------------------ M07b  段游标
     struct Cur {
@@ -919,6 +949,11 @@ public:
     // 代价：被搬的 run 多写一遍（顶层产物 ⇒ 这次合并的写量 ×2）。只治"合并后静态占用"，治不了合并时刻的峰值（见 docs/20-rounds/ROUND14.md）。
     void set_hw_reclaim_pct(u32 pct) { hw_reclaim_pct_ = pct; }
     u32  hw_reclaim_pct() const { return hw_reclaim_pct_; }
+    // 坑 125（空间轨 T 臂）：近满加速——eff_tail ≥ pct%·user_lim 时视同维护积压，NOSPACE 前多一次 hw_reclaim。
+    // Soft 默认关（harness A1/A2/A3 消融无峰增益）；实验设 FCS_SPACE_ACCEL_PCT。无新子系统。
+    void set_space_accel_pct(u32 pct) { space_accel_pct_ = pct > 100 ? 100 : pct; }
+    u32  space_accel_pct() const { return space_accel_pct_; }
+    u64  space_accels() const { return space_accels_; }   // 观测：维护单元因近满加压的次数
     bool maint_yield_now() const { return maint_quantum_us_ && xl_.contended() && prog_us() - unit_t0_ >= maint_quantum_us_; }   // 持锁内调用
     bool maint_pending() const { return maint_more_.load(std::memory_order_relaxed); }   // 上次维护循环结束时还有活没干完
     // 跑最多 max_units 个维护单元（每个单元内持锁，单元之间放锁）。MORE = 还有活；OK = 暂时没活。
@@ -927,8 +962,9 @@ public:
     RC maintain(u32 max_units = 1) {
         RC last = RC::OK;
         bool need_sync = false;
+        starve_prom_defer_ = true;
         for (u32 i = 0; i < (max_units ? max_units : 1); ++i) {
-            bool wrote = false;
+            bool wrote = false, do_prom = false;
             {
                 WGuard g(this); if (g.busy) { last = RC::BUSY; break; }
                 if (RC r = ensure_ready(); r != RC::OK) { last = r; break; }
@@ -936,10 +972,14 @@ public:
                 ++maint_units_;
                 if (last != RC::MORE && last != RC::OK) { ++maint_errs_; dirty_ = true; break; }
                 if (maint_sync_pending_) { need_sync = wrote = true; maint_sync_pending_ = false; }
+                do_prom = starve_prom_req_;
             }
             if (wrote) wait_io();            // 同 maint_after_commit：按单元等写完，sync 只做一次
-            if (last != RC::MORE) break;
+            if (do_prom) starve_prom_flush_();   // 坑 141：β fsync 在 XLock 外
+            if (last != RC::MORE && !do_prom) break;
+            if (last != RC::MORE && do_prom) last = RC::MORE;  // 屏障后还要再推进作业
         }
+        starve_prom_defer_ = false;
         if (need_sync && dev_) { wait_io(); dev_->sync(); }
         return last;
     }
@@ -973,6 +1013,39 @@ public:
     void set_hole_protect_pages(u32 n) { hole_protect_pages_ = n ? n : FCS_PART_FLOOR_PAGES; }
     u32  hole_protect_pages() const { return hole_protect_pages_; }
     u64  hole_protect_skips() const { return hole_protect_skips_; }   // 观测：因护洞跳过的候选次数
+    // 坑 132/133（P1b）：流式 **anti-shatter**——仍可吃中部大洞，但禁止切出 (0, floor) 残桩。
+    // Soft A1 抬峰已否（VERDICT_P1 / P1b）；Soft 默认关。
+    void set_protect_stream_small(bool on) { protect_stream_small_ = on; }
+    bool protect_stream_small() const { return protect_stream_small_; }
+    // 坑 134/135（P1c/P1d）：流式 best-fit。mode：0=关 1=全量 2=仅 np<floor（小分配）。
+    // exact 早停烘焙进 bf 扫描；skip_pct>0 且 used/live×100≥pct 时旁路（近满）。Soft 默认全关。
+    void set_stream_best_fit(bool on) { stream_best_fit_mode_ = on ? 1u : 0u; }
+    void set_stream_best_fit_mode(u32 m) { stream_best_fit_mode_ = m > 2u ? 2u : m; }
+    u32  stream_best_fit_mode() const { return stream_best_fit_mode_; }
+    bool stream_best_fit() const { return stream_best_fit_mode_ != 0; }
+    void set_stream_best_fit_skip_pct(u32 pct) { stream_bf_skip_pct_ = pct; }  // 0=不旁路
+    u32  stream_best_fit_skip_pct() const { return stream_bf_skip_pct_; }
+    u64  stream_best_fits() const { return stream_best_fits_; }
+    // 坑 138（P2 α）：洞饥饿紧余量。frag 分布 maxh 常 29–51，而 part_cap_of(16)=56 ⇒ 碎片切片全拒、+311 落尾。
+    // 紧公式 part_cap_tight(p)=p+max(p/16,4)+4（p=32→40）。仅当最大洞 < part_cap_of(frag_floor) 时启用。
+    // 坑 139–143 税刀；坑 144：configure_deploy / Soft **默认开**（成员默认仍 false，至 Soft 才开）。
+    void set_part_starve_fit(bool on) { starve_fit_ = on; }
+    bool part_starve_fit() const { return starve_fit_; }
+    u64  part_starve_fits() const { return starve_fits_; }
+    // 坑 140：运行时税刀旋钮（默认=宏）；消融用，Soft 默认仍关 P2。
+    void set_starve_floor(u32 n) { starve_floor_ = n ? n : FCS_PART_STARVE_FLOOR; }
+    u32  starve_floor() const { return starve_floor_; }
+    void set_starve_max_slices(u32 n) { starve_max_slices_ = n ? n : FCS_PART_STARVE_MAX_SLICES; }
+    u32  starve_max_slices() const { return starve_max_slices_; }
+    void set_starve_max_promotes(u32 n) { starve_max_promotes_ = n ? n : FCS_PART_STARVE_MAX_PROMOTES; }
+    u32  starve_max_promotes() const { return starve_max_promotes_; }
+    void set_starve_prom_min_pend(u32 n) { starve_prom_min_pend_ = n; }  // 0=不门槛；默认 64（坑 140）
+    u32  starve_prom_min_pend() const { return starve_prom_min_pend_; }
+    // 坑 138（P2 β）：封口后若仍洞饿且有 pend_delta_/pending_free_，插一次 maint 提交点放行源前缀（I4 闸）。坑 144：Soft 默认开。
+    void set_starve_promote(bool on) { starve_promote_ = on; }
+    bool starve_promote() const { return starve_promote_; }
+    u64  starve_promotes() const { return starve_promotes_; }
+    u64  starve_prom_us() const { return starve_prom_us_; }  // 坑 141：β 屏障耗时（含锁外 sync）
     // 常驻整理态（状态机，薄封装现有 maint / consolidate_step / polish）
     enum class TidyPolicy : int { Off = 0, Soft = 1, Hard = 2, Periodic = 3 };
     struct TidySnap {
@@ -984,6 +1057,34 @@ public:
         tidy_soft_runs_ = soft_hi ? soft_hi : 32;
         tidy_hard_runs_ = hard_hi ? hard_hi : 64;
     }
+    // 坑 146/147/149/150/151：路径 B — Soft / configure_deploy 默认 Post（门禁可议通过）。
+    //   Off   — Soft maybe_tidy no-op（写换读；消融 set_soft_cons(Off)）
+    //   Eager — 压力下可逐步 consolidate（写税高）
+    //   Idle  — 连续维护谷满 streak 才迈一步 + 整理后冷却（偷谷）
+    //   Post  — 写路径只记债；读前 soft_cons_repay / polish（坑 150/151）
+    enum class SoftCons : int { Off = 0, Eager = 1, Idle = 2, Post = 3 };
+    void set_soft_cons(SoftCons m) {
+        soft_cons_ = (int)m;
+        soft_consolidate_ = (m != SoftCons::Off);
+    }
+    SoftCons soft_cons() const { return (SoftCons)soft_cons_; }
+    void set_soft_consolidate(bool on) { set_soft_cons(on ? SoftCons::Eager : SoftCons::Off); }
+    bool soft_consolidate() const { return soft_consolidate_; }
+    void set_soft_idle_max_us(u64 us) { soft_idle_max_us_ = us ? us : 1; }
+    u64  soft_idle_max_us() const { return soft_idle_max_us_; }
+    // 连续谷次数（默认 5，对齐 sync longest valley ~5–7）
+    void set_soft_idle_streak(u32 n) { soft_idle_need_streak_ = n ? n : 1; }
+    u32  soft_idle_streak() const { return soft_idle_need_streak_; }
+    void set_soft_idle_debt_max(u32 n) { soft_idle_debt_max_ = n ? n : 1; }
+    u32  soft_idle_debt() const { return soft_idle_debt_; }
+    // 坑 149 写税刀：整理最小间隔（提交数）与 Idle/Post 专用 run 压力（0=用 tidy_soft_runs_）
+    void set_soft_idle_min_gap(u32 n) { soft_idle_min_gap_ = n ? n : 1; }
+    u32  soft_idle_min_gap() const { return soft_idle_min_gap_; }
+    void set_soft_idle_run_hi(u32 n) { soft_idle_run_hi_ = n; }
+    u32  soft_idle_run_hi() const { return soft_idle_run_hi_; }
+    u64  last_maint_us() const { return last_maint_us_; }
+    u64  soft_idle_tidies() const { return soft_idle_tidies_; }
+    // soft_cons_repay → 见 maybe_tidy 旁（坑 150）
     // set_tidy_policy / tidy_snap / maybe_tidy → 见 polish() 旁（类内不可先声明再定义）
     void set_merge_part_auto() { part_auto_ = true; }
     u64  merge_parts() const { return merge_parts_; }     // 中途封口（片落地）次数
@@ -1285,6 +1386,38 @@ public:
         for (auto& kv : runs_) h[std::min<u32>(kv.second->lvl, LVL_MAX)]++;
         return h;
     }
+    // 坑 146：按层家族数（同 lvl+seq 计 1；与 level_pass 选组口径一致）
+    std::vector<u32> fam_hist() const {
+        RGuard g(const_cast<Store*>(this));
+        std::vector<u32> h(LVL_MAX + 1, 0);
+        std::vector<std::pair<u32, u64>> keys;
+        keys.reserve(runs_.size());
+        for (auto& kv : runs_)
+            if (kv.second->npages)
+                keys.push_back({std::min<u32>(kv.second->lvl, LVL_MAX), kv.second->seq});
+        std::sort(keys.begin(), keys.end());
+        for (size_t i = 0; i < keys.size(); ++i)
+            if (i == 0 || keys[i].first != keys[i - 1].first || keys[i].second != keys[i - 1].second)
+                ++h[keys[i].first];
+        return h;
+    }
+    // 坑 146：level_pass 归因计数（只读观测，不改决策；默认关）
+    struct MergeDiag {
+        u64 skip_need_t = 0;       // fam < lvl_t，(a)(b)(c) 轮空
+        u64 skip_budget = 0;       // lvl_merges 预算挡住
+        u64 skip_not_trigger = 0;  // fam≥t 但未 dirty/cheap 且未达 cliff
+        u64 skip_gap_promote = 0;  // seq 夹缝 → 提升层
+        u64 skip_top_gap = 0;      // 顶层夹缝无法升
+        u64 did_reclaim = 0;       // (a)
+        u64 did_cheap = 0;         // (c)
+        u64 did_cliff = 0;         // (b)
+        u64 did_d = 0;             // (d) 脏度重写（含 force1）
+        u64 did_merge = 0;         // merge_run_set / start_job 实际发起
+    };
+    void set_merge_diag(bool on) { merge_diag_ = on; }
+    bool merge_diag() const { return merge_diag_; }
+    void clear_merge_diag() { md_ = MergeDiag{}; }
+    MergeDiag merge_diag_snap() const { return md_; }
     u32  max_segs_per_cell() const { RGuard g(const_cast<Store*>(this)); size_t m = 0; for (auto& kv : cells_) m = std::max(m, kv.second->segs.size()); return (u32)m; }
     u64  wr_flush() const { return wr_flush_; }
     u64  wr_compact() const { return wr_compact_; }
@@ -1570,6 +1703,7 @@ public:
         }
         bool prime() {
             cs_.clear();
+            chains_.clear();
             cs_.reserve(16);
             if (!st_ || cell_ == st_->cells_.end()) { done_ = true; return false; }
             Cell* c = cell_->second;
@@ -1577,27 +1711,56 @@ public:
             done_ = false;
             if (clo_ >= cend_) return true;             // 空区间：next() 会直接推进
             Tls& t = st_->tls();
+            // 坑 145：先收候选 run，再按 seq 串成家族链（与 merge build_chains 同口径）
+            // —— Soft+P2 分片后同 seq 多片若各开一 Cur，range 的 k 路归并宽度≈片数；串链后 = 家族数。
+            // FCS_RANGE_FAMILY_CHAIN=0：消融（每候选一 Cur）。
+            std::vector<RunPtr> cands;
+            cands.reserve(c->segs.size());
             for (auto& sg : c->segs) {
                 ++t.ctr[C_SEGS];
                 RunPtr r = st_->run_at(sg.second.rid);
                 if (!r || sg.second.p0 >= sg.second.p1) continue;
                 if (sg.second.khi <= clo_ || sg.second.klo >= cend_) continue;
                 if (r->meta_pending.load(std::memory_order_acquire)) st_->ensure_meta(r);
-                if (!run_may_have(r, clo_, cend_)) { ++t.ctr[C_SPSKIP]; continue; }  // 键域摘要：整条 run 跳过
+                if (!run_may_have(r, clo_, cend_)) { ++t.ctr[C_SPSKIP]; continue; }
+                cands.push_back(r);
+            }
+#if FCS_RANGE_FAMILY_CHAIN
+            Store::build_chains(cands, chains_, clo_, cend_);
+#else
+            chains_.clear();
+            for (RunPtr r : cands) chains_.emplace_back(1, r);
+#endif
+            for (auto& ch : chains_) {
+                if (ch.empty()) continue;
                 cs_.emplace_back();
                 ++t.ctr[C_CUR];
                 Cur& x = cs_.back();
-                x.r = r; x.p0 = sg.second.p0; x.p1 = sg.second.p1;
-                x.klo = sg.second.klo; x.khi = sg.second.khi;
-                x.pf_ = st_->pf_ok_;           // 顺序扫描才预取；多段归并时下面会关掉
-                x.load(st_, clo_);
+                x.pf_ = st_->pf_ok_;
+                if (ch.size() == 1) {
+                    RunPtr r = ch[0];
+                    // 单 run：仍按本单元段页窗打开（比整链 page_range 更紧）
+                    u32 p0 = 0, p1 = 0;
+                    for (auto& sg : c->segs) if (sg.second.rid == r->page0) {
+                        p0 = sg.second.p0; p1 = sg.second.p1;
+                        x.klo = sg.second.klo; x.khi = sg.second.khi;
+                        break;
+                    }
+                    if (p0 >= p1) { cs_.pop_back(); --t.ctr[C_CUR]; continue; }
+                    x.r = r; x.p0 = p0; x.p1 = p1;
+                    x.load(st_, clo_);
+                } else {
+                    x.open_chain(st_, &ch, clo_, cend_, cend_);
+                }
             }
-            if (cs_.size() > 1) for (auto& x : cs_) x.pf_ = false;   // 多路归并：预取只会互相踢
+            // 坑 145：k≤2 仍预取（双路踢缓存轻）；k>2 关
+            if (cs_.size() > 2) for (auto& x : cs_) x.pf_ = false;
             return true;
         }
 
         Store* st_ = nullptr;
         std::vector<Cur> cs_;
+        std::vector<std::vector<RunPtr>> chains_;  // 坑 145：家族链所有权（Cur::chain 指这里）
         std::map<u64, Cell*>::iterator cell_;
         u64 lo_ = 0, hi_ = 0, clo_ = 0, cend_ = 0;
         u64 view_ = 0; u32 pend_len_ = 0;
@@ -1842,6 +2005,9 @@ public:
                 kick_maint_thread();
                 if (backlog_.load(std::memory_order_relaxed)) maint_loop(maint_budget_us_, true);   // 第 14 轮：背压也守预算（后台线程还在干；以前积压时不限 ⇒ 提交 max 869 ms）
             }
+            // 坑 149/150：Idle 谷整理；Post 只记债（还债走 soft_cons_repay）
+            if (soft_cons_ == (int)SoftCons::Idle || soft_cons_ == (int)SoftCons::Post)
+                soft_idle_tidy_after_();
         }
         return rc;                         // mode 2：维护留给应用的 maintain()
     }
@@ -1852,8 +2018,9 @@ public:
         bool need_sync = false;
         const u64 t0 = prog_us();
         RC r = RC::OK;
+        starve_prom_defer_ = true;           // 坑 141：β 可推迟到单元之间、锁外 fsync
         for (u32 i = 0; i < maint_units_max_; ++i) {
-            bool wrote = false, backlog = false;
+            bool wrote = false, backlog = false, do_prom = false;
             {
                 WGuard g(this); if (g.busy) break;
                 if (dirty_ || !dev_) break;
@@ -1861,16 +2028,20 @@ public:
                 ++maint_units_;
                 if (r != RC::MORE && r != RC::OK) { ++maint_errs_; dirty_ = true; break; }
                 if (maint_sync_pending_) { need_sync = wrote = true; maint_sync_pending_ = false; }
+                do_prom = starve_prom_req_;
                 backlog = update_backlog_locked();
             }
             // 维护产物的页由维护线程自己在锁外等写完（wait_io）：锁内不会再有人等这批 I/O；
             if (wrote) wait_io();
-            if (r != RC::MORE) break;
+            if (do_prom) starve_prom_flush_();   // 坑 141：双 sync 不占 XLock ⇒ put 可与屏障重叠
+            if (r != RC::MORE && !do_prom) break;
+            if (r != RC::MORE && do_prom) r = RC::MORE;
             // 第 14 轮：门口有人等（读者 / 提交线程）⇒ 让他们先进（有上界：最多 ~64 次 yield），否则维护线程放锁 → 立刻再拿锁，
             // 自旋中的读者永远抢不过（XLock 写者优先；它只对**睡过**的读者让 200 µs）。
             for (unsigned y = 0; y < 64 && xl_.contended(); ++y) std::this_thread::yield();
             if (budget_us && (hard || !backlog) && prog_us() - t0 >= budget_us) { maint_deferred_.fetch_add(1, std::memory_order_relaxed); break; }   // 预算用完：留给下次
         }
+        starve_prom_defer_ = false;
         maint_more_.store(r == RC::MORE, std::memory_order_relaxed);
         // …… 而 sync 只在整个维护循环**结束后做一次**：下一次提交点的 write_sb 里就没有这笔 I/O 了
         //（以前顶层合并的几十 MB 全压在提交路径的 fsync 上：停顿 = 合并 I/O 体量）。
@@ -1878,14 +2049,24 @@ public:
         // 维护变成几十次 fdatasync（沙箱上每次 5 ~ 12 ms）⇒ wprof avg +26%；改成一次之后 fsync 次数从"每单元"回到"每次提交"。
         // 但 wait_io 仍按单元做：只 sync 一次的第一版让几十片的写积压在 I/O 队列里，锁内等它的那一下把读者卡到 92 ms。
         if (need_sync && dev_) { wait_io(); dev_->sync(); }
+        last_maint_us_ = prog_us() - t0;   // 坑 149：供 Idle 整理判谷
     }
-    // L0 积压（持锁调用）：≥ 4·lvl_t 条 ⇒ 预算不再限制维护循环；mode 3 下提交线程也顺手干活
+    // L0 积压或近满加压（持锁）：⇒ 预算不再限制维护循环；mode 3 下提交线程也顺手干活
     bool update_backlog_locked() {
         u32 l0 = 0;
         for (auto& kv : runs_) if (kv.second->lvl == 0 && kv.second->npages) ++l0;
-        const bool b = l0 >= lvl_t_ * std::max<u32>(lvl_cliff_, 1);
+        const bool space = space_pressure_locked();
+        const bool b = l0 >= lvl_t_ * std::max<u32>(lvl_cliff_, 1) || space;
+        if (space) ++space_accels_;
         backlog_.store(b, std::memory_order_relaxed);
         return b;
+    }
+    // 坑 125：eff_tail 逼近 user_lim（默认 85%）⇒ 近满；持锁调用
+    bool space_pressure_locked() const {
+        if (!space_accel_pct_ || !cap_) return false;
+        const u32 lim = user_lim();
+        if (lim < 8) return false;
+        return (u64)hw_eff_tail() * 100ull >= (u64)lim * space_accel_pct_;
     }
     // --- M07i  mode 3：后台维护线程 ---
     void start_maint_thread() {
@@ -2078,6 +2259,9 @@ public:
                     delta.clear();
                 }
                 promote_pending();
+                // 坑 125：近满加速开着时，NOSPACE 重试前再试一次高水位搬家（可能腾出尾部/洞）
+                if (space_accel_pct_ && hw_reclaim_pct_ && !job_)
+                    (void)hw_reclaim_pass(delta);
                 rc = flush_mem(delta, open_vers());
                 if (rc != RC::OK) { dirty_ = true; return rc; }   // 账已动过（退休的 run）⇒ 下次按盘重建
             }
@@ -2165,9 +2349,10 @@ public:
     RC consolidate(u32 min_segs = 0) { return consolidate_impl(min_segs, false); }
     // --- M07h2  部署整理 / 常驻整理态（configure_deploy · polish · tidy） ---
     // 部署整理（小入口，见 docs/00-entry/EVAL17.md §3 / README「部署」）：
-    //   configure_deploy — Soft 常驻：async + cheap + hole_fit + 护洞 + hw_reclaim；组提交仍由应用拼。
+    //   configure_deploy — Soft 常驻：async + cheap + hole_fit + 护洞 + hw_reclaim + P2 洞饿刀；组提交仍由应用拼。
     //   polish — 全库归一 + 尾部回落（Periodic / 对外读服务前的重锤）。
     //   set_tidy_policy / maybe_tidy — Soft|Hard|Periodic 状态机（见 tidy_snap）。
+    //   set_soft_cons — 路径 B；Soft 默认 Post（坑 151），消融可 Off。
     void configure_deploy(bool async = true, u32 hw_pct = 150) {
         set_async_writes(async);
         if (async) set_io_threads(io_threads_ ? io_threads_ : 1);
@@ -2177,6 +2362,12 @@ public:
         // B 默认关：layout det200k 1.71→1.74（搬挡路写放大）；需要时 set_part_coalesce(true)
         set_protect_merge_holes(true);               // 护洞：L0 不吃合并大洞
         if (hw_pct) set_hw_reclaim_pct(hw_pct);
+        // 坑 125：space_accel 不进 Soft 默认（backup/harness-ab-space 消融无峰增益）
+        // 坑 144：P2 洞饿刀进 Soft 默认（门禁可议 + Soft A1 峰↓≈13%；消融仍可 set_* false）
+        set_part_starve_fit(true);
+        set_starve_promote(true);
+        // 坑 151：Post 进 Soft 默认（VERDICT_POST_SOFT_ON；消融 set_soft_cons(Off)）
+        set_soft_cons(SoftCons::Post);
         if (maint_mode_ == 0) set_maint_mode(1);     // 勿退回「提交前维护」老路径
         if (tidy_policy_ == (int)TidyPolicy::Off) tidy_policy_ = (int)TidyPolicy::Soft;
     }
@@ -2187,7 +2378,10 @@ public:
     }
     void set_tidy_policy(TidyPolicy p) {
         tidy_policy_ = (int)p;
-        if (p == TidyPolicy::Off) return;
+        if (p == TidyPolicy::Off) {
+            set_soft_cons(SoftCons::Off);
+            return;
+        }
         configure_deploy(async_, hw_reclaim_pct_ ? hw_reclaim_pct_ : 150);
         if (p == TidyPolicy::Hard && maint_mode_ == 0) set_maint_mode(1);
         if (p == TidyPolicy::Periodic && maint_mode_ == 0) set_maint_mode(1);
@@ -2203,13 +2397,94 @@ public:
     }
     RC maybe_tidy() {
         const TidyPolicy p = (TidyPolicy)tidy_policy_;
-        if (p == TidyPolicy::Off || p == TidyPolicy::Soft) return RC::OK;
+        if (p == TidyPolicy::Off) return RC::OK;
+        // Soft 默认 no-op；Eager/Idle 才迈步（坑 147/149）；Post 写路径零迈步（坑 150）
+        if (p == TidyPolicy::Soft && soft_cons_ == (int)SoftCons::Off) return RC::OK;
+        if (p == TidyPolicy::Soft && soft_cons_ == (int)SoftCons::Post) return RC::OK;
+        // Idle：峰上跳过
+        if (p == TidyPolicy::Soft && soft_cons_ == (int)SoftCons::Idle) {
+            if (last_maint_us_ > soft_idle_max_us_) return RC::OK;
+            if (soft_idle_cool_) return RC::OK;
+        }
         TidySnap sn = tidy_snap();
-        const bool pressure = sn.runs >= (p == TidyPolicy::Hard ? tidy_hard_runs_ : tidy_soft_runs_)
-                           || sn.layout_pct >= tidy_layout_pct_;
+        u32 run_hi = (p == TidyPolicy::Hard) ? tidy_hard_runs_ : tidy_soft_runs_;
+        if (p == TidyPolicy::Soft && soft_idle_run_hi_ && soft_cons_ == (int)SoftCons::Idle)
+            run_hi = soft_idle_run_hi_;
+        const bool pressure = sn.runs >= run_hi || sn.layout_pct >= tidy_layout_pct_;
         if (!pressure) return RC::OK;
-        if (p == TidyPolicy::Hard) return consolidate_step();
+        if (p == TidyPolicy::Soft || p == TidyPolicy::Hard)
+            return consolidate_step();
         return compact_file_step();   // Periodic
+    }
+    // 坑 150：Post/可选 — 写后有界还债（不走写路径谷还）；收尾 shrink 防 sync 空间回潮
+    RC soft_cons_repay(u32 max_steps = 64) {
+        if (max_steps == 0) max_steps = 64;
+        if (tidy_policy_ == (int)TidyPolicy::Off) return RC::OK;
+        if (soft_cons_ == (int)SoftCons::Off) return RC::OK;
+        for (u32 i = 0; i < max_steps; ++i) {
+            TidySnap sn = tidy_snap();
+            if (sn.runs <= 1) break;
+            RC r = consolidate_step();
+            ++soft_idle_tidies_;
+            if (soft_idle_debt_) --soft_idle_debt_;
+            if (r != RC::OK && r != RC::MORE) return r;
+        }
+        soft_idle_debt_ = 0;
+        if (tidy_snap().runs <= 1) {
+            // 分步归并产物常落高位；relocate+shrink 对齐 polish 密度（坑 150 空间回潮）
+            RC rr = relocate();
+            if (rr != RC::OK && rr != RC::BUSY) return rr;
+            (void)checkpoint();
+            return shrink();
+        }
+        return RC::MORE;
+    }
+    // 坑 149/150：commit 后 Idle 偷谷；Post 只记债（压力下每 min_gap +1）
+    void soft_idle_tidy_after_() {
+        const int mode = soft_cons_;
+        if (mode != (int)SoftCons::Idle && mode != (int)SoftCons::Post) return;
+        if (tidy_policy_ != (int)TidyPolicy::Soft) return;
+
+        ++soft_idle_since_;
+        TidySnap sn = tidy_snap();
+        const u32 run_hi = soft_idle_run_hi_ ? soft_idle_run_hi_ : tidy_soft_runs_;
+        const bool pressure = sn.runs >= run_hi || sn.layout_pct >= tidy_layout_pct_;
+
+        // 坑 150：Post 写路径零 consolidate；压力下按 min_gap 记债（估还债步数）
+        if (mode == (int)SoftCons::Post) {
+            if (pressure) {
+                if (soft_idle_since_ >= soft_idle_min_gap_
+                    && soft_idle_debt_ < soft_idle_debt_max_) {
+                    ++soft_idle_debt_;
+                    soft_idle_since_ = 0;
+                }
+            }
+            soft_idle_pressing_ = pressure;
+            return;
+        }
+
+        if (soft_idle_cool_) {
+            --soft_idle_cool_;
+            soft_idle_cur_streak_ = 0;
+            return;
+        }
+        if (soft_idle_since_ < soft_idle_min_gap_) {
+            soft_idle_cur_streak_ = 0;
+            return;
+        }
+        if (last_maint_us_ > soft_idle_max_us_) {
+            soft_idle_cur_streak_ = 0;
+            return;
+        }
+        ++soft_idle_cur_streak_;
+        if (soft_idle_cur_streak_ < soft_idle_need_streak_) return;
+        if (!pressure) return;
+
+        RC r = consolidate_step();
+        soft_idle_cur_streak_ = 0;
+        soft_idle_cool_ = soft_idle_need_streak_;
+        soft_idle_since_ = 0;
+        if (r == RC::OK || r == RC::MORE) ++soft_idle_tidies_;
     }
     // R2（第 11 轮）分步维护：每次只做**一个有界单位**就提交、放锁、返回 MORE；应用或后台线程循环到 OK。
     //   consolidate_step()：合并一组（≤ lvl_t 条、全库 seq 连续、ver > snap_max）最老的 run；只剩 ≤1 条可合并 run 时
@@ -3249,6 +3524,13 @@ private:
             if (&tls_[i] != me && tls_[i].pin.load(std::memory_order_seq_cst) == slot) return true;
         return false;
     }
+    // 坑 120：与 verify/scrub 同式。非 PK_DATA 不套数据页公式（清单/meta/溢出头另有路径）。
+    bool data_page_crc_ok(const u8* p) const {
+        if (rd32(p) != PK_DATA) return true;
+        u16 used = rd16(p + 34);
+        if (used < DHDR || used > PAGE) return false;
+        return crc32c(p + 12, (size_t)(used - 12)) == rd32(p + 8);
+    }
     const u8* page(u32 pid) {
         if (pid >= cap_) return nullptr;
         if (!wait_page(pid)) return nullptr;      // 等到超时：当作读失败（明确 RC，不挂死）
@@ -3265,6 +3547,7 @@ private:
             if (w[v].buf.empty()) w[v].buf.resize(PAGE);
             w[v].pid.store(NIL, std::memory_order_relaxed);
             if (dev_->read((PageId)pid, 0, w[v].buf.data(), PAGE) != RC::OK) return nullptr;
+            if (verify_reads_ && !data_page_crc_ok(w[v].buf.data())) return nullptr;   // 坑 120：不发布坏页
             w[v].pid.store(pid, std::memory_order_relaxed);
             cs.mru.store((u8)v, std::memory_order_relaxed);
             ++t.ctr[C_MISSES];
@@ -3300,6 +3583,7 @@ private:
                 set_unlock(cs);
                 if (t.pgbuf.size() < PAGE) t.pgbuf.resize(PAGE);
                 if (dev_->read((PageId)pid, 0, t.pgbuf.data(), PAGE) != RC::OK) return nullptr;
+                if (verify_reads_ && !data_page_crc_ok(t.pgbuf.data())) return nullptr;   // 坑 120
                 ++t.ctr[C_MISSES];
                 return t.pgbuf.data();
             }
@@ -3307,6 +3591,7 @@ private:
         }
         if (w[v].buf.empty()) w[v].buf.resize(PAGE);
         if (dev_->read((PageId)pid, 0, w[v].buf.data(), PAGE) != RC::OK) { set_unlock(cs); return nullptr; }
+        if (verify_reads_ && !data_page_crc_ok(w[v].buf.data())) { set_unlock(cs); return nullptr; }   // 坑 120：槽保持 NIL
         t.pin.store(2 * si + v, std::memory_order_seq_cst);                // 先钉住再发布
         w[v].pid.store(pid, std::memory_order_release);
         cs.mru.store((u8)v, std::memory_order_relaxed);
@@ -3359,6 +3644,11 @@ private:
             } else w[v].pid.store(NIL, std::memory_order_relaxed);
             if (w[v].buf.empty()) w[v].buf.resize(PAGE);
             std::memcpy(w[v].buf.data(), tmp + (size_t)i * PAGE, PAGE);
+            // 坑 120：坏页不进缓存（与 page() 一致）；预取失败只是少加速
+            if (verify_reads_ && !data_page_crc_ok(w[v].buf.data())) {
+                if (shared) set_unlock(cs);
+                continue;
+            }
             w[v].pid.store(pid, std::memory_order_release);
             // 预取页不动 MRU：它们还没被用过，别把刚命中的那一路挤成下一个牺牲品
             if (shared) set_unlock(cs);
@@ -3905,6 +4195,54 @@ private:
         durable_vers_.store(std::max(durable_vers_.load(std::memory_order_relaxed), c.vers), std::memory_order_release);
         return RC::OK;
     }
+    // 坑 141：β 屏障——锁内只 fold+抓 SB；锁外 wait_io+双 sync；再锁内 promote。
+    // 根因：旧路径在 maint_unit 持 XLock 时 write_sb，fsync 期间 put/commit 全堵 ⇒ Soft A1 insert 税。
+    void starve_prom_flush_() {
+        const u64 t0 = prog_us();
+        SbCap cap;
+        bool have = false;
+        {
+            WGuard g(this); if (g.busy) return;
+            if (!starve_prom_req_) return;
+            if (!starve_promote_ || !job_) { starve_prom_req_ = false; return; }
+            MergeJob& j = *job_;
+            if (j.starve_prom_n >= starve_max_promotes_ || sb_synced_ > j.seal_gen) {
+                starve_prom_req_ = false; return;
+            }
+            if (pend_delta_.empty() && pending_free_.empty()) { starve_prom_req_ = false; return; }
+            if (starve_prom_min_pend_ && pending_free_pages_() < starve_prom_min_pend_) {
+                starve_prom_req_ = false; return;
+            }
+            RC rc = commit_delta({}, true, &cap);   // fold + sb_capture，不写盘
+            if (rc != RC::OK || !cap.has) {
+                if (rc != RC::OK) dirty_ = true;
+                starve_prom_req_ = false;
+                return;
+            }
+            have = true;
+        }
+        if (!have) return;
+        drain_inflight();
+        RC rc = RC::OK;
+        if (!wait_io()) rc = RC::TIMEOUT;
+        else rc = sb_flush(cap);
+        {
+            WGuard g(this); if (g.busy) { need_sb_ = true; dirty_ = true; starve_prom_req_ = false; return; }
+            if (rc != RC::OK) {
+                need_sb_ = true; dirty_ = true; starve_prom_req_ = false;
+            } else {
+                need_sb_ = false;
+                if (cap.built) sb_synced_ = std::max(sb_synced_, cap.built);
+                durable_vers_.store(std::max(durable_vers_.load(std::memory_order_relaxed), cap.vers),
+                                    std::memory_order_release);
+                promote_pending();
+                if (job_) ++job_->starve_prom_n;
+                ++starve_promotes_;
+                starve_prom_req_ = false;
+            }
+        }
+        starve_prom_us_ += prog_us() - t0;
+    }
     // 第 17 轮：write_sb 拆两半。sb_capture（锁内）：抓 SB 载荷 + 统计 + 代数；sb_flush（可在锁外，按票串行）：屏障 → 擦/写槽 → 屏障。
     void sb_capture(SbCap& c) {
         u32 n = (u32)std::min<size_t>(pend_.size(), INLINE_MAX);
@@ -4303,20 +4641,45 @@ private:
     }
     RC alloc_pages(u32 np, u32& out, bool maint = false) {
         if (np == 0) { out = NIL; return RC::OK; }
-        // 护洞：用户路径跳过中部大洞；失败再退回吃洞（合并/流式经 stream_alloc_ 或 maint 不受影响）
-        const bool want_protect = protect_holes_ && !stream_alloc_ && !maint;
-        RC rc = alloc_pages_impl(np, out, maint, want_protect);
-        if (rc == RC::NOSPACE && want_protect)
-            rc = alloc_pages_impl(np, out, maint, false);
+        // 护洞：用户路径跳过中部大洞。坑 133 P1b；坑 134/135 P1c/d 流式 best-fit。
+        // maint=true 不受影响。NOSPACE 时退回放宽（best-fit 无放宽：只改序）。
+        const bool skip_big = protect_holes_ && !stream_alloc_ && !maint;
+        const bool anti_shatter = protect_stream_small_ && stream_alloc_ && !maint;
+        bool best_fit = stream_best_fit_mode_ && stream_alloc_ && !maint;
+        if (best_fit && stream_best_fit_mode_ == 2 && np >= hole_protect_pages_)
+            best_fit = false;   // P1d-A：仅小分配
+        if (best_fit && stream_bf_skip_pct_) {
+            const u64 live = live_page_count();
+            if (live) {
+                const u32 pct = (u32)std::min<u64>(10000ull, (u64)tail_ * 100 / live);
+                if (pct >= stream_bf_skip_pct_) best_fit = false;  // P1d-C：近满旁路
+            }
+        }
+        RC rc = alloc_pages_impl(np, out, maint, skip_big, anti_shatter, best_fit);
+        if (rc == RC::NOSPACE && (skip_big || anti_shatter))
+            rc = alloc_pages_impl(np, out, maint, false, false, best_fit);
         return rc;
     }
-    RC alloc_pages_impl(u32 np, u32& out, bool maint, bool skip_big) {
+    RC alloc_pages_impl(u32 np, u32& out, bool maint, bool skip_big, bool anti_shatter = false,
+                        bool best_fit = false) {
         // 维护（compact/merge/relocate）要能在“写满”的库上搬数据：它只需临时空间，
         // 搬完立刻把旧页还回来。用户写入则不许碰这块预留，保证 GC 总能推进。
         u32 lim = maint ? cap_ : user_lim();
         auto tailhole = free_.end();                  // 贴着尾部的洞（p0+n >= tail_）
+        auto take = [&](std::map<u32, u32>::iterator it, u32 n) -> RC {
+            const u32 p0 = it->first;
+            if (man_hole_.count(p0)) man_hole_.erase(p0);
+            free_.erase(it);
+            if (n > np) free_[p0 + np] = n - np;      // 低位先用 ⇒ 尾部天然紧凑
+            out = p0;
+            ovc_drop(out, np);                        // 这些页要被重写：链缓存里的旧内容作废
+            tr(TR_ALLOC, out, np, tail_, maint ? 1 : 0);
+            return RC::OK;
+        };
         for (int pass = 0; pass < 2; ++pass) {        // 第 14 轮：第一遍跳过清单页簇（≤ 8 页的小洞），没得选才用
             if (pass == 1 && man_hole_.empty()) break;
+            auto best = free_.end();
+            u32 best_n = 0;
             for (auto it = free_.begin(); it != free_.end(); ++it) {
                 u32 p0 = it->first, n = it->second;
                 if (p0 >= tail_) continue;
@@ -4330,13 +4693,21 @@ private:
                     ++hole_protect_skips_;
                     continue;
                 }
-                if (pass == 1) man_hole_.erase(p0);
-                free_.erase(it);
-                if (n > np) free_[p0 + np] = n - np;      // 低位先用 ⇒ 尾部天然紧凑
-                out = p0;
-                ovc_drop(out, np);                        // 这些页要被重写：链缓存里的旧内容作废
-                tr(TR_ALLOC, out, np, tail_, maint ? 1 : 0);
-                return RC::OK;
+                // 坑 133：流式防切碎——≥floor 中部洞若切完残桩 ∈ (0, floor) 则跳过（整吃或残桩≥floor 仍可）
+                if (anti_shatter && p0 + it->second < tail_ && it->second >= hole_protect_pages_
+                    && np < it->second && (it->second - np) < hole_protect_pages_) {
+                    ++hole_protect_skips_;
+                    continue;
+                }
+                if (!best_fit) return take(it, n);
+                // 坑 135-B：精确命中早停（免扫完全表）
+                if (n == np) { ++stream_best_fits_; return take(it, n); }
+                // 坑 134：选能装下的最小洞（同尺寸取低址，map 序已保证）
+                if (best == free_.end() || n < best_n) { best = it; best_n = n; }
+            }
+            if (best_fit && best != free_.end()) {
+                ++stream_best_fits_;
+                return take(best, best_n);
             }
         }
         // 没有装得下的洞：贴着尾部的洞可以和尾部增长**拼成一块**（B3）。否则这个洞会被永远跳过，
@@ -6250,6 +6621,8 @@ private:
     u32 lvl_cliff_ = FCS_LVL_CLIFF;        // 第 17 轮 ②：(b) 悬崖倍数
     u32 lvl_dirty_pct_ = FCS_LVL_DIRTY_PCT;        // (a) 垃圾门槛
     u32 lvl_dirty_big_pct_ = FCS_LVL_DIRTY_BIG_PCT; // (d) 大前缀垃圾门槛
+    bool merge_diag_ = false;              // 坑 146：level_pass 归因（默认关）
+    MergeDiag md_{};
     // R3-lite（第 12 轮，L1）：维护（split / compact / 层合并）挪出提交关键路径。
     //   maint_mode_ 0 = 老行为：维护在 commit() 持锁期间、提交点之前做（维护产物与本次数据同一个提交点入账）；
     //   maint_mode_ 1 = 提交点先落盘、放锁；然后按“维护单元”循环 {拿锁 → 一个单元 → 放锁}，
@@ -6282,6 +6655,21 @@ private:
     u64 part_coalesces_ = 0;
     u64 coal_gen_ = 0;                     // 本代数已搬过挡路（同 hw2_gen_：每提交最多一次）
     bool protect_holes_ = FCS_PROTECT_MERGE_HOLES;  // 养洞护航：用户路径不吃中部大洞
+    bool protect_stream_small_ = false;    // 坑 133 P1b：流式 anti-shatter（默认关）
+    u32 stream_best_fit_mode_ = 0;         // 坑 135：0关 1全量 2仅小np（默认关）
+    u32 stream_bf_skip_pct_ = 0;           // 坑 135-C：≥此 used/live% 旁路 bf；0=不旁路
+    u64 stream_best_fits_ = 0;
+    bool starve_fit_ = false;              // 坑 138 P2α：洞饿时紧余量切片（默认关）
+    u64 starve_fits_ = 0;
+    bool starve_promote_ = false;          // 坑 138 P2β：洞饿时插提交点放行 PEND（默认关）
+    u64 starve_promotes_ = 0;
+    u32 starve_floor_ = FCS_PART_STARVE_FLOOR;           // 坑 140
+    u32 starve_max_slices_ = FCS_PART_STARVE_MAX_SLICES;
+    u32 starve_max_promotes_ = FCS_PART_STARVE_MAX_PROMOTES;
+    u32 starve_prom_min_pend_ = FCS_PART_STARVE_PROM_MIN_PEND;  // 坑 140 矩阵胜者
+    bool starve_prom_req_ = false;         // 坑 141：β 请求锁外 SB 屏障
+    bool starve_prom_defer_ = false;       // 坑 141：maint_loop/maintain 允许推迟 β
+    u64 starve_prom_us_ = 0;               // 坑 141：β 屏障累计 µs
     bool stream_alloc_ = false;            // begin_stream / 归并 finish 期间允许吃大洞
     u32 hole_protect_pages_ = FCS_PART_FLOOR_PAGES;
     u64 hole_protect_skips_ = 0;
@@ -6289,6 +6677,20 @@ private:
     u32 tidy_soft_runs_ = 48;
     u32 tidy_hard_runs_ = 96;
     u32 tidy_layout_pct_ = 180;            // used/live ×100；≥ 此值视为空间压力
+    bool soft_consolidate_ = false;        // 坑 147：兼容旧 API（Eager 开）
+    int  soft_cons_ = 0;                   // SoftCons：默认 Off
+    u64  soft_idle_max_us_ = 8000;         // 坑 149：单提交维护 ≤ 此值算谷（µs）
+    u32  soft_idle_need_streak_ = 5;       // 连续谷（默认 5）
+    u32  soft_idle_cur_streak_ = 0;
+    u32  soft_idle_cool_ = 0;              // 整理后冷却剩余提交数
+    u32  soft_idle_min_gap_ = 32;          // 坑 149：整理最小间隔（写税刀；16 易半成品伤 range）
+    u32  soft_idle_since_ = 0;             // 距上次整理的提交数
+    u32  soft_idle_run_hi_ = 16;           // Idle/Post run 压力阈值
+    u32  soft_idle_debt_ = 0;              // Post：压力负债
+    u32  soft_idle_debt_max_ = 32;         // Post：负债上限
+    bool soft_idle_pressing_ = false;      // Post：压力沿边沿
+    u64  last_maint_us_ = 0;               // 最近一次 maint_loop 墙钟
+    u64  soft_idle_tidies_ = 0;            // Idle/Post 自动整理步数
     u64 merge_parts_ = 0, run_trims_ = 0;
     u32 maint_units_max_ = 256;            // 一次 commit() 之后最多跑多少个维护单元（兜底，防无限循环）
 #ifndef FCS_MAINT_BUDGET_US
@@ -6300,6 +6702,8 @@ private:
 #endif
     u64 maint_quantum_us_ = FCS_MAINT_QUANTUM_US;
     u32 hw_reclaim_pct_ = 0;                          // 第 14 轮：高水位回收阈值（百分比；0 = 关）
+    u32 space_accel_pct_ = 0;                         // 坑 125：近满加速阈值（0 = 关；Soft 经 configure_deploy 打开）
+    u64 space_accels_ = 0;                            // 观测：update_backlog 见近满的次数
     u64 hw_reclaims_ = 0;                             // 观测：策略启动的搬家作业次数
     u64 hw_blockers_ = 0;                             // 第 15 轮观测：二步搬家里"先搬开挡路小 run"的次数（不含最后搬顶部 run 那一步）
     u32 hw2_top_ = NIL;                               // 第 15 轮：正在为哪条顶部 run（page0）腾洞；换了顶部就清零计数
@@ -6677,10 +7081,27 @@ private:
                 j.part_lo = j.part_hi = 0;
                 if (hole_fit_ && lbp >= 4 * FCS_PART_FLOOR_PAGES) {
                     const u64 best = largest_hole();
-                    if (best < part_cap_of(lbp)) {
-                        u32 lo = FCS_PART_FLOOR_PAGES, hi = (u32)lbp, p = 0;     // 最大的 p：part_cap_of(p) ≤ best
-                        while (lo <= hi) { u32 m = lo + (hi - lo) / 2; if (part_cap_of(m) <= best) { p = m; lo = m + 1; } else { if (m == 0) break; hi = m - 1; } }
-                        if (p && (u64)p * 4 >= lbp) { j.part_lo = j.part_hi = p; ++hole_fits_; }
+                    // 坑 138：洞饿时用紧余量；坑 139：下限 STARVE_FLOOR、片数 ≤ STARVE_MAX_SLICES（压写税）
+                    const bool tight = starve_fit_ && best < part_cap_of(frag_floor_);
+                    auto cap = [&](u64 x) -> u64 { return tight ? part_cap_tight(x) : part_cap_of(x); };
+                    if (best < cap(lbp)) {
+                        const u32 starve_lo = starve_part_floor(frag_floor_, starve_floor_);
+                        u32 lo = tight ? starve_lo : FCS_PART_FLOOR_PAGES;
+                        if (lo > (u32)lbp) lo = (u32)lbp;
+                        u32 hi = (u32)lbp, p = 0;     // 最大的 p：cap(p) ≤ best
+                        while (lo <= hi) {
+                            u32 m = lo + (hi - lo) / 2;
+                            if (cap(m) <= best) { p = m; lo = m + 1; }
+                            else { if (m == 0) break; hi = m - 1; }
+                        }
+                        const bool ok4 = p && (u64)p * 4 >= lbp;
+                        const bool ok_starve = tight && p && p >= starve_lo
+                            && (u64)p * starve_max_slices_ >= lbp;
+                        if (ok4 || ok_starve) {
+                            j.part_lo = j.part_hi = p;
+                            ++hole_fits_;
+                            if (tight) { j.starve_tight = true; ++starve_fits_; }
+                        }
                     }
                 }
             } else {
@@ -6713,17 +7134,36 @@ private:
             src.push_back(it->second);
         }
         if (j.src_vis.size() != src.size()) j.src_vis.assign(src.size(), 0);
-        if (j.need_res && j.w && !j.w->res_np && sb_synced_ > j.seal_gen) {   // P2b：上一片封口时释放的源前缀已过提交点 ⇒ 现在预留能落进那些洞
-            promote_pending();                                       // 第 17 轮：内联 SB（rollback/shrink）只发布代数不放行 ⇒ 这里补一次（有闸，便宜）
-            // 养洞合并 B 在 A 之前：按 part_lo 目标并洞（若先 choose_part/A 把片缩小，largest≥need ⇒ B 永不触发）
-            if (j.part_lo && coalesce_hole_step(part_cap_of(j.part_lo), delta)) return RC::MORE;
-            choose_part(j);
-            j.need_res = false;
-            const u64 est = stream_cap_est(src);
-            if (est) begin_stream(*j.w, src, std::min<u64>(std::max<u64>(est, part_cap_of(j.part) / 2), part_cap(j)));
+        if (j.need_res && j.w && !j.w->res_np) {
+            // 坑 138 β：封口后仍洞饿 ⇒ 插提交点放行源前缀（坑 104：裸 write_sb 在 pend_delta_ 非空时不开闸）
+            // 坑 139/140：次数封顶 + pending 页门槛；坑 141：锁外 fsync（defer）——持锁 write_sb 是写税代码根
+            if (starve_promote_ && j.starve_prom_n < starve_max_promotes_
+                && sb_synced_ <= j.seal_gen
+                && (!pend_delta_.empty() || !pending_free_.empty())
+                && largest_hole() < hole_protect_pages_
+                && (!starve_prom_min_pend_ || pending_free_pages_() >= starve_prom_min_pend_)) {
+                if (starve_prom_defer_) {
+                    starve_prom_req_ = true;
+                    return RC::MORE;             // 交 maint_loop/maintain 在 XLock 外做屏障
+                }
+                if (commit_delta({}) == RC::OK) {  // 非 defer 路径（mode0 一口气推进）仍内联
+                    promote_pending();
+                    ++j.starve_prom_n;
+                    ++starve_promotes_;
+                }
+            }
+            if (sb_synced_ > j.seal_gen) {   // P2b：上一片封口时释放的源前缀已过提交点 ⇒ 现在预留能落进那些洞
+                promote_pending();                                       // 第 17 轮：内联 SB（rollback/shrink）只发布代数不放行 ⇒ 这里补一次（有闸，便宜）
+                // 养洞合并 B 在 A 之前：按 part_lo 目标并洞（若先 choose_part/A 把片缩小，largest≥need ⇒ B 永不触发）
+                if (j.part_lo && coalesce_hole_step(part_cap_need(j.part_lo), delta)) return RC::MORE;
+                choose_part(j);
+                j.need_res = false;
+                const u64 est = stream_cap_est(src);
+                if (est) begin_stream(*j.w, src, std::min<u64>(std::max<u64>(est, part_cap_need(j.part) / 2), part_cap(j)));
 #ifdef FCS_TRACE
-            std::fprintf(stderr, "  JOB reserve est=%llu part=%u res_p0=%u res_np=%u tail=%u buffered=%u\n", (unsigned long long)est, j.part, j.w->res_p0, j.w->res_np, tail_, j.w->total_pages());
+                std::fprintf(stderr, "  JOB reserve est=%llu part=%u res_p0=%u res_np=%u tail=%u buffered=%u\n", (unsigned long long)est, j.part, j.w->res_p0, j.w->res_np, tail_, j.w->total_pages());
 #endif
+            }
         }
         if (!j.done) {
             // ---- 2. 定片：从 next_lo 所在单元起，按键序累计源段页数到 ≥ 预算 ----
@@ -7087,10 +7527,14 @@ private:
                 while (mcont < fam.size() && mcont < cliff && !gap_between(fam[mcont - 1].seq, fam[mcont].seq)) ++mcont;
                 size_t n = 0;                        // 本层要合并的家族数（0 = 本层不动）
                 bool force1 = false;                 // 单条重写（(d) 长度 1）
+                int why = 0;                         // 坑 146：1=a 2=c 3=b 4=d
                 if (fam.size() >= t) {
                     // R2（第 11 轮）：预算用完就留给下次提交 —— 除非这一层已经积压到 lvl_t×4（读放大兜底）。
                     // 以前一次提交最多级联 16 轮 × 4 层，大合并全砸在同一次提交里（100k×500B：max 530 ~ 600 ms）。
-                    if (lvl_merges_ && merges >= lvl_merges_ && fam.size() < cliff) continue;
+                    if (lvl_merges_ && merges >= lvl_merges_ && fam.size() < cliff) {
+                        if (merge_diag_) ++md_.skip_budget;
+                        continue;
+                    }
                     // 只有"合并能换回东西"才付合并的写代价：
                     //  (a) 这一层最老 t 条垃圾占比 ≥ FCS_LVL_DIRTY_PCT（默认 30%）⇒ 合并立刻回收空间；
                     //     门槛太低（曾用 20%）会让"刚写就被覆盖"的层级反复重写：实测 20%→30%
@@ -7105,8 +7549,9 @@ private:
                     if (live > tot) live = tot;
                     const bool reclaim = tot && (tot - live) * 100 >= tot * (u64)lvl_dirty_pct_;
                     const bool cheap = cheap_pages_ && pg <= cheap_pages_;
-                    if (reclaim || cheap) n = k;
-                    else if (fam.size() >= cliff) n = std::min<size_t>(fam.size(), cliff);
+                    if (reclaim) { n = k; why = 1; }
+                    else if (cheap) { n = k; why = 2; }
+                    else if (fam.size() >= cliff) { n = std::min<size_t>(fam.size(), cliff); why = 3; }
                 }
                 bool dsingle = false;                // (d) 选中了"单条重写"
                 if (!n && !fam.empty()) {
@@ -7118,7 +7563,10 @@ private:
                     //     ≥ 256 页的 run 做——L0 的小 run 等组合并顺手丢垃圾更便宜；大 run 的垃圾（新写盖住的、范围删除盖住的）
                     //     以前只能等单元压实按预算慢慢啃或 consolidate。≥ 2 条时门槛 64 页。
                     //     能回收的前提是归并会丢"被更新 run 盖住"的记录（见 merge_run_set）；没有它这条规则只会白写。
-                    if (lvl_merges_ && merges >= lvl_merges_) continue;
+                    if (lvl_merges_ && merges >= lvl_merges_) {
+                        if (merge_diag_) ++md_.skip_budget;
+                        continue;
+                    }
                     const size_t kmax = std::min<size_t>(mcont, t);
                     u64 tot = 0, live = 0, pg = 0;
                     long long best = LLONG_MIN;          // 回收 − 重写 = (tot − live) − live；老规则只接受 ≥ 0（即垃圾 ≥ 50%）
@@ -7133,16 +7581,26 @@ private:
                         const long long gain = (long long)(tot - live) - (long long)live;
                         const bool huge = pg >= (u64)FCS_LVL_BIG_PAGES;
                         const bool ok = huge ? (tot - live) * 100 >= tot * (u64)lvl_dirty_big_pct_ : (tot - live) * 2 >= tot;
-                        if (ok && gain >= best) { best = gain; n = i + 1; dsingle = (i == 0); }
+                        if (ok && gain >= best) { best = gain; n = i + 1; dsingle = (i == 0); why = 4; }
                     }
                 }
-                if (!n) continue;
+                if (!n) {
+                    if (merge_diag_) {
+                        if (fam.size() < t) ++md_.skip_need_t;
+                        else ++md_.skip_not_trigger;
+                    }
+                    continue;
+                }
                 size_t m = std::min(n, mcont);       // 连续前缀长度
                 if (m < 2) {
                     if (n == 1 && dsingle) force1 = true;   // (d) 单条重写：merge_run_set 单源要 force（家族 ≥ 2 条时就是普通多源归并）
                     else {                           // 最老那条被组外 run 隔开：提升到下一层，重来（顶层没有下一层：跳过）
-                        if (lvl == LVL_MAX) continue;
+                        if (lvl == LVL_MAX) {
+                            if (merge_diag_) ++md_.skip_top_gap;
+                            continue;
+                        }
                         for (size_t q = 0; q < fam[0].e; ++q) set[q]->lvl = lvl + 1;   // 整个家族一起升
+                        if (merge_diag_) ++md_.skip_gap_promote;
                         did = true;
                         continue;
                     }
@@ -7154,6 +7612,11 @@ private:
                     start_job(set, newlvl);
                     RC r = merge_job_step(delta);
                     if (r != RC::OK && r != RC::MORE) return r;
+                    if (merge_diag_) {
+                        ++md_.did_merge;
+                        if (why == 1) ++md_.did_reclaim; else if (why == 2) ++md_.did_cheap;
+                        else if (why == 3) ++md_.did_cliff; else if (why == 4) ++md_.did_d;
+                    }
                     did = true;
                     ++merges;
                     if (one) return RC::MORE;
@@ -7162,6 +7625,11 @@ private:
                 RC rc = merge_run_set(set, delta, newlvl, force1);
                 if (rc == RC::NOSPACE) return RC::OK;   // 尽力而为：空间不够就不合并
                 if (rc != RC::OK) return rc;
+                if (merge_diag_) {
+                    ++md_.did_merge;
+                    if (why == 1) ++md_.did_reclaim; else if (why == 2) ++md_.did_cheap;
+                    else if (why == 3) ++md_.did_cliff; else if (why == 4) ++md_.did_d;
+                }
                 did = true;
                 ++merges;
                 maint_sync_pending_ = true;
@@ -7945,6 +8413,7 @@ private:
     // 代价（实测 set_io_timeout_ms 那段基准）：点查 296 → 310 ns（+5%）。
     XLock xl_;                       // P1：写独占（可重入）/ 读共享
     bool shared_reads_ = false;      // set_shared_reads()
+    bool verify_reads_ = false;      // 坑 120：set_verify_reads()；默认关
     std::unique_ptr<Tls[]> tls_;     // MAX_TLS 个线程槽 + 1 个公共槽
     struct RangeTomb { u64 lo = 0, hi = 0, maxhi = 0; u64 ver = 0; };   // maxhi = 前缀最大 hi
     // 键 = (lo, ver)。**不能**只用 lo：同一 lo 的第二条（更窄的）墓碑会把第一条顶掉，
@@ -7992,13 +8461,37 @@ private:
         //（≤ 一片，begin_stream 之后第一次 add 会把积压的页一次 spill 掉）。
         bool need_res = false;
         u64 seal_gen = 0;
+        u32 starve_prom_n = 0;                    // 坑 139：本作业已插 β 次数（≤ starve_max_promotes_）
+        bool starve_tight = false;                // 坑 143：本作业紧余量（避免 part_cap_need 每次扫 free_）
         u32 coal_moves = 0;                       // 本作业已并洞搬挡路次数（上限 FCS_PART_COALESCE_MAX）
     };
     std::unique_ptr<MergeJob> job_;
     // 一片的预留量：片 + 余量（封口切点落在单元边界上：产物到达片大小后在**下一个单元格的门口**切（pcut），最多多出一个单元
     // ≤ BMAX 物理字节 ≈ 8 页）。
     static u64 part_cap_of(u64 p) { return p + std::max<u64>(p / 8, 32) + 8; }
-    u64 part_cap(const MergeJob& j) const { return part_cap_of(j.part); }
+    // 坑 138：洞饿紧余量（p=32 → 40，对齐 Soft A1 starve maxh 带）
+    static u64 part_cap_tight(u64 p) { return p + std::max<u64>(p / 16, 4) + 4; }
+    static u32 starve_part_floor(u32 frag_floor, u32 flo = FCS_PART_STARVE_FLOOR) {
+        const u32 f = flo ? flo : (u32)FCS_PART_STARVE_FLOOR;
+        return frag_floor > f ? frag_floor : f;
+    }
+    u64 pending_free_pages_() const {
+        u64 n = 0;
+        for (auto& e : pending_free_) n += e.first;
+        return n;
+    }
+    // 坑 143：勿在 part_cap_need 里扫 largest_hole——starve_fit 仅开着、作业未紧切时每次预留都 O(free_)，
+    // Soft sync 50k 上 P2 计数常 0 仍可能吃 CPU。紧余量只看本作业 starve_tight 旗。
+    u64 part_cap_need(u64 p) const {
+        if (!p) return part_cap_of(p);
+        if (starve_fit_ && job_ && job_->starve_tight) return part_cap_tight(p);
+        return part_cap_of(p);
+    }
+    u64 part_cap(const MergeJob& j) const {
+        if (!j.part) return part_cap_of(0);
+        if (starve_fit_ && j.starve_tight) return part_cap_tight(j.part);
+        return part_cap_of(j.part);
+    }
     // P2b：按洞挑片大小。封口释放的是各源的前缀 —— N 个源就是 N 个洞，每个洞只有产物的 1/N 大；片若比洞大就只能长尾，裁出来的
     // 空间白白闲着（layout 800k：31 条 L2 合并，洞最大 186 页、片 1024 页 ⇒ 峰值比不分片还高）。所以下一片 = 能装进**当前最大的洞**
     //（含余量）的最大片，夹在 [part_lo, part_hi]；没有洞装得下最小片就按 part_lo 长尾（之后洞长大了再回来）。
@@ -8009,17 +8502,19 @@ private:
         for (auto& kv : free_) { if (kv.first >= tail_) continue; u64 n = kv.second; if ((u64)kv.first + n > tail_) n = tail_ - kv.first; best = std::max(best, n); }
         return best;
     }
-    static u64 max_part_fitting(u64 best, u64 lo, u64 hi) {   // 最大 p∈[lo,hi]：part_cap_of(p) ≤ best；装不下 ⇒ 0
-        if (best < part_cap_of(lo)) return 0;
-        while (lo < hi) { const u64 mid = (lo + hi + 1) / 2; if (part_cap_of(mid) <= best) lo = mid; else hi = mid - 1; }
+    static u64 max_part_fitting_fn(u64 best, u64 lo, u64 hi, u64 (*cap)(u64)) {   // 最大 p∈[lo,hi]：cap(p) ≤ best；装不下 ⇒ 0
+        if (best < cap(lo)) return 0;
+        while (lo < hi) { const u64 mid = (lo + hi + 1) / 2; if (cap(mid) <= best) lo = mid; else hi = mid - 1; }
         return lo;
     }
+    static u64 max_part_fitting(u64 best, u64 lo, u64 hi) { return max_part_fitting_fn(best, lo, hi, part_cap_of); }
     void choose_part(MergeJob& j) const {
         if (!j.part_hi) { j.part = 0; return; }
         if (j.part_lo >= j.part_hi) { j.part = j.part_hi; return; }     // 固定片（set_merge_part_pages）
         const u64 best = largest_hole();
         u64 p = j.part_lo;
         bool frag = false;
+        bool starve = false;
         // 有洞装得下最小片：按洞挑最大片（老路）
         if (best >= part_cap_of(j.part_lo)) {
             p = max_part_fitting(best, j.part_lo, j.part_hi);
@@ -8032,14 +8527,27 @@ private:
                 if (p) { frag = true; ++const_cast<Store*>(this)->part_frags_; }
                 else p = j.part_lo;   // 理论不该：best ≥ part_cap(frag_floor)
             }
+        } else if (starve_fit_ && part_frag_) {
+            // 坑 138/139 α：松余量装不下 frag_floor，紧余量从 STARVE_FLOOR 起挑
+            const u32 slo = starve_part_floor(frag_floor_, starve_floor_);
+            if (slo < j.part_lo && best >= part_cap_tight(slo)) {
+                p = max_part_fitting_fn(best, slo, j.part_lo - 1, part_cap_tight);
+                if (p) {
+                    frag = true; starve = true;
+                    j.starve_tight = true;
+                    ++const_cast<Store*>(this)->starve_fits_;
+                }
+                else p = j.part_lo;
+            }
         }
         // 碎片命中：允许 part < part_lo；否则夹在 [part_lo, part_hi]
         if (frag) j.part = (u32)std::min<u64>(p, j.part_hi);
         else j.part = (u32)std::max<u64>(j.part_lo, std::min<u64>(p, j.part_hi));
 #ifdef FCS_TRACE
-        std::fprintf(stderr, "  JOB choose_part best_hole=%llu -> part=%u [%u,%u]%s\n",
-                     (unsigned long long)best, j.part, j.part_lo, j.part_hi, frag ? " frag" : "");
+        std::fprintf(stderr, "  JOB choose_part best_hole=%llu -> part=%u [%u,%u]%s%s\n",
+                     (unsigned long long)best, j.part, j.part_lo, j.part_hi, frag ? " frag" : "", starve ? " starve" : "");
 #endif
+        (void)starve;
     }
     bool maint_sync_pending_ = false;                 // 提交后维护写了 run：放锁后由维护线程自己 wait_io + sync
     bool job_has(u32 rid) const {

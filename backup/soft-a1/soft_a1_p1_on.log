@@ -1,0 +1,27 @@
+# Soft A1: N=200000 B=500 VSZ=32 protect=1 p1_stream_small=1 hw=150 space_accel=0 frag=1
+ins #65 tail 380->691 (+311) r0=1.022 r1=1.066 holes=2/43 maxh=40 pend=328 L0=1 L1=0 L2=1 L3=0 dead_est=0 owned=316 ATTR=HOLE_STARVE
+ins #129 tail 926->1237 (+311) r0=1.350 r1=1.286 holes=7/275 maxh=89 pend=328 L0=1 L1=0 L2=2 L3=0 dead_est=6 owned=627 ATTR=SB_LAG
+ins #193 tail 1319->1630 (+311) r0=1.319 r1=1.277 holes=7/354 maxh=89 pend=328 L0=1 L1=0 L2=3 L3=0 dead_est=18 owned=938 ATTR=SB_LAG
+ins #257 tail 1712->2023 (+311) r0=1.304 r1=1.273 holes=8/434 maxh=89 pend=328 L0=1 L1=0 L2=4 L3=0 dead_est=36 owned=1249 ATTR=SB_LAG
+ins #321 tail 2105->2416 (+311) r0=1.294 r1=1.270 holes=8/513 maxh=89 pend=328 L0=1 L1=0 L2=5 L3=0 dead_est=59 owned=1560 ATTR=SB_LAG
+ins #385 tail 2503->2814 (+311) r0=1.290 r1=1.270 holes=12/598 maxh=89 pend=328 L0=1 L1=0 L2=6 L3=0 dead_est=88 owned=1871 ATTR=SB_LAG
+== after insert: tail=2814 live=1778 peak=2814 runs=8
+upd #452 tail 2899->3187 (+288) r0=1.307 r1=1.269 holes=13/676 maxh=89 pend=322 L0=3 L1=0 L2=7 L3=0 dead_est=319 owned=2169 ATTR=SB_LAG
+upd #515 tail 3272->3559 (+287) r0=1.307 r1=1.273 holes=13/764 maxh=91 pend=321 L0=2 L1=0 L2=8 L3=0 dead_est=601 owned=2451 ATTR=SB_LAG
+upd #573 tail 3423->3576 (+153) r0=1.746 r1=1.720 holes=22/1497 maxh=209 pend=150 L0=4 L1=7 L2=0 L3=19 dead_est=66 owned=1901 ATTR=PRE_DIRTY
+upd #574 tail 3576->3727 (+151) r0=1.720 r1=1.788 holes=22/1642 maxh=209 pend=153 L0=5 L1=7 L2=0 L3=19 dead_est=68 owned=1904 ATTR=PRE_DIRTY
+upd #579 tail 3539->3730 (+191) r0=1.813 r1=1.736 holes=21/1582 maxh=209 pend=169 L0=2 L1=8 L2=1 L3=19 dead_est=105 owned=2120 ATTR=PRE_DIRTY
+upd #581 tail 3730->3914 (+184) r0=1.790 r1=1.840 holes=23/1787 maxh=225 pend=191 L0=4 L1=0 L2=2 L3=19 dead_est=84 owned=1907 ATTR=PRE_DIRTY
+upd #582 tail 3914->4097 (+183) r0=1.840 r1=1.929 holes=24/1973 maxh=225 pend=184 L0=5 L1=0 L2=2 L3=19 dead_est=89 owned=1911 ATTR=PRE_DIRTY
+upd #586 tail 3904->4085 (+181) r0=1.958 r1=1.909 holes=25/1945 maxh=225 pend=182 L0=1 L1=1 L2=2 L3=19 dead_est=107 owned=1929 ATTR=PRE_DIRTY
+upd #589 tail 3901->4081 (+180) r0=1.815 r1=1.895 holes=25/1928 maxh=225 pend=181 L0=4 L1=1 L2=2 L3=19 dead_est=119 owned=1943 ATTR=PRE_DIRTY
+upd #592 tail 3898->4077 (+179) r0=1.804 r1=1.883 holes=24/1912 maxh=225 pend=179 L0=7 L1=1 L2=2 L3=19 dead_est=133 owned=1957 ATTR=PRE_DIRTY
+upd #596 tail 3892->4068 (+176) r0=1.789 r1=1.866 holes=25/1888 maxh=225 pend=176 L0=3 L1=2 L2=2 L3=19 dead_est=148 owned=1975 ATTR=PRE_DIRTY
+upd #599 tail 3890->4065 (+175) r0=1.777 r1=1.854 holes=25/1872 maxh=225 pend=175 L0=6 L1=2 L2=2 L3=19 dead_est=160 owned=1989 ATTR=PRE_DIRTY
+upd #602 tail 3713->3887 (+174) r0=1.795 r1=1.764 holes=23/1684 maxh=225 pend=174 L0=0 L1=3 L2=2 L3=19 dead_est=170 owned=1999 ATTR=PRE_DIRTY
+== SUMMARY Soft A1 peak_tail=4097 peak_x=2.200 end_tail=3887 end_x=2.088 live_logic=1862 live_phys=2219
+== ATTR_COUNTS big_grows=19 PRE_DIRTY=16 HOLE_STARVE=1 SB_LAG=8 sum_delta=5792
+== MERGE_START tail=3272 live=2503 ratio=1.307 (first big L2/L3 wave)
+== AT_PEAK commit=582 dead_est=89 owned=1911 dead/live=0.048 maxh=225 pend=184 L0=5 L1=0 L2=2 L3=19
+== DECOMP leading: pre_dirty≈1.307 + residual≈0.893 (peak_x)  P2c_gate dead/live=0.048 →勿开P2c(死页不足)
+== maint hole_fits=1 hw_reclaims=712 part_frags=9 stream_extends=0 hole_protect_skips=1954 p1=1

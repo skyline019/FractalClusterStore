@@ -1,0 +1,21 @@
+== base chain=1 k1=0 ==
+polish=0 runs=10 range=28.873 cursors=12.38 rows=199785
+polish=0 runs=10 range=32.761 cursors=12.38 rows=199785
+polish=1 runs=1 range=4.034 cursors=1.25 rows=199785
+polish=1 runs=1 range=7.505 cursors=1.25 rows=199785
+== nochain chain=0 k1=0 ==
+polish=0 runs=10 range=29.030 cursors=12.38 rows=199785
+polish=0 runs=10 range=26.736 cursors=12.38 rows=199785
+polish=1 runs=1 range=4.192 cursors=1.25 rows=199785
+polish=1 runs=1 range=11.716 cursors=1.25 rows=199785
+== k1 chain=1 k1=1 ==
+polish=0 runs=10 range=26.815 cursors=12.38 rows=199785
+polish=0 runs=10 range=25.032 cursors=12.38 rows=199785
+polish=1 runs=1 range=5.160 cursors=1.26 rows=199785
+polish=1 runs=1 range=3.908 cursors=1.25 rows=199785
+== both chain=0 k1=1 ==
+polish=0 runs=10 range=23.851 cursors=12.38 rows=199785
+polish=0 runs=10 range=25.923 cursors=12.38 rows=199785
+polish=1 runs=1 range=4.083 cursors=1.25 rows=199785
+polish=1 runs=1 range=4.815 cursors=1.25 rows=199785
+DONE

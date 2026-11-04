@@ -22,11 +22,15 @@ int main(int argc,char**argv){
     s.set_maint_mode(mode); if(rpct) s.set_hw_reclaim_pct((u32)rpct);
     int frag=argc>11?atoi(argv[11]):-1;   // -1=默认(FCS_PART_FRAG)；0/1=强制关/开
     int coal=argc>12?atoi(argv[12]):-1;   // -1=默认(FCS_PART_COALESCE)；0/1=强制关/开
+    int sp_accel=argc>13?atoi(argv[13]):-1; // -1=不碰；≥0 ⇒ set_space_accel_pct（坑 125 harness）
+    int stream_bf=argc>14?atoi(argv[14]):0;  // 1 ⇒ set_stream_best_fit（坑 134 P1c）
     if(protect) s.set_protect_merge_holes(true);
     if(budget_ms>=0) s.set_maint_budget_us((u64)budget_ms*1000ull);
     if(units>0) s.set_maint_units_max((u32)units);
     if(frag>=0) s.set_part_frag(frag!=0);
     if(coal>=0) s.set_part_coalesce(coal!=0);
+    if(sp_accel>=0) s.set_space_accel_pct((u32)sp_accel);
+    if(stream_bf) s.set_stream_best_fit(true);
     std::vector<u64> keys(N); for(u32 i=0;i<N;i++) keys[i]=mix(i+1)%(N*8)+1;
     std::vector<u8> val(VSZ,7), val2(VSZ,9);
     u32 tail_prev=s.tail_; u32 commits=0, grows=0; u64 grown=0; u32 peak=0;
@@ -47,15 +51,16 @@ int main(int argc,char**argv){
     s.commit(); commits++; report("upd ");
     { double w0=prog_us(); while(s.maint_pending() && prog_us()-w0<60e6){ if(mode==3) usleep(1000); else s.commit(); } s.commit(); s.commit(); }   // 末尾两个空提交：让最后一批释放页过提交点（pending → free_，顶部回落）
     report("fin ");
-    { auto ms=s.maint_stats(); printf("== after update: tail=%u peak_tail=%u live_pages=%llu used=%u runs=%u grows=%u grown=%llu  hw %.1f MB live %.1f MB (%.2fx) peak %.2fx  stream runs=%llu moves=%llu extends=%llu reclaims=%llu blockers=%llu  dev writes %.1f MB\n", s.tail_, peak, (unsigned long long)s.live_pages(), s.used_pages(), s.run_count(), grows,(unsigned long long)grown, s.tail_*4096/1048576.0, s.live_pages()*4096/1048576.0, (double)s.tail_/std::max<u64>(1,s.live_pages()), (double)peak/std::max<u64>(1,s.live_pages()), (unsigned long long)ms.stream_runs, (unsigned long long)ms.stream_moves, 
+    { auto ms=s.maint_stats(); printf("== after update: tail=%u peak_tail=%u live_pages=%llu used=%u runs=%u grows=%u grown=%llu  hw %.1f MB live %.1f MB (%.2fx) peak %.2fx  stream runs=%llu moves=%llu extends=%llu reclaims=%llu blockers=%llu  space_accels=%llu  dev writes %.1f MB\n", s.tail_, peak, (unsigned long long)s.live_pages(), s.used_pages(), s.run_count(), grows,(unsigned long long)grown, s.tail_*4096/1048576.0, s.live_pages()*4096/1048576.0, (double)s.tail_/std::max<u64>(1,s.live_pages()), (double)peak/std::max<u64>(1,s.live_pages()), (unsigned long long)ms.stream_runs, (unsigned long long)ms.stream_moves, 
 #if defined(LAYOUT_OLD) || defined(LAYOUT_R14)
         0ull, 0ull, 0ull,
 #else
         (unsigned long long)ms.stream_extends, (unsigned long long)ms.hw_reclaims, (unsigned long long)ms.hw_blockers,   // 第 15 轮：blockers = 二步搬家搬开的挡路 run 数
 #endif
+        (unsigned long long)s.space_accels(),
         dev.st.write_bytes.load()/1048576.0);
 #ifdef FCS_R17
-      printf("== merge width: src_max=%llu cur_max=%llu  hole_fits=%llu  protect=%d  part_frags=%llu frag=%d  part_coalesces=%llu coal=%d\n", (unsigned long long)ms.merge_src_max, (unsigned long long)ms.merge_cur_max, (unsigned long long)s.part_hole_fits(), protect, (unsigned long long)s.part_frags(), (int)s.part_frag(), (unsigned long long)s.part_coalesces(), (int)s.part_coalesce());
+      printf("== merge width: src_max=%llu cur_max=%llu  hole_fits=%llu  protect=%d  part_frags=%llu frag=%d  part_coalesces=%llu coal=%d  stream_best_fit=%d fits=%llu\n", (unsigned long long)ms.merge_src_max, (unsigned long long)ms.merge_cur_max, (unsigned long long)s.part_hole_fits(), protect, (unsigned long long)s.part_frags(), (int)s.part_frag(), (unsigned long long)s.part_coalesces(), (int)s.part_coalesce(), (int)s.stream_best_fit(), (unsigned long long)s.stream_best_fits());
 #endif
     }
     // run 布局

@@ -1,0 +1,8 @@
+== chain=1 ==
+runs=30 range=15.705 cursors=6.48 fits=2 prom=1 rows=199871
+runs=32 range=15.355 cursors=6.48 fits=1 prom=1 rows=199871
+runs=36 range=23.505 cursors=6.50 fits=2 prom=1 rows=199871
+== chain=0 ==
+runs=33 range=18.513 cursors=6.47 fits=2 prom=1 rows=199871
+runs=31 range=14.190 cursors=6.48 fits=2 prom=1 rows=199871
+runs=33 range=15.815 cursors=6.47 fits=2 prom=1 rows=199871

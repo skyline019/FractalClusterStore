@@ -75,6 +75,12 @@ int main(int argc, char** argv) {
     int kmode = argc > 15 ? atoi(argv[15]) : 0;   // 0=均匀随机键 1=时间型有序键
     int hwpct = argc > 16 ? atoi(argv[16]) : 0;   // 第 14 轮：高水位回收百分比（百分比，0 = 关）
     int soft  = argc > 17 ? atoi(argv[17]) : 0;   // 1 = Soft / configure_deploy（产品常驻整理态）
+    int sp_accel = argc > 18 ? atoi(argv[18]) : -1; // 坑 125：-1=Soft 默认；≥0 覆盖 set_space_accel_pct（0=消融）
+    int stream_bf = argc > 19 ? atoi(argv[19]) : 0; // 坑 134/135：bf_mode 0/1/2
+    int bf_skip = argc > 20 ? atoi(argv[20]) : 0;   // 坑 135-C：skip_pct
+    int starve_fit = argc > 21 ? atoi(argv[21]) : 0;       // 坑 138 P2α
+    int starve_promote = argc > 22 ? atoi(argv[22]) : 0;   // 坑 138 P2β
+    int soft_cons = argc > 23 ? atoi(argv[23]) : 0;        // 坑 149：0 Off 1 Eager 2 Idle 3 Post
 
     const u64 KEYMASK = SKEY_MAX;                      // 56 位键（SQLite INTEGER 为有符号）
     std::vector<u64> keys;
@@ -90,8 +96,9 @@ int main(int argc, char** argv) {
     std::vector<u8> val(VSZ), val2(VSZ);
     for (u32 i = 0; i < VSZ; ++i) { val[i] = (u8)(i * 31 + 7); val2[i] = (u8)(i * 17 + 3); }
 
-    std::printf("# FCS vs SQLite   N=%u B=%u val=%uB 读=%u 区间=%u×%u  kidx=%d async=%d group=%d lvl_t=%d key=%s soft=%d\n",
-                N, B, VSZ, R, S, K, kidx, async, gm, lvl_t, kmode ? "时间型" : "随机", soft);
+    std::printf("# FCS vs SQLite   N=%u B=%u val=%uB 读=%u 区间=%u×%u  kidx=%d async=%d group=%d lvl_t=%d key=%s soft=%d bf_mode=%d bf_skip=%d starve_fit=%d starve_promote=%d soft_cons=%d\n",
+                N, B, VSZ, R, S, K, kidx, async, gm, lvl_t, kmode ? "时间型" : "随机", soft, stream_bf, bf_skip,
+                starve_fit, starve_promote, soft_cons);
     std::printf("# 单位: µs/op（越小越好） | 写字节 = 引擎自计 / 块层实测 / 逻辑值字节\n");
 
     // ---------------------------------------------------------------- FCS
@@ -107,11 +114,21 @@ int main(int argc, char** argv) {
         s.set_key_index(kidx != 0);
         if (soft) {
             s.set_tidy_policy(Store::TidyPolicy::Soft);   // configure_deploy：async+cheap+hole_fit+护洞+hw
+            if (sp_accel >= 0) s.set_space_accel_pct((u32)sp_accel);
         } else {
             s.set_async_writes(async != 0);
             if (hwpct) s.set_hw_reclaim_pct((u32)hwpct);
             s.set_io_threads((u32)(ithr > 0 ? ithr : 1));
+            if (sp_accel >= 0) s.set_space_accel_pct((u32)sp_accel);
         }
+        if (stream_bf > 0) s.set_stream_best_fit_mode((u32)stream_bf);
+        if (bf_skip > 0) s.set_stream_best_fit_skip_pct((u32)bf_skip);
+        // 坑 144：Soft 已开 P2；argv 显式传入时覆盖（0=消融关）
+        if (argc > 21) s.set_part_starve_fit(starve_fit != 0);
+        if (argc > 22) s.set_starve_promote(starve_promote != 0);
+        // 坑 151：argv 显式覆盖 Soft 默认 Post（含 0=Off 消融）
+        if (argc > 23)
+            s.set_soft_cons((Store::SoftCons)std::min(std::max(soft_cons, 0), 3));
         if (lt) s.set_lvl_t((u32)lt);
         if (am) s.set_async_flush_min((u32)am);
         if (!soft) s.set_io_threads((u32)(ithr > 0 ? ithr : 1));
@@ -137,6 +154,14 @@ int main(int argc, char** argv) {
         s.commit();
         f2r.us = (now_us() - t0) / (N / 2); f2r.ops = N / 2;
         f2r.logical = dev.st.write_bytes - e1;
+
+        // 坑 150/151：Post（含 Soft 默认）写后 soft_cons_repay，再测 get/range
+        if (s.soft_cons() == Store::SoftCons::Post) {
+            (void)s.soft_cons_repay(64);
+            std::printf("# fcs soft_cons=Post after repay: runs=%u debt=%u tidies=%llu\n",
+                        s.run_count(), s.soft_idle_debt(),
+                        (unsigned long long)s.soft_idle_tidies());
+        }
 
         if (cons) {
             double c0 = now_us();
@@ -188,12 +213,17 @@ int main(int argc, char** argv) {
         Report rep;
         s.verify(&rep);
         fcs_space = (u64)s.used_pages() * PAGE;      // 实际在用空间（文件是预分配的）
-        std::printf("# fcs space: file=%llu B hw=%llu B (live_pages=%llu free=%llu largest_free=%u pg extents=%u)  live_recs=%llu  bytes/rec=%.1f  runs=%u cells=%u  hw_reclaims=%llu pending=%d\n",
+        std::printf("# fcs space: file=%llu B hw=%llu B (live_pages=%llu free=%llu largest_free=%u pg extents=%u)  live_recs=%llu  bytes/rec=%.1f  runs=%u cells=%u  hw_reclaims=%llu space_accels=%llu pending=%d\n",
                     (unsigned long long)dev.file_bytes(), (unsigned long long)fcs_space,
                     (unsigned long long)((u64)s.live_pages() * PAGE),
                     (unsigned long long)(s.free_page_count() * PAGE), s.largest_free(), s.free_extents(),
                     (unsigned long long)fcs_live,
-                    fcs_live ? (double)fcs_space / fcs_live : 0.0, rep.runs, rep.cells, (unsigned long long)s.maint_stats().hw_reclaims, (int)s.maint_pending());
+                    fcs_live ? (double)fcs_space / fcs_live : 0.0, rep.runs, rep.cells, (unsigned long long)s.maint_stats().hw_reclaims,
+                    (unsigned long long)s.space_accels(), (int)s.maint_pending());
+        std::printf("# fcs p2: starve_fits=%llu starve_promotes=%llu merge_parts=%llu part_frags=%llu hole_fits=%llu\n",
+                    (unsigned long long)s.part_starve_fits(), (unsigned long long)s.starve_promotes(),
+                    (unsigned long long)s.merge_parts(), (unsigned long long)s.part_frags(),
+                    (unsigned long long)s.part_hole_fits());
 #ifdef FCS_R17
         std::printf("# fcs r17: merge src_max=%llu cur_max=%llu hole_fits=%llu durable=%llu\n",
                     (unsigned long long)s.maint_stats().merge_src_max, (unsigned long long)s.maint_stats().merge_cur_max,

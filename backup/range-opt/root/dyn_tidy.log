@@ -1,0 +1,44 @@
+== N=50000 arm=0 ==
+arm=soft N=50000 runs=10 used=962 peak_used=962 live=666 peak_x=1.444 insert=6.986 update=6.688 range=28.336 cursors=12.38 steps=0 commits=152
+== N=50000 arm=1 ==
+arm=eager N=50000 runs=2 used=556 peak_used=1464 live=471 peak_x=3.108 insert=21.849 update=10.398 range=6.665 cursors=2.34 steps=214 commits=152
+== N=50000 arm=2 ==
+arm=duty8 N=50000 runs=1 used=1042 peak_used=1503 live=469 peak_x=3.205 insert=8.103 update=12.187 range=6.262 cursors=1.20 steps=19 commits=152
+== N=50000 arm=3 ==
+arm=duty32 N=50000 runs=3 used=1118 peak_used=1118 live=628 peak_x=1.780 insert=7.020 update=7.483 range=15.191 cursors=3.79 steps=4 commits=152
+== N=50000 arm=4 ==
+arm=hyst N=50000 runs=10 used=962 peak_used=962 live=666 peak_x=1.444 insert=6.504 update=7.771 range=22.970 cursors=12.38 steps=0 commits=152
+== N=50000 arm=5 ==
+arm=post N=50000 runs=3 used=962 peak_used=962 live=655 peak_x=1.469 insert=7.545 update=4.691 range=10.592 cursors=3.75 steps=2 commits=152
+== N=50000 arm=6 ==
+arm=polish N=50000 runs=1 used=1465 peak_used=1465 live=477 peak_x=3.071 insert=7.563 update=8.259 range=4.139 cursors=1.25 steps=0 commits=152
+== N=200000 arm=0 ==
+arm=soft N=200000 runs=36 used=2762 peak_used=3014 live=2101 peak_x=1.435 insert=7.006 update=12.230 range=18.421 cursors=6.48 steps=0 commits=602
+== N=200000 arm=1 ==
+arm=eager N=200000 runs=1 used=9836 peak_used=13098 live=1884 peak_x=6.952 insert=53.572 update=97.761 range=5.773 cursors=1.16 steps=1096 commits=602
+== N=200000 arm=2 ==
+arm=duty8 N=200000 runs=13 used=4797 peak_used=4797 live=2331 peak_x=2.058 insert=7.145 update=12.802 range=31.528 cursors=15.47 steps=75 commits=602
+== N=200000 arm=3 ==
+arm=duty32 N=200000 runs=29 used=3093 peak_used=4735 live=2133 peak_x=2.220 insert=6.786 update=14.698 range=49.606 cursors=31.62 steps=18 commits=602
+== N=200000 arm=4 ==
+arm=hyst N=200000 runs=14 used=2752 peak_used=4652 live=2650 peak_x=1.755 insert=9.808 update=20.109 range=34.306 cursors=15.94 steps=39 commits=602
+== N=200000 arm=5 ==
+arm=post N=200000 runs=1 used=6829 peak_used=6829 live=1868 peak_x=3.656 insert=6.209 update=9.526 range=5.058 cursors=1.30 steps=6 commits=602
+== N=200000 arm=6 ==
+arm=polish N=200000 runs=1 used=4749 peak_used=4749 live=1878 peak_x=2.529 insert=5.691 update=10.205 range=5.043 cursors=1.30 steps=0 commits=602
+--- csv ---
+arm,N,runs,peak_used,live,peak_x,insert,update,range,cursors,steps
+soft,50000,10,962,666,1.444,6.986,6.688,28.336,12.38,0
+eager,50000,2,1464,471,3.108,21.849,10.398,6.665,2.34,214
+duty8,50000,1,1503,469,3.205,8.103,12.187,6.262,1.20,19
+duty32,50000,3,1118,628,1.780,7.020,7.483,15.191,3.79,4
+hyst,50000,10,962,666,1.444,6.504,7.771,22.970,12.38,0
+post,50000,3,962,655,1.469,7.545,4.691,10.592,3.75,2
+polish,50000,1,1465,477,3.071,7.563,8.259,4.139,1.25,0
+soft,200000,36,3014,2101,1.435,7.006,12.230,18.421,6.48,0
+eager,200000,1,13098,1884,6.952,53.572,97.761,5.773,1.16,1096
+duty8,200000,13,4797,2331,2.058,7.145,12.802,31.528,15.47,75
+duty32,200000,29,4735,2133,2.220,6.786,14.698,49.606,31.62,18
+hyst,200000,14,4652,2650,1.755,9.808,20.109,34.306,15.94,39
+post,200000,1,6829,1868,3.656,6.209,9.526,5.058,1.30,6
+polish,200000,1,4749,1878,2.529,5.691,10.205,5.043,1.30,0

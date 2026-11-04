@@ -1,0 +1,8 @@
+# Soft A1: N=20000 B=500 VSZ=32 protect=1 p1_stream_small=1 hw=150 space_accel=0 frag=1
+== after insert: tail=252 live=180 peak=252 runs=5
+== SUMMARY Soft A1 peak_tail=326 peak_x=1.226 end_tail=326 end_x=1.226 live_logic=266 live_phys=298
+== ATTR_COUNTS big_grows=0 PRE_DIRTY=0 HOLE_STARVE=0 SB_LAG=0 sum_delta=329
+== MERGE_START tail=0 live=0 ratio=0.000 (first big L2/L3 wave)
+== AT_PEAK commit=57 dead_est=79 owned=274 dead/live=0.297 maxh=5 pend=40 L0=0 L1=7 L2=0 L3=0
+== DECOMP leading: pre_dirty≈0.000 + residual≈0.226 (peak_x)  P2c_gate dead/live=0.297 →可议P2c
+== maint hole_fits=0 hw_reclaims=1 part_frags=0 stream_extends=0 hole_protect_skips=0 p1=1

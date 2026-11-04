@@ -1,0 +1,8 @@
+N=50000 B=500 peak_tail=919 peak_at_commit=130 end_tail=919
+live_logic=596 live_phys=661 peak_x=1.542 end_x=1.542
+events=26 spatial_dumps=26 hole_starve_commits=2
+end holes=5 maxh=209 free=258 free_ge64=209 n_ge64=1
+end hist[1,2,4,...,2048+]: 0 0 1 1 1 1 0 0 1 0 0 0
+part_frags=0 hole_protect_skips=29 stream_best_fits=0
+files: backup/frag-trace/timeline.csv
+backup/frag-trace/holes.csv

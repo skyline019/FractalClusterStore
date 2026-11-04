@@ -1,0 +1,19 @@
+# Soft A1: N=200000 B=500 VSZ=32 protect=1 p1=0 bf_mode=0 bf_skip=0 starve_fit=1 starve_promote=1 floor=24 slices=12 max_prom=1 min_pend=0 hw=150 space_accel=0 frag=1
+ins #66 tail 429->504 (+75) r0=1.111 r1=1.223 holes=10/92 maxh=35 pend=36 L0=2 L1=8 L2=3 L3=0 dead_est=4 owned=462 ATTR=HOLE_STARVE
+ins #67 tail 504->575 (+71) r0=1.223 r1=1.272 holes=10/123 maxh=30 pend=67 L0=3 L1=8 L2=5 L3=0 dead_est=6 owned=538 ATTR=HOLE_STARVE
+ins #68 tail 575->679 (+104) r0=1.272 r1=1.372 holes=10/184 maxh=25 pend=99 L0=4 L1=8 L2=8 L3=0 dead_est=29 owned=647 ATTR=HOLE_STARVE
+ins #258 tail 1401->1712 (+311) r0=1.053 r1=1.040 holes=8/66 maxh=21 pend=328 L0=2 L1=0 L2=32 L3=0 dead_est=25 owned=1303 ATTR=HOLE_STARVE
+ins #322 tail 1712->2023 (+311) r0=1.042 r1=1.033 holes=8/64 maxh=21 pend=328 L0=2 L1=0 L2=33 L3=0 dead_est=45 owned=1614 ATTR=HOLE_STARVE
+ins #386 tail 2023->2334 (+311) r0=1.034 r1=1.027 holes=8/61 maxh=21 pend=328 L0=2 L1=0 L2=34 L3=0 dead_est=76 owned=1925 ATTR=HOLE_STARVE
+== after insert: tail=2334 live=1791 peak=2334 runs=36
+== PHASE_US insert_total=6784803 insert_us_op=33.924
+upd #451 tail 2334->2623 (+289) r0=1.031 r1=1.025 holes=9/65 maxh=20 pend=322 L0=2 L1=0 L2=35 L3=0 dead_est=311 owned=2214 ATTR=HOLE_STARVE
+upd #515 tail 2623->2910 (+287) r0=1.027 r1=1.022 holes=9/63 maxh=21 pend=321 L0=2 L1=0 L2=36 L3=0 dead_est=604 owned=2501 ATTR=HOLE_STARVE
+upd #569 tail 2910->3030 (+120) r0=1.230 r1=1.100 holes=18/276 maxh=53 pend=825 L0=24 L1=4 L2=0 L3=36 dead_est=40 owned=1898 ATTR=HOLE_STARVE
+== PHASE_US update_total=9147268 update_us_op=91.473
+== SUMMARY Soft A1 peak_tail=3030 peak_x=1.616 end_tail=2759 end_x=1.471 live_logic=1875 live_phys=2076
+== ATTR_COUNTS big_grows=9 PRE_DIRTY=0 HOLE_STARVE=9 SB_LAG=8 sum_delta=3214
+== MERGE_START tail=575 live=452 ratio=1.272 (first big L2/L3 wave)
+== AT_PEAK commit=569 dead_est=40 owned=1898 dead/live=0.021 maxh=53 pend=825 L0=24 L1=4 L2=0 L3=36
+== DECOMP leading: pre_dirty≈1.272 + residual≈0.344 (peak_x)  P2c_gate dead/live=0.021 →勿开P2c(死页不足)
+== maint hole_fits=4 hw_reclaims=8 part_frags=21 stream_extends=0 hole_protect_skips=0 p1=0 stream_best_fits=0 bf_mode=0 bf_skip=0 starve_fits=8 starve_promotes=4

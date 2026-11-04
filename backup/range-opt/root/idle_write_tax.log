@@ -1,0 +1,50 @@
+== N=50000 arm=0 gap=16 run_hi=16 ==
+arm=soft N=50000 gap=16 run_hi=16 runs=10 debt=0 peak_x=1.444 insert=6.432 update=6.494 range=24.655 cursors=12.38 tidies=0
+== N=50000 arm=1 gap=16 run_hi=16 ==
+arm=eager N=50000 gap=16 run_hi=16 runs=2 debt=0 peak_x=3.108 insert=19.682 update=10.328 range=5.669 cursors=2.34 tidies=0
+== N=50000 arm=2 gap=16 run_hi=16 ==
+arm=idle N=50000 gap=16 run_hi=16 runs=8 debt=0 peak_x=2.294 insert=6.839 update=6.102 range=19.404 cursors=9.72 tidies=3
+== N=50000 arm=2 gap=32 run_hi=16 ==
+arm=idle N=50000 gap=32 run_hi=16 runs=5 debt=0 peak_x=2.366 insert=6.601 update=6.284 range=14.854 cursors=6.12 tidies=1
+== N=50000 arm=2 gap=32 run_hi=24 ==
+arm=idle N=50000 gap=32 run_hi=24 runs=5 debt=0 peak_x=2.366 insert=7.289 update=7.154 range=12.605 cursors=6.12 tidies=1
+== N=50000 arm=2 gap=48 run_hi=24 ==
+arm=idle N=50000 gap=48 run_hi=24 runs=5 debt=0 peak_x=2.366 insert=6.431 update=5.976 range=12.908 cursors=6.12 tidies=1
+== N=50000 arm=3 gap=32 run_hi=16 ==
+arm=post N=50000 gap=32 run_hi=16 runs=1 debt=0 peak_x=2.069 insert=7.511 update=5.421 range=4.362 cursors=1.25 tidies=2
+== N=50000 arm=4 gap=16 run_hi=16 ==
+arm=polish N=50000 gap=16 run_hi=16 runs=1 debt=0 peak_x=3.071 insert=6.306 update=5.923 range=6.635 cursors=1.25 tidies=0
+== N=200000 arm=0 gap=16 run_hi=16 ==
+arm=soft N=200000 gap=16 run_hi=16 runs=33 debt=0 peak_x=1.464 insert=6.593 update=11.182 range=18.915 cursors=6.48 tidies=0
+== N=200000 arm=1 gap=16 run_hi=16 ==
+arm=eager N=200000 gap=16 run_hi=16 runs=1 debt=0 peak_x=6.908 insert=52.349 update=85.333 range=5.048 cursors=1.16 tidies=0
+== N=200000 arm=2 gap=16 run_hi=16 ==
+arm=idle N=200000 gap=16 run_hi=16 runs=24 debt=0 peak_x=1.866 insert=8.198 update=13.431 range=43.503 cursors=27.16 tidies=22
+== N=200000 arm=2 gap=32 run_hi=16 ==
+arm=idle N=200000 gap=32 run_hi=16 runs=14 debt=0 peak_x=1.118 insert=7.199 update=8.814 range=44.050 cursors=17.72 tidies=7
+== N=200000 arm=2 gap=32 run_hi=24 ==
+arm=idle N=200000 gap=32 run_hi=24 runs=16 debt=0 peak_x=2.108 insert=6.959 update=10.848 range=18.409 cursors=8.72 tidies=1
+== N=200000 arm=2 gap=48 run_hi=24 ==
+arm=idle N=200000 gap=48 run_hi=24 runs=22 debt=0 peak_x=1.901 insert=6.604 update=9.619 range=17.105 cursors=8.68 tidies=2
+== N=200000 arm=3 gap=32 run_hi=16 ==
+arm=post N=200000 gap=32 run_hi=16 runs=1 debt=0 peak_x=1.720 insert=6.474 update=10.512 range=5.118 cursors=1.30 tidies=5
+== N=200000 arm=4 gap=16 run_hi=16 ==
+arm=polish N=200000 gap=16 run_hi=16 runs=1 debt=0 peak_x=2.504 insert=6.009 update=11.223 range=5.783 cursors=1.30 tidies=0
+--- csv ---
+arm,N,gap,run_hi,runs,peak_x,insert,update,range,cursors,tidies
+soft,50000,16,16,10,1.444,6.432,6.494,24.655,12.38,0
+eager,50000,16,16,2,3.108,19.682,10.328,5.669,2.34,0
+idle,50000,16,16,8,2.294,6.839,6.102,19.404,9.72,3
+idle,50000,32,16,5,2.366,6.601,6.284,14.854,6.12,1
+idle,50000,32,24,5,2.366,7.289,7.154,12.605,6.12,1
+idle,50000,48,24,5,2.366,6.431,5.976,12.908,6.12,1
+post,50000,32,16,1,2.069,7.511,5.421,4.362,1.25,2
+polish,50000,16,16,1,3.071,6.306,5.923,6.635,1.25,0
+soft,200000,16,16,33,1.464,6.593,11.182,18.915,6.48,0
+eager,200000,16,16,1,6.908,52.349,85.333,5.048,1.16,0
+idle,200000,16,16,24,1.866,8.198,13.431,43.503,27.16,22
+idle,200000,32,16,14,1.118,7.199,8.814,44.050,17.72,7
+idle,200000,32,24,16,2.108,6.959,10.848,18.409,8.72,1
+idle,200000,48,24,22,1.901,6.604,9.619,17.105,8.68,2
+post,200000,32,16,1,1.720,6.474,10.512,5.118,1.30,5
+polish,200000,16,16,1,2.504,6.009,11.223,5.783,1.30,0

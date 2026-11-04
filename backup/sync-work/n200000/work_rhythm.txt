@@ -1,0 +1,36 @@
+commits=603 phases={'ins': 401, 'upd': 201, 'fin': 1}
+commit_us p25=7888.7 p50=13096.8 p75=38085.3 p90=62861.4 p95=84655.7 p99=163535.7 max=248500.6
+rhythm_counts={'VALLEY': 150, 'WARM': 151, 'BUSY': 240, 'PEAK': 62}
+PEAK=62 (10.3%)  VALLEY=150 (24.9%)
+top_work_peaks:
+  c569 upd commit=248500.6us level=208134us units=8 runs=55 fits=0 prom=0
+  c573 upd commit=227905.9us level=155355us units=1 runs=38 fits=0 prom=0
+  c580 upd commit=210275.9us level=22455us units=3 runs=33 fits=0 prom=0
+  c560 upd commit=206306.4us level=88000us units=1 runs=58 fits=0 prom=0
+  c579 upd commit=196536.5us level=160811us units=9 runs=39 fits=0 prom=0
+  c450 upd commit=186052.7us level=155753us units=15 runs=17 fits=0 prom=0
+  c561 upd commit=174267.0us level=48176us units=1 runs=59 fits=0 prom=0
+  c514 upd commit=163535.7us level=126735us units=18 runs=18 fits=0 prom=0
+  c385 ins commit=160960.0us level=152426us units=12 runs=16 fits=0 prom=0
+  c321 ins commit=155117.3us level=145346us units=11 runs=15 fits=0 prom=0
+deepest_valleys (low commit_us):
+  c603 fin commit=25.2us level=3 units=1 runs=33
+  c602 upd commit=2514.7us level=8 units=1 runs=33
+  c401 ins commit=3009.7us level=10 units=1 runs=17
+  c59 ins commit=4237.9us level=19 units=1 runs=10
+  c25 ins commit=4351.5us level=6 units=1 runs=4
+  c29 ins commit=4532.2us level=8 units=1 runs=8
+  c175 ins commit=4554.1us level=11 units=1 runs=23
+  c21 ins commit=4687.2us level=6 units=1 runs=7
+peak_streaks=27 longest=20
+longest_peak_streaks (start,len,phase): [(543, 20, 'upd'), (568, 7, 'upd'), (460, 3, 'upd'), (578, 3, 'upd'), (467, 2, 'upd')]
+valley_streaks=73 longest=7
+longest_valley_streaks (start,len,phase): [(49, 7, 'ins'), (97, 7, 'ins'), (169, 7, 'ins'), (19, 5, 'ins'), (25, 5, 'ins')]
+Q1 [1..150] avg_us=16044.1 sum_level_us=977510 rhythm={'VALLEY': 67, 'WARM': 37, 'BUSY': 43, 'PEAK': 3}
+Q2 [151..301] avg_us=14429.5 sum_level_us=770162 rhythm={'WARM': 64, 'BUSY': 30, 'VALLEY': 54, 'PEAK': 3}
+Q3 [302..452] avg_us=20993.0 sum_level_us=999847 rhythm={'VALLEY': 27, 'WARM': 50, 'BUSY': 71, 'PEAK': 3}
+Q4 [453..603] avg_us=61209.7 sum_level_us=2140181 rhythm={'BUSY': 96, 'PEAK': 53, 'VALLEY': 2}
+phase_ins: n=401 avg_us=15526.6 sum_level_us=2438246 peak_share=0.02
+phase_upd: n=201 avg_us=53591.4 sum_level_us=2449451 peak_share=0.27
+phase_fin: n=1 avg_us=25.2 sum_level_us=3 peak_share=0.00
+among_PEAK: sum_level_us/sum_commit_us=0.44 (level merge share of peak wall)

@@ -1,0 +1,5 @@
+arm,peak_x,peak_tail,insert_us,update_us,starve_fits,starve_promotes,hole_starve,part_frags
+off,1.808,3354,30.952,102.513,0,0,12,7
+fit,1.826,3410,30.414,114.124,8,0,11,19
+prom,1.810,3354,31.212,112.931,0,0,12,7
+both,1.782,3329,30.576,94.371,9,11,10,22

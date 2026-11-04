@@ -1,0 +1,19 @@
+# Soft A1: N=200000 B=500 VSZ=32 protect=1 p1=0 bf_mode=0 bf_skip=0 starve_fit=1 starve_promote=1 floor=24 slices=12 max_prom=1 min_pend=0 hw=150 space_accel=0 frag=1
+ins #66 tail 429->504 (+75) r0=1.111 r1=1.223 holes=10/92 maxh=35 pend=36 L0=2 L1=8 L2=3 L3=0 dead_est=4 owned=462 ATTR=HOLE_STARVE
+ins #67 tail 504->575 (+71) r0=1.223 r1=1.272 holes=10/123 maxh=30 pend=67 L0=3 L1=8 L2=5 L3=0 dead_est=6 owned=538 ATTR=HOLE_STARVE
+ins #68 tail 575->643 (+68) r0=1.272 r1=1.401 holes=10/184 maxh=25 pend=64 L0=4 L1=8 L2=7 L3=0 dead_est=15 owned=611 ATTR=HOLE_STARVE
+ins #258 tail 1436->1747 (+311) r0=1.078 r1=1.060 holes=9/99 maxh=25 pend=328 L0=2 L1=0 L2=32 L3=0 dead_est=24 owned=1305 ATTR=HOLE_STARVE
+ins #322 tail 1747->2058 (+311) r0=1.062 r1=1.049 holes=8/97 maxh=25 pend=328 L0=2 L1=0 L2=33 L3=0 dead_est=47 owned=1616 ATTR=HOLE_STARVE
+ins #386 tail 2058->2369 (+311) r0=1.051 r1=1.041 holes=10/94 maxh=25 pend=328 L0=2 L1=0 L2=34 L3=0 dead_est=77 owned=1927 ATTR=HOLE_STARVE
+== after insert: tail=2369 live=1792 peak=2369 runs=36
+== PHASE_US insert_total=6275325 insert_us_op=31.377
+upd #451 tail 2369->2658 (+289) r0=1.045 r1=1.038 holes=13/98 maxh=25 pend=322 L0=2 L1=0 L2=35 L3=0 dead_est=312 owned=2216 ATTR=HOLE_STARVE
+upd #515 tail 2658->2945 (+287) r0=1.039 r1=1.034 holes=14/96 maxh=20 pend=321 L0=2 L1=0 L2=36 L3=0 dead_est=606 owned=2503 ATTR=HOLE_STARVE
+upd #569 tail 2945->3151 (+206) r0=1.222 r1=1.078 holes=15/228 maxh=37 pend=995 L0=24 L1=4 L2=0 L3=38 dead_est=35 owned=1897 ATTR=HOLE_STARVE
+== PHASE_US update_total=10159275 update_us_op=101.593
+== SUMMARY Soft A1 peak_tail=3151 peak_x=1.683 end_tail=2791 end_x=1.491 live_logic=1872 live_phys=2076
+== ATTR_COUNTS big_grows=9 PRE_DIRTY=0 HOLE_STARVE=9 SB_LAG=8 sum_delta=3283
+== MERGE_START tail=1436 live=1332 ratio=1.078 (first big L2/L3 wave)
+== AT_PEAK commit=569 dead_est=35 owned=1897 dead/live=0.019 maxh=37 pend=995 L0=24 L1=4 L2=0 L3=38
+== DECOMP leading: pre_dirty≈1.078 + residual≈0.605 (peak_x)  P2c_gate dead/live=0.019 →勿开P2c(死页不足)
+== maint hole_fits=4 hw_reclaims=8 part_frags=21 stream_extends=0 hole_protect_skips=15 p1=0 stream_best_fits=0 bf_mode=0 bf_skip=0 starve_fits=9 starve_promotes=4

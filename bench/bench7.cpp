@@ -76,6 +76,9 @@ int main(int argc, char** argv) {
     int cons  = argc > 9 ? atoi(argv[9]) : 1;
     int shr   = argc > 10 ? atoi(argv[10]) : 1;
     int soft  = argc > 11 ? atoi(argv[11]) : 0;   // 1 = Soft / configure_deploy
+    int starve_fit = argc > 12 ? atoi(argv[12]) : 0;       // 坑 138 P2α
+    int starve_promote = argc > 13 ? atoi(argv[13]) : 0;   // 坑 138 P2β
+    int soft_cons = argc > 14 ? atoi(argv[14]) : 0;        // 坑 149：0 Off … 3 Post
 
     const u64 KEYMASK = SKEY_MAX;
     std::vector<u64> keys;
@@ -89,8 +92,8 @@ int main(int argc, char** argv) {
     std::vector<u8> val(VSZ), val2(VSZ);
     for (u32 i = 0; i < VSZ; ++i) { val[i] = (u8)(i * 31 + 7); val2[i] = (u8)(i * 17 + 3); }
 
-    std::printf("# FCS vs LMDB  N=%u B=%u val=%uB R=%u S=%u×%u  fcs(async=%d group=%d cons=%d shr=%d soft=%d)\n",
-                N, B, VSZ, R, S, K, async, gm, cons, shr, soft);
+    std::printf("# FCS vs LMDB  N=%u B=%u val=%uB R=%u S=%u×%u  fcs(async=%d group=%d cons=%d shr=%d soft=%d starve_fit=%d starve_promote=%d soft_cons=%d)\n",
+                N, B, VSZ, R, S, K, async, gm, cons, shr, soft, starve_fit, starve_promote, soft_cons);
     std::printf("# LittleFS: 暂缓（非有序KV；禁测其不擅长能力）。每 B 次一持久屏障 | LMDB 大端键\n");
     std::fflush(stdout);
 
@@ -110,6 +113,12 @@ int main(int argc, char** argv) {
             s.set_async_writes(async != 0);
             s.set_io_threads(1);
         }
+        // 坑 144：Soft 已开 P2；argv 显式覆盖
+        if (argc > 12) s.set_part_starve_fit(starve_fit != 0);
+        if (argc > 13) s.set_starve_promote(starve_promote != 0);
+        // 坑 151：argv 显式覆盖 Soft 默认 Post（含 0=Off）
+        if (argc > 14)
+            s.set_soft_cons((Store::SoftCons)std::min(std::max(soft_cons, 0), 3));
         auto cb = [&] { if (gm) s.commit(false); else s.commit(); };
 
         double t0 = now_us();
@@ -127,6 +136,13 @@ int main(int argc, char** argv) {
         }
         s.commit();
         fu.us = (now_us() - t0) / (N / 2);
+
+        if (s.soft_cons() == Store::SoftCons::Post) {
+            (void)s.soft_cons_repay(64);
+            std::printf("# fcs soft_cons=Post after repay: runs=%u debt=%u tidies=%llu\n",
+                        s.run_count(), s.soft_idle_debt(),
+                        (unsigned long long)s.soft_idle_tidies());
+        }
 
         if (cons) {
             RC crc = (cons == 1 && shr) ? s.compact_file() : s.consolidate(0);

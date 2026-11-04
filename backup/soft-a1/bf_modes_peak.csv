@@ -1,0 +1,6 @@
+arm,bf_mode,bf_skip,peak_tail,peak_x,end_x,hole_starve,stream_best_fits,hw_reclaims
+off,0,0,3539,1.928,1.473,12,0,20
+full,1,0,3084,1.633,1.506,10,108,21
+small,2,0,3119,1.670,1.567,10,96,33
+full_s180,1,180,3145,1.666,1.479,10,104,22
+small_s180,2,180,3067,1.640,1.474,10,82,21

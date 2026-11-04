@@ -1,0 +1,34 @@
+== N=50000 arm=0 ==
+arm=soft N=50000 runs=10 cells=123 used=962 live=666 peak_x=1.444 insert=5.747 update=6.152 range=29.358 cursors=12.38 soft_cons=0
+fam_hist=6,2,2,0,0
+== N=50000 arm=1 ==
+arm=soft_cons N=50000 runs=2 cells=80 used=556 live=471 peak_x=1.180 insert=18.704 update=10.930 range=7.777 cursors=2.34 soft_cons=1
+fam_hist=1,1,0,0,0
+== N=50000 arm=2 ==
+arm=hard N=50000 runs=2 cells=80 used=556 live=471 peak_x=1.180 insert=20.110 update=11.479 range=10.598 cursors=2.34 soft_cons=0
+fam_hist=1,1,0,0,0
+== N=50000 arm=3 ==
+arm=polish N=50000 runs=1 cells=123 used=1465 live=477 peak_x=3.071 insert=7.716 update=6.191 range=3.879 cursors=1.25 soft_cons=0
+fam_hist=1,0,0,0,0
+== N=200000 arm=0 ==
+arm=soft N=200000 runs=29 cells=569 used=2735 live=2096 peak_x=1.305 insert=6.842 update=10.964 range=20.280 cursors=6.48 soft_cons=0
+fam_hist=0,3,1,1,0
+== N=200000 arm=1 ==
+arm=soft_cons N=200000 runs=1 cells=302 used=9831 live=1883 peak_x=5.221 insert=54.497 update=86.356 range=7.865 cursors=1.16 soft_cons=1
+fam_hist=1,0,0,0,0
+== N=200000 arm=2 ==
+arm=hard N=200000 runs=1 cells=305 used=5260 live=1881 peak_x=2.796 insert=46.945 update=88.339 range=5.507 cursors=1.16 soft_cons=0
+fam_hist=1,0,0,0,0
+== N=200000 arm=3 ==
+arm=polish N=200000 runs=1 cells=570 used=4801 live=1876 peak_x=2.559 insert=6.211 update=10.315 range=4.972 cursors=1.30 soft_cons=0
+fam_hist=1,0,0,0,0
+--- csv ---
+arm,N,runs,used,live,peak_x,insert,update,range,cursors
+soft,50000,10,962,666,1.444,5.747,6.152,29.358,12.38
+soft_cons,50000,2,556,471,1.180,18.704,10.930,7.777,2.34
+hard,50000,2,556,471,1.180,20.110,11.479,10.598,2.34
+polish,50000,1,1465,477,3.071,7.716,6.191,3.879,1.25
+soft,200000,29,2735,2096,1.305,6.842,10.964,20.280,6.48
+soft_cons,200000,1,9831,1883,5.221,54.497,86.356,7.865,1.16
+hard,200000,1,5260,1881,2.796,46.945,88.339,5.507,1.16
+polish,200000,1,4801,1876,2.559,6.211,10.315,4.972,1.30

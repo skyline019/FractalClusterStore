@@ -199,7 +199,13 @@ int t_tidy_sm() {
     chk(s.merge_cheap_pages() == 1024, "Soft enables cheap", bad);
     auto sn = s.tidy_snap();
     chk(sn.policy == (int)Store::TidyPolicy::Soft, "snap policy", bad);
-    chk(s.maybe_tidy() == RC::OK, "Soft maybe_tidy no-op", bad);
+    // 坑 151：Soft 默认 Post — maybe_tidy 仍 no-op；写后 soft_cons_repay
+    chk(s.soft_cons() == Store::SoftCons::Post, "Soft default Post", bad);
+    chk(s.soft_consolidate(), "soft_consolidate true under Post", bad);
+    chk(s.maybe_tidy() == RC::OK, "Soft+Post maybe_tidy no-op", bad);
+    s.set_soft_cons(Store::SoftCons::Off);
+    chk(s.maybe_tidy() == RC::OK, "Soft Off maybe_tidy no-op", bad);
+    chk(!s.soft_consolidate(), "soft_consolidate off when Off", bad);
 
     // 造一点数据，Hard 在低阈值下应能迈出 consolidate_step
     std::vector<u8> v(32, 7);
@@ -209,8 +215,26 @@ int t_tidy_sm() {
     }
     s.commit();
     s.set_tidy_runs(1, 1);   // 极低阈值 ⇒ 有压力
-    s.set_tidy_policy(Store::TidyPolicy::Hard);
+    // 坑 147/149：Soft Eager / Idle 可选项（仍非 Soft 默认）
+    s.set_tidy_policy(Store::TidyPolicy::Soft);
+    s.set_soft_cons(Store::SoftCons::Eager);
     RC r = s.maybe_tidy();
+    chk(r == RC::OK || r == RC::MORE, "Soft+Eager step", bad);
+    s.set_soft_cons(Store::SoftCons::Idle);
+    s.set_soft_idle_max_us(1000000);   // 宽松 ⇒ 允许一步
+    r = s.maybe_tidy();
+    chk(r == RC::OK || r == RC::MORE, "Soft+Idle step", bad);
+    s.set_soft_cons(Store::SoftCons::Post);
+    s.set_soft_idle_max_us(1000000);
+    r = s.maybe_tidy();
+    chk(r == RC::OK, "Soft+Post maybe_tidy no-op (pit 150)", bad);
+    r = s.soft_cons_repay(8);
+    chk(r == RC::OK || r == RC::MORE, "Soft+Post soft_cons_repay", bad);
+    s.set_soft_cons(Store::SoftCons::Off);
+    chk(s.maybe_tidy() == RC::OK, "Soft Off no-op again", bad);
+
+    s.set_tidy_policy(Store::TidyPolicy::Hard);
+    r = s.maybe_tidy();
     chk(r == RC::OK || r == RC::MORE, "Hard maybe_tidy step", bad);
 
     s.set_tidy_policy(Store::TidyPolicy::Periodic);

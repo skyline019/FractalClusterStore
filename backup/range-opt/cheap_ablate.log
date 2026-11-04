@@ -1,0 +1,15 @@
+== cheap=1024 ==
+cheap=1024 runs=10 insert=6.231 update=5.936 get=0.535 range=26.984 cursors/scan=12.38
+cheap=1024 runs=10 insert=6.624 update=5.477 get=0.462 range=25.517 cursors/scan=12.38
+== cheap=512 ==
+cheap=512 runs=10 insert=5.885 update=8.659 get=0.682 range=23.970 cursors/scan=12.38
+cheap=512 runs=10 insert=5.635 update=5.630 get=0.542 range=25.108 cursors/scan=12.38
+== cheap=256 ==
+cheap=256 runs=10 insert=5.910 update=8.612 get=0.437 range=21.941 cursors/scan=12.36
+cheap=256 runs=10 insert=5.189 update=7.147 get=0.471 range=26.001 cursors/scan=12.36
+== cheap=128 ==
+cheap=128 runs=10 insert=5.186 update=9.647 get=0.606 range=28.637 cursors/scan=12.37
+cheap=128 runs=10 insert=6.557 update=9.418 get=1.441 range=75.590 cursors/scan=12.36
+== cheap=64 ==
+cheap=64 runs=10 insert=6.368 update=9.868 get=0.449 range=23.060 cursors/scan=12.36
+cheap=64 runs=10 insert=8.545 update=14.514 get=0.663 range=23.489 cursors/scan=12.37

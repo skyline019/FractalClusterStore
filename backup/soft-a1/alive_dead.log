@@ -1,0 +1,209 @@
+# Soft A1: N=200000 B=500 VSZ=32 protect=1 hw=150 space_accel=0 frag=1
+== LIVE_INV PEAK_c65 tail=691
+   pages: FREE=43 PEND=328 DEF=0 MAN=2 OVFL=0 META=27 ANCHOR=0 DATA_LIVE=289 DATA_MIX=0 DATA_DEAD=0 UNCLAIMED=0
+   records: nrec=32180 exact_live=32180 dead=0 dead_frac=0.000
+   top dirty runs (page0 lvl np nrec live_exact pgL/M/D/A trim):
+     211 L0 np=5 nrec=500 live=500 pages L/M/D/A=5/0/0/0 trim=0
+     380 L2 np=284 nrec=31680 live=31680 pages L/M/D/A=284/0/0/0 trim=0
+   reclaim_gate: DATA_DEAD+ANCHOR=0 (0.000 of data_pages=289); MIX=0 (P2c-ish partial); FREE+PEND=0.537 of tail
+ins #65 tail 380->691 (+311) r0=1.022 r1=1.066 holes=2/43 maxh=40 pend=328 L0=1 L1=0 L2=1 L3=0 dead_est=0 owned=316 ATTR=HOLE_STARVE
+== LIVE_INV PEAK_c129 tail=1002
+   pages: FREE=40 PEND=328 DEF=0 MAN=5 OVFL=0 META=54 ANCHOR=0 DATA_LIVE=316 DATA_MIX=257 DATA_DEAD=0 UNCLAIMED=0
+   records: nrec=63851 exact_live=63205 dead=646 dead_frac=0.010
+   top dirty runs (page0 lvl np nrec live_exact pgL/M/D/A trim):
+     380 L2 np=284 nrec=31680 live=31034 pages L/M/D/A=27/257/0/0 trim=0
+     374 L0 np=5 nrec=500 live=500 pages L/M/D/A=5/0/0/0 trim=0
+     691 L2 np=284 nrec=31671 live=31671 pages L/M/D/A=284/0/0/0 trim=0
+   reclaim_gate: DATA_DEAD+ANCHOR=0 (0.000 of data_pages=573); MIX=257 (P2c-ish partial); FREE+PEND=0.367 of tail
+ins #129 tail 691->1002 (+311) r0=1.009 r1=1.042 holes=2/40 maxh=30 pend=328 L0=1 L1=0 L2=2 L3=0 dead_est=6 owned=627 ATTR=HOLE_STARVE
+== LIVE_INV PEAK_c193 tail=1354
+   pages: FREE=79 PEND=328 DEF=0 MAN=7 OVFL=0 META=81 ANCHOR=0 DATA_LIVE=324 DATA_MIX=533 DATA_DEAD=0 UNCLAIMED=0
+   records: nrec=95526 exact_live=93610 dead=1916 dead_frac=0.020
+   top dirty runs (page0 lvl np nrec live_exact pgL/M/D/A trim):
+     380 L2 np=284 nrec=31680 live=30376 pages L/M/D/A=4/280/0/0 trim=0
+     691 L2 np=284 nrec=31671 live=31059 pages L/M/D/A=31/253/0/0 trim=0
+     174 L0 np=5 nrec=500 live=500 pages L/M/D/A=5/0/0/0 trim=0
+     1043 L2 np=284 nrec=31675 live=31675 pages L/M/D/A=284/0/0/0 trim=0
+   reclaim_gate: DATA_DEAD+ANCHOR=0 (0.000 of data_pages=857); MIX=533 (P2c-ish partial); FREE+PEND=0.301 of tail
+ins #193 tail 1043->1354 (+311) r0=1.044 r1=1.062 holes=6/79 maxh=30 pend=328 L0=1 L1=0 L2=3 L3=0 dead_est=18 owned=938 ATTR=HOLE_STARVE
+== LIVE_INV PEAK_c257 tail=1706
+   pages: FREE=117 PEND=328 DEF=0 MAN=10 OVFL=0 META=108 ANCHOR=0 DATA_LIVE=321 DATA_MIX=820 DATA_DEAD=0 UNCLAIMED=0
+   records: nrec=127206 exact_live=123482 dead=3724 dead_frac=0.029
+   top dirty runs (page0 lvl np nrec live_exact pgL/M/D/A trim):
+     380 L2 np=284 nrec=31680 live=29816 pages L/M/D/A=1/283/0/0 trim=0
+     691 L2 np=284 nrec=31671 live=30444 pages L/M/D/A=2/282/0/0 trim=0
+     1043 L2 np=284 nrec=31675 live=31042 pages L/M/D/A=29/255/0/0 trim=0
+     89 L0 np=5 nrec=500 live=500 pages L/M/D/A=5/0/0/0 trim=0
+     1395 L2 np=284 nrec=31680 live=31680 pages L/M/D/A=284/0/0/0 trim=0
+   reclaim_gate: DATA_DEAD+ANCHOR=0 (0.000 of data_pages=1141); MIX=820 (P2c-ish partial); FREE+PEND=0.261 of tail
+ins #257 tail 1395->1706 (+311) r0=1.062 r1=1.074 holes=7/117 maxh=30 pend=328 L0=1 L1=0 L2=4 L3=0 dead_est=36 owned=1249 ATTR=HOLE_STARVE
+== LIVE_INV PEAK_c321 tail=2017
+   pages: FREE=115 PEND=328 DEF=0 MAN=12 OVFL=0 META=135 ANCHOR=0 DATA_LIVE=326 DATA_MIX=1099 DATA_DEAD=0 UNCLAIMED=0
+   records: nrec=158889 exact_live=152758 dead=6131 dead_frac=0.039
+   top dirty runs (page0 lvl np nrec live_exact pgL/M/D/A trim):
+     380 L2 np=284 nrec=31680 live=29227 pages L/M/D/A=1/283/0/0 trim=0
+     691 L2 np=284 nrec=31671 live=29818 pages L/M/D/A=0/284/0/0 trim=0
+     1043 L2 np=284 nrec=31675 live=30445 pages L/M/D/A=3/281/0/0 trim=0
+     1395 L2 np=284 nrec=31680 live=31085 pages L/M/D/A=33/251/0/0 trim=0
+     43 L0 np=5 nrec=500 live=500 pages L/M/D/A=5/0/0/0 trim=0
+     1706 L2 np=284 nrec=31683 live=31683 pages L/M/D/A=284/0/0/0 trim=0
+   reclaim_gate: DATA_DEAD+ANCHOR=0 (0.000 of data_pages=1425); MIX=1099 (P2c-ish partial); FREE+PEND=0.220 of tail
+ins #321 tail 1706->2017 (+311) r0=1.049 r1=1.060 holes=7/115 maxh=29 pend=328 L0=1 L1=0 L2=5 L3=0 dead_est=59 owned=1560 ATTR=HOLE_STARVE
+== LIVE_INV PEAK_c385 tail=2328
+   pages: FREE=112 PEND=328 DEF=0 MAN=15 OVFL=0 META=162 ANCHOR=0 DATA_LIVE=315 DATA_MIX=1394 DATA_DEAD=0 UNCLAIMED=0
+   records: nrec=190557 exact_live=181389 dead=9168 dead_frac=0.048
+   top dirty runs (page0 lvl np nrec live_exact pgL/M/D/A trim):
+     380 L2 np=284 nrec=31680 live=28621 pages L/M/D/A=0/284/0/0 trim=0
+     691 L2 np=284 nrec=31671 live=29241 pages L/M/D/A=0/284/0/0 trim=0
+     1043 L2 np=284 nrec=31675 live=29837 pages L/M/D/A=0/284/0/0 trim=0
+     1395 L2 np=284 nrec=31680 live=30493 pages L/M/D/A=0/284/0/0 trim=0
+     1706 L2 np=284 nrec=31683 live=31029 pages L/M/D/A=26/258/0/0 trim=0
+     44 L0 np=5 nrec=500 live=500 pages L/M/D/A=5/0/0/0 trim=0
+     2017 L2 np=284 nrec=31668 live=31668 pages L/M/D/A=284/0/0/0 trim=0
+   reclaim_gate: DATA_DEAD+ANCHOR=0 (0.000 of data_pages=1709); MIX=1394 (P2c-ish partial); FREE+PEND=0.189 of tail
+ins #385 tail 2017->2328 (+311) r0=1.040 r1=1.051 holes=9/112 maxh=29 pend=328 L0=1 L1=0 L2=6 L3=0 dead_est=88 owned=1871 ATTR=HOLE_STARVE
+== after insert: tail=2328 live=1778 peak=2328 runs=8
+== LIVE_INV PEAK_c451 tail=2617
+   pages: FREE=111 PEND=322 DEF=0 MAN=17 OVFL=0 META=188 ANCHOR=0 DATA_LIVE=220 DATA_MIX=1757 DATA_DEAD=0 UNCLAIMED=0
+   records: nrec=220337 exact_live=187995 dead=32342 dead_frac=0.147
+   top dirty runs (page0 lvl np nrec live_exact pgL/M/D/A trim):
+     380 L2 np=284 nrec=31680 live=25182 pages L/M/D/A=0/284/0/0 trim=0
+     691 L2 np=284 nrec=31671 live=25686 pages L/M/D/A=0/284/0/0 trim=0
+     1043 L2 np=284 nrec=31675 live=26013 pages L/M/D/A=0/284/0/0 trim=0
+     1395 L2 np=284 nrec=31680 live=26628 pages L/M/D/A=0/284/0/0 trim=0
+     1706 L2 np=284 nrec=31683 live=26888 pages L/M/D/A=0/284/0/0 trim=0
+     2017 L2 np=284 nrec=31668 live=27374 pages L/M/D/A=0/284/0/0 trim=0
+     2328 L2 np=263 nrec=29282 live=29226 pages L/M/D/A=210/53/0/0 trim=0
+     2 L0 np=5 nrec=499 live=499 pages L/M/D/A=5/0/0/0 trim=0
+     44 L0 np=5 nrec=499 live=499 pages L/M/D/A=5/0/0/0 trim=0
+   reclaim_gate: DATA_DEAD+ANCHOR=0 (0.000 of data_pages=1977); MIX=1757 (P2c-ish partial); FREE+PEND=0.165 of tail
+upd #451 tail 2328->2617 (+289) r0=1.052 r1=1.044 holes=11/111 maxh=29 pend=322 L0=2 L1=0 L2=7 L3=0 dead_est=314 owned=2165 ATTR=HOLE_STARVE
+== LIVE_INV PEAK_c515 tail=2904
+   pages: FREE=109 PEND=321 DEF=0 MAN=20 OVFL=0 META=214 ANCHOR=0 DATA_LIVE=224 DATA_MIX=2014 DATA_DEAD=0 UNCLAIMED=0
+   records: nrec=249471 exact_live=187995 dead=61476 dead_frac=0.246
+   top dirty runs (page0 lvl np nrec live_exact pgL/M/D/A trim):
+     380 L2 np=284 nrec=31680 live=21487 pages L/M/D/A=0/284/0/0 trim=0
+     691 L2 np=284 nrec=31671 live=21855 pages L/M/D/A=0/284/0/0 trim=0
+     1043 L2 np=284 nrec=31675 live=21968 pages L/M/D/A=0/284/0/0 trim=0
+     1395 L2 np=284 nrec=31680 live=22498 pages L/M/D/A=0/284/0/0 trim=0
+     1706 L2 np=284 nrec=31683 live=22597 pages L/M/D/A=0/284/0/0 trim=0
+     2017 L2 np=284 nrec=31668 live=23011 pages L/M/D/A=0/284/0/0 trim=0
+     2328 L2 np=263 nrec=29282 live=24506 pages L/M/D/A=0/263/0/0 trim=0
+     2617 L2 np=261 nrec=29134 live=29076 pages L/M/D/A=215/46/0/0 trim=0
+     49 L0 np=5 nrec=499 live=498 pages L/M/D/A=4/1/0/0 trim=0
+     2 L0 np=5 nrec=499 live=499 pages L/M/D/A=5/0/0/0 trim=0
+   reclaim_gate: DATA_DEAD+ANCHOR=0 (0.000 of data_pages=2238); MIX=2014 (P2c-ish partial); FREE+PEND=0.148 of tail
+upd #515 tail 2617->2904 (+287) r0=1.046 r1=1.039 holes=12/109 maxh=29 pend=321 L0=2 L1=0 L2=8 L3=0 dead_est=602 owned=2452 ATTR=HOLE_STARVE
+== LIVE_INV PEAK_c545 tail=3040
+   pages: FREE=337 PEND=0 DEF=0 MAN=22 OVFL=0 META=226 ANCHOR=8 DATA_LIVE=73 DATA_MIX=2268 DATA_DEAD=0 UNCLAIMED=104
+   records: nrec=260314 exact_live=187995 dead=72319 dead_frac=0.278
+   top dirty runs (page0 lvl np nrec live_exact pgL/M/D/A trim):
+     380 L2 np=284 nrec=29891 live=18718 pages L/M/D/A=0/268/0/1 trim=16
+     1043 L2 np=284 nrec=29884 live=19126 pages L/M/D/A=0/268/0/1 trim=16
+     691 L2 np=284 nrec=29879 live=19155 pages L/M/D/A=0/268/0/1 trim=16
+     1395 L2 np=284 nrec=29891 live=19571 pages L/M/D/A=0/268/0/1 trim=16
+     1706 L2 np=284 nrec=29894 live=19666 pages L/M/D/A=0/268/0/1 trim=16
+     2017 L2 np=284 nrec=29879 live=19985 pages L/M/D/A=0/268/0/1 trim=16
+     2328 L2 np=263 nrec=27605 live=21190 pages L/M/D/A=0/248/0/1 trim=15
+     2617 L2 np=261 nrec=27457 live=25222 pages L/M/D/A=0/246/0/1 trim=15
+     75 L1 np=36 nrec=3952 live=3729 pages L/M/D/A=0/36/0/0 trim=0
+     128 L1 np=36 nrec=3950 live=3787 pages L/M/D/A=1/35/0/0 trim=0
+     210 L1 np=36 nrec=3947 live=3863 pages L/M/D/A=5/31/0/0 trim=0
+     250 L3 np=91 nrec=10088 live=10028 pages L/M/D/A=49/42/0/0 trim=0
+   reclaim_gate: DATA_DEAD+ANCHOR=8 (0.003 of data_pages=2349); MIX=2268 (P2c-ish partial); FREE+PEND=0.111 of tail
+upd #545 tail 2904->3040 (+136) r0=1.071 r1=1.125 holes=20/337 maxh=41 pend=0 L0=8 L1=3 L2=8 L3=1 dead_est=746 owned=2693 ATTR=HOLE_STARVE
+== LIVE_INV PEAK_c547 tail=3147
+   pages: FREE=455 PEND=0 DEF=0 MAN=22 OVFL=0 META=234 ANCHOR=8 DATA_LIVE=91 DATA_MIX=2231 DATA_DEAD=0 UNCLAIMED=104
+   records: nrec=257988 exact_live=187995 dead=69993 dead_frac=0.271
+   top dirty runs (page0 lvl np nrec live_exact pgL/M/D/A trim):
+     380 L2 np=284 nrec=28550 live=17791 pages L/M/D/A=0/256/0/1 trim=28
+     691 L2 np=284 nrec=28538 live=18194 pages L/M/D/A=0/256/0/1 trim=28
+     1043 L2 np=284 nrec=28431 live=18161 pages L/M/D/A=0/255/0/1 trim=29
+     1395 L2 np=284 nrec=28549 live=18603 pages L/M/D/A=0/256/0/1 trim=28
+     1706 L2 np=284 nrec=28553 live=18660 pages L/M/D/A=0/256/0/1 trim=28
+     2017 L2 np=284 nrec=28426 live=18937 pages L/M/D/A=0/255/0/1 trim=29
+     2328 L2 np=263 nrec=26376 live=20103 pages L/M/D/A=0/237/0/1 trim=26
+     2617 L2 np=261 nrec=26228 live=23951 pages L/M/D/A=0/235/0/1 trim=26
+     75 L1 np=36 nrec=3952 live=3707 pages L/M/D/A=0/36/0/0 trim=0
+     128 L1 np=36 nrec=3950 live=3767 pages L/M/D/A=0/36/0/0 trim=0
+     250 L3 np=91 nrec=10088 live=9975 pages L/M/D/A=28/63/0/0 trim=0
+     210 L1 np=36 nrec=3947 live=3844 pages L/M/D/A=3/33/0/0 trim=0
+   reclaim_gate: DATA_DEAD+ANCHOR=8 (0.003 of data_pages=2330); MIX=2231 (P2c-ish partial); FREE+PEND=0.145 of tail
+upd #547 tail 3011->3147 (+136) r0=1.124 r1=1.169 holes=20/455 maxh=41 pend=0 L0=10 L1=3 L2=8 L3=2 dead_est=756 owned=2778 ATTR=HOLE_STARVE
+== LIVE_INV PEAK_c549 tail=3252
+   pages: FREE=570 PEND=0 DEF=0 MAN=23 OVFL=0 META=240 ANCHOR=8 DATA_LIVE=104 DATA_MIX=2201 DATA_DEAD=0 UNCLAIMED=104
+   records: nrec=255879 exact_live=187995 dead=67884 dead_frac=0.265
+   top dirty runs (page0 lvl np nrec live_exact pgL/M/D/A trim):
+     380 L2 np=284 nrec=27209 live=16893 pages L/M/D/A=0/244/0/1 trim=40
+     691 L2 np=284 nrec=27197 live=17186 pages L/M/D/A=0/244/0/1 trim=40
+     1043 L2 np=284 nrec=27090 live=17154 pages L/M/D/A=0/243/0/1 trim=41
+     1395 L2 np=284 nrec=27208 live=17633 pages L/M/D/A=0/244/0/1 trim=40
+     1706 L2 np=284 nrec=27212 live=17681 pages L/M/D/A=0/244/0/1 trim=40
+     2017 L2 np=284 nrec=27085 live=17941 pages L/M/D/A=0/243/0/1 trim=41
+     2328 L2 np=263 nrec=25147 live=19031 pages L/M/D/A=0/226/0/1 trim=37
+     2617 L2 np=261 nrec=24999 live=22689 pages L/M/D/A=0/224/0/1 trim=37
+     75 L1 np=36 nrec=3952 live=3691 pages L/M/D/A=0/36/0/0 trim=0
+     128 L1 np=36 nrec=3950 live=3747 pages L/M/D/A=0/36/0/0 trim=0
+     250 L3 np=91 nrec=10088 live=9926 pages L/M/D/A=15/76/0/0 trim=0
+     210 L1 np=36 nrec=3947 live=3830 pages L/M/D/A=1/35/0/0 trim=0
+   reclaim_gate: DATA_DEAD+ANCHOR=8 (0.003 of data_pages=2313); MIX=2201 (P2c-ish partial); FREE+PEND=0.175 of tail
+upd #549 tail 3116->3252 (+136) r0=1.169 r1=1.213 holes=20/570 maxh=41 pend=0 L0=12 L1=3 L2=8 L3=3 dead_est=768 owned=2861 ATTR=HOLE_STARVE
+== LIVE_INV PEAK_c551 tail=3323
+   pages: FREE=684 PEND=99 DEF=0 MAN=23 OVFL=0 META=252 ANCHOR=8 DATA_LIVE=155 DATA_MIX=2100 DATA_DEAD=0 UNCLAIMED=0
+   records: nrec=250124 exact_live=187995 dead=62129 dead_frac=0.248
+   top dirty runs (page0 lvl np nrec live_exact pgL/M/D/A trim):
+     380 L2 np=284 nrec=24415 live=15072 pages L/M/D/A=0/219/0/1 trim=65
+     691 L2 np=284 nrec=24515 live=15340 pages L/M/D/A=0/220/0/1 trim=64
+     1043 L2 np=284 nrec=24405 live=15403 pages L/M/D/A=0/219/0/1 trim=65
+     1395 L2 np=284 nrec=24414 live=15762 pages L/M/D/A=0/219/0/1 trim=65
+     1706 L2 np=284 nrec=24418 live=15811 pages L/M/D/A=0/219/0/1 trim=65
+     2017 L2 np=284 nrec=24515 live=16140 pages L/M/D/A=0/220/0/1 trim=64
+     2328 L2 np=263 nrec=22577 live=17017 pages L/M/D/A=0/203/0/1 trim=60
+     2617 L2 np=261 nrec=22541 live=20344 pages L/M/D/A=0/202/0/1 trim=59
+     75 L1 np=36 nrec=3952 live=3671 pages L/M/D/A=0/36/0/0 trim=0
+     128 L1 np=36 nrec=3950 live=3724 pages L/M/D/A=0/36/0/0 trim=0
+     250 L3 np=91 nrec=10088 live=9878 pages L/M/D/A=8/83/0/0 trim=0
+     210 L1 np=36 nrec=3947 live=3808 pages L/M/D/A=0/36/0/0 trim=0
+   reclaim_gate: DATA_DEAD+ANCHOR=8 (0.004 of data_pages=2263); MIX=2100 (P2c-ish partial); FREE+PEND=0.236 of tail
+upd #551 tail 3218->3323 (+105) r0=1.213 r1=1.259 holes=21/684 maxh=51 pend=99 L0=14 L1=3 L2=8 L3=5 dead_est=779 owned=3014 ATTR=HOLE_STARVE
+== LIVE_INV PEAK_c569 tail=3427
+   pages: FREE=536 PEND=987 DEF=0 MAN=25 OVFL=0 META=120 ANCHOR=0 DATA_LIVE=605 DATA_MIX=1152 DATA_DEAD=0 UNCLAIMED=0
+   records: nrec=193580 exact_live=187995 dead=5585 dead_frac=0.029
+   top dirty runs (page0 lvl np nrec live_exact pgL/M/D/A trim):
+     250 L3 np=91 nrec=10088 live=9395 pages L/M/D/A=0/91/0/0 trim=0
+     2936 L3 np=67 nrec=7404 live=6947 pages L/M/D/A=1/66/0/0 trim=0
+     75 L1 np=36 nrec=3952 live=3506 pages L/M/D/A=0/36/0/0 trim=0
+     128 L1 np=36 nrec=3950 live=3531 pages L/M/D/A=0/36/0/0 trim=0
+     3043 L3 np=67 nrec=7395 live=6981 pages L/M/D/A=1/66/0/0 trim=0
+     3148 L3 np=64 nrec=7099 live=6721 pages L/M/D/A=0/64/0/0 trim=0
+     3250 L3 np=67 nrec=7493 live=7142 pages L/M/D/A=0/67/0/0 trim=0
+     210 L1 np=36 nrec=3947 live=3631 pages L/M/D/A=0/36/0/0 trim=0
+     2618 L3 np=69 nrec=7672 live=7468 pages L/M/D/A=2/67/0/0 trim=0
+     1707 L3 np=48 nrec=5353 live=5159 pages L/M/D/A=0/48/0/0 trim=0
+     1396 L3 np=42 nrec=4667 live=4488 pages L/M/D/A=0/42/0/0 trim=0
+     2018 L3 np=56 nrec=6181 live=6010 pages L/M/D/A=3/53/0/0 trim=0
+   reclaim_gate: DATA_DEAD+ANCHOR=0 (0.000 of data_pages=1757); MIX=1152 (P2c-ish partial); FREE+PEND=0.444 of tail
+upd #569 tail 3323->3427 (+104) r0=1.333 r1=1.185 holes=20/536 maxh=102 pend=987 L0=24 L1=4 L2=0 L3=22 dead_est=41 owned=1877 ATTR=PRE_DIRTY
+== SUMMARY Soft A1 peak_tail=3427 peak_x=1.860 end_tail=2692 end_x=1.461 live_logic=1842 live_phys=2015
+== ATTR_COUNTS big_grows=13 PRE_DIRTY=1 HOLE_STARVE=12 SB_LAG=9 sum_delta=3589
+== MERGE_START tail=2617 live=2503 ratio=1.046 (first big L2/L3 wave)
+== AT_PEAK commit=569 dead_est=41 owned=1877 dead/live=0.022 maxh=102 pend=987 L0=24 L1=4 L2=0 L3=22
+== DECOMP leading: pre_dirty≈1.046 + residual≈0.815 (peak_x)  P2c_gate dead/live=0.022 →勿开P2c(死页不足)
+== maint hole_fits=1 hw_reclaims=19 part_frags=7 stream_extends=0
+== LIVE_INV END tail=2692
+   pages: FREE=677 PEND=0 DEF=0 MAN=27 OVFL=0 META=144 ANCHOR=0 DATA_LIVE=44 DATA_MIX=1798 DATA_DEAD=0 UNCLAIMED=0
+   records: nrec=204253 exact_live=187995 dead=16258 dead_frac=0.080
+   top dirty runs (page0 lvl np nrec live_exact pgL/M/D/A trim):
+     250 L3 np=91 nrec=10088 live=8615 pages L/M/D/A=0/91/0/0 trim=0
+     479 L2 np=201 nrec=22421 live=21407 pages L/M/D/A=0/201/0/0 trim=0
+     2394 L3 np=99 nrec=11053 live=10110 pages L/M/D/A=0/99/0/0 trim=0
+     1759 L3 np=99 nrec=11047 live=10108 pages L/M/D/A=0/99/0/0 trim=0
+     1441 L3 np=90 nrec=9975 live=9083 pages L/M/D/A=1/89/0/0 trim=0
+     2078 L3 np=99 nrec=11060 live=10218 pages L/M/D/A=0/99/0/0 trim=0
+     1083 L3 np=81 nrec=8982 live=8159 pages L/M/D/A=0/81/0/0 trim=0
+     2618 L3 np=69 nrec=7672 live=6874 pages L/M/D/A=0/69/0/0 trim=0
+     876 L3 np=98 nrec=10932 live=10137 pages L/M/D/A=0/98/0/0 trim=0
+     723 L3 np=72 nrec=8005 live=7274 pages L/M/D/A=0/72/0/0 trim=0
+     409 L3 np=65 nrec=7265 live=6585 pages L/M/D/A=0/65/0/0 trim=0
+     2329 L3 np=60 nrec=6626 live=5964 pages L/M/D/A=0/60/0/0 trim=0
+   reclaim_gate: DATA_DEAD+ANCHOR=0 (0.000 of data_pages=1842); MIX=1798 (P2c-ish partial); FREE+PEND=0.251 of tail

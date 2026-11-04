@@ -1,0 +1,38 @@
+== N=50000 arm=0 idle=8000 ==
+arm=soft N=50000 idle_us=8000 streak=3 runs=10 peak_used=962 live=666 peak_x=1.444 insert=5.456 update=6.422 range=27.714 cursors=12.38 idle_tidies=0
+== N=50000 arm=1 idle=8000 ==
+arm=eager N=50000 idle_us=8000 streak=3 runs=2 peak_used=1464 live=471 peak_x=3.108 insert=20.874 update=11.950 range=5.548 cursors=2.34 idle_tidies=0
+== N=50000 idle streak=3 idle_us=8000 ==
+arm=idle N=50000 idle_us=8000 streak=3 runs=5 peak_used=1461 live=485 peak_x=3.012 insert=10.155 update=10.571 range=13.052 cursors=5.81 idle_tidies=16
+== N=50000 idle streak=5 idle_us=8000 ==
+arm=idle N=50000 idle_us=8000 streak=5 runs=1 peak_used=1530 live=469 peak_x=3.262 insert=9.072 update=10.582 range=3.780 cursors=1.16 idle_tidies=13
+== N=50000 idle streak=3 idle_us=15000 ==
+arm=idle N=50000 idle_us=15000 streak=3 runs=7 peak_used=1448 live=495 peak_x=2.925 insert=10.580 update=11.866 range=15.854 cursors=8.11 idle_tidies=16
+== N=50000 arm=3 idle=8000 ==
+arm=polish N=50000 idle_us=8000 streak=3 runs=1 peak_used=1465 live=477 peak_x=3.071 insert=6.332 update=6.569 range=3.598 cursors=1.25 idle_tidies=0
+== N=200000 arm=0 idle=8000 ==
+arm=soft N=200000 idle_us=8000 streak=3 runs=31 peak_used=3172 live=2097 peak_x=1.513 insert=7.208 update=11.717 range=17.322 cursors=6.48 idle_tidies=0
+== N=200000 arm=1 idle=8000 ==
+arm=eager N=200000 idle_us=8000 streak=3 runs=4 peak_used=4769 live=1897 peak_x=2.514 insert=26.331 update=49.200 range=9.942 cursors=3.41 idle_tidies=0
+== N=200000 idle streak=3 idle_us=8000 ==
+arm=idle N=200000 idle_us=8000 streak=3 runs=5 peak_used=4795 live=1896 peak_x=2.529 insert=17.393 update=30.515 range=9.054 cursors=4.56 idle_tidies=84
+== N=200000 idle streak=5 idle_us=8000 ==
+arm=idle N=200000 idle_us=8000 streak=5 runs=2 peak_used=4813 live=1922 peak_x=2.504 insert=18.408 update=28.942 range=7.102 cursors=1.89 idle_tidies=80
+== N=200000 idle streak=3 idle_us=15000 ==
+arm=idle N=200000 idle_us=15000 streak=3 runs=4 peak_used=6748 live=1893 peak_x=3.565 insert=19.951 update=29.656 range=9.875 cursors=3.43 idle_tidies=109
+== N=200000 arm=3 idle=8000 ==
+arm=polish N=200000 idle_us=8000 streak=3 runs=1 peak_used=4756 live=1877 peak_x=2.534 insert=6.677 update=9.801 range=5.014 cursors=1.30 idle_tidies=0
+--- csv ---
+arm,N,idle_us,runs,peak_x,insert,update,range,cursors,idle_tidies
+soft,50000,8000,10,1.444,5.456,6.422,27.714,12.38,0
+eager,50000,8000,2,3.108,20.874,11.950,5.548,2.34,0
+idle_s3,50000,8000,5,3.012,10.155,10.571,13.052,5.81,16
+idle_s5,50000,8000,1,3.262,9.072,10.582,3.780,1.16,13
+idle_s3,50000,15000,7,2.925,10.580,11.866,15.854,8.11,16
+polish,50000,8000,1,3.071,6.332,6.569,3.598,1.25,0
+soft,200000,8000,31,1.513,7.208,11.717,17.322,6.48,0
+eager,200000,8000,4,2.514,26.331,49.200,9.942,3.41,0
+idle_s3,200000,8000,5,2.529,17.393,30.515,9.054,4.56,84
+idle_s5,200000,8000,2,2.504,18.408,28.942,7.102,1.89,80
+idle_s3,200000,15000,4,3.565,19.951,29.656,9.875,3.43,109
+polish,200000,8000,1,2.534,6.677,9.801,5.014,1.30,0

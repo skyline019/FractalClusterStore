@@ -1,0 +1,1 @@
+TINY pages=512 accel=0 bf_mode=0 bf_skip=0 starve_fit=0 starve_promote=0 N=8000 peak_tail=446 live_pages=429 peak_x=1.040 space_accels=0 stream_best_fits=0 starve_fits=0 starve_promotes=0 nospace=159 commits=480 used=446

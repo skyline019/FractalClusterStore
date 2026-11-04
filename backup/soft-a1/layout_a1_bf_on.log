@@ -1,0 +1,45 @@
+== after insert: tail=2288 live_pages=1778 used=2288 runs=8 grows=36 grown=2345
+== after update: tail=2892 peak_tail=3076 live_pages=1874 used=2892 runs=27 grows=62 grown=3243  hw 11.3 MB live 7.3 MB (1.54x) peak 1.64x  stream runs=18 moves=0 extends=0 reclaims=23 blockers=0  space_accels=0  dev writes 42.6 MB
+== merge width: src_max=8 cur_max=8  hole_fits=1  protect=1  part_frags=6 frag=1  part_coalesces=0 coal=0  stream_best_fit=1 fits=111
+== runs by address (page0 npages lvl seq):
+   [hole 145 pg]
+       147    194 L3 seq=601
+   [hole 10 pg]
+       351     21 L3 seq=601
+   [hole 9 pg]
+       381     23 L3 seq=601
+   [hole 30 pg]
+       434     92 L3 seq=601
+       526     93 L2 seq=699
+       619     41 L1 seq=719
+   [hole 32 pg]
+       692     40 L1 seq=710
+   [hole 2 pg]
+       734     48 L3 seq=601
+       782     81 L3 seq=601
+   [hole 182 pg]
+      1045     30 L3 seq=601
+      1075     65 L3 seq=601
+      1140    198 L2 seq=699
+   [hole 18 pg]
+      1356     55 L3 seq=601
+      1411    106 L3 seq=601
+      1517     65 L3 seq=601
+   [hole 85 pg]
+      1667     42 L3 seq=601
+      1709     77 L3 seq=601
+   [hole 192 pg]
+      1978     66 L3 seq=601
+      2044    115 L3 seq=601
+      2159     70 L3 seq=601
+      2229     31 L3 seq=601
+   [hole 29 pg]
+      2289     78 L3 seq=601
+      2367    108 L3 seq=601
+   [hole 102 pg]
+      2577     91 L3 seq=601
+      2668    111 L3 seq=601
+      2779     41 L1 seq=728
+   [hole 43 pg]
+      2863     29 L3 seq=601
+== free holes by size class: [2,4):1 [4,8):1 [8,16):2 [16,32):4 [32,64):1 [64,128):3 [128,256):2

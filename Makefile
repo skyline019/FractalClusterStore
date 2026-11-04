@@ -17,7 +17,7 @@ INC      := -Iinclude
 BIN      := build
 
 TESTS    := t1 t2 t3 t4 t5 t6 tchk x1 x2 f1 f2 f3 f4 f5 f6 q1 p1 m1 \
-            v1 g1 g2 g3 g4 g5 g6 g7 g8 g9 g10 g11 g12 g13 g14 g15 g16 g17 g18 h1 h2 h3 w1 s3 s4 c1 r2 s2 b1
+            v1 g1 g2 g3 g4 g5 g6 g7 g8 g9 g10 g11 g12 g13 g14 g15 g16 g17 g18 h1 h2 h3 w1 s3 s4 c1 c2 c3 c4 c5 c6 r2 s2 b1
 BINS     := $(addprefix $(BIN)/,$(TESTS))
 
 # 调试开关（按需组合）：
@@ -30,22 +30,37 @@ BINS     := $(addprefix $(BIN)/,$(TESTS))
 #   -DXDB_CORRUPT_TRACE   CORRUPT 返回点定位
 #   -DXDB_COMMIT_CHECK    每次提交后全量校验（极慢）
 
-.PHONY: all test bins ci-smoke ci asan dbg clean
+.PHONY: all test bins ci-smoke ci asan asan-new dbg clean soak-smoke soak harness-ab-space soft-a1 soft-a1-p1 soft-a1-bf soft-a1-bf-lat soft-a1-bf-ablate soft-a1-p2 soft-a1-p2-gate soft-a1-p2-tax soft-p2-on peers-p2 soft-post-on peers-post frag-trace
 all: test
 
 # 仅编译全部测试二进制（CI compile 门）
 bins: $(BINS)
 
 # 快速门：格式 / 近轮回归（CI smoke）
-ci-smoke: $(BIN)/f1 $(BIN)/g16 $(BIN)/g17 $(BIN)/g18 $(BIN)/h2
+ci-smoke: $(BIN)/f1 $(BIN)/g16 $(BIN)/g17 $(BIN)/g18 $(BIN)/h2 $(BIN)/c2 $(BIN)/c3 $(BIN)/c4 $(BIN)/c5 $(BIN)/c6
 	$(BIN)/f1
 	$(BIN)/g16
 	$(BIN)/g17
 	$(BIN)/g18
 	$(BIN)/h2
+	$(BIN)/c2
+	$(BIN)/c3
+	$(BIN)/c4
+	$(BIN)/c5
+	$(BIN)/c6
 
 # 本地对齐严格 CI（不含 sanitizers；那些用 make asan）
-ci: bins ci-smoke test
+ci: bins ci-smoke test soak-smoke
+
+# 坑 121：短时 soak（默认 30s）；长跑：FCS_SOAK_SEC=3600 make soak
+soak-smoke: $(BIN)/soak1
+	FCS_SOAK_SEC=$${FCS_SOAK_SEC:-30} $(BIN)/soak1
+
+soak: $(BIN)/soak1
+	FCS_SOAK_SEC=$${FCS_SOAK_SEC:-3600} $(BIN)/soak1
+
+$(BIN)/soak1: tests/soak1.cpp include/*.h | $(BIN)
+	$(CXX) $(CXXFLAGS) $(INC) $< -o $@
 
 $(BIN):
 	@mkdir -p $(BIN)
@@ -100,6 +115,11 @@ test: $(BINS)
 	@echo "== h2 golden 镜像兼容（tests/golden/*.img v2：挂载 + 逐键比对 + 快照视图 + verify；tests/golden/v1/*.img 老库：只读不写回 → 写即升级 → 重开）"; $(BIN)/h2 | tail -7
 	@echo "== h3 多写者 × 异步提交 × 掉电（3 写者线程 + VolDev 随机掉电/撕裂，每线程自己的持久下界模型，3 种子 × (10 轮长 span + 40 轮短 span)）"; $(BIN)/h3 | tail -7
 	@echo "== c1 FCS scrub（介质 CRC）"; $(BIN)/c1 | tail -3
+	@echo "== c2 FCS set_verify_reads（坑 120：读路径数据页 CRC）"; $(BIN)/c2 | tail -3
+	@echo "== c3 FCS 近满加速 space_accel（坑 125：Soft 护洞+加压 / 消融）"; $(BIN)/c3 | tail -8
+	@echo "== c4 FCS protect_stream_small（坑 132/133 P1b anti-shatter / Soft 默认关）"; $(BIN)/c4 | tail -3
+	@echo "== c5 FCS stream_best_fit（坑 134 P1c：流式最小适配洞 / Soft 默认关）"; $(BIN)/c5 | tail -3
+	@echo "== c6 FCS starve_fit（坑 138 P2α：洞饿紧余量 / Soft 默认关）"; $(BIN)/c6 | tail -3
 	@echo "== r2 FCS 空间耗尽/写失败/不挂死"; $(BIN)/r2
 	@echo "== s2 FCS 长跑无漂移"; $(BIN)/s2 | tail -4
 	@echo "== b1 FCS 大库（>256 MB，PageId 32 位）"; $(BIN)/b1 | tail -3
@@ -143,6 +163,10 @@ bench: | $(BIN)
 	@$(BIN)/bench2 20000 500 | head -1
 	@$(BIN)/bench2big 20000 500 | head -1
 
+# WSL2 新内核（如 6.18）上 TSan 常 FATAL: unexpected memory mapping（ASLR 熵过高）。
+# setarch -R 关掉个性化随机化即可跑；非 Linux / 无 setarch 时退回直接执行。
+TSAN_WRAP := $(shell command -v setarch >/dev/null 2>&1 && echo "setarch $$(uname -m) -R" || echo "")
+
 asan:
 	$(CXX) -std=c++17 -O1 -g -pthread -fsanitize=address,undefined $(INC) tests/f1.cpp -o $(BIN)/asan_f1
 	ASAN_OPTIONS=detect_leaks=1 $(BIN)/asan_f1 | tail -1
@@ -160,30 +184,127 @@ asan:
 	ASAN_OPTIONS=detect_leaks=1 $(BIN)/asan_t2 2
 	$(CXX) -std=c++17 -O1 -g -pthread -fsanitize=address,undefined $(INC) tests/m1.cpp -o $(BIN)/asan_m1
 	ASAN_OPTIONS=detect_leaks=1 $(BIN)/asan_m1 | tail -1
-	for t in v1 g1 g2 g3 g4 g5 g6 g7 g8 g9 g10 g11 g12 g13 g14 g15 g16 g17 g18 h1 h2 h3 s3 s4 c1; do \
+	for t in v1 g1 g2 g3 g4 g5 g6 g7 g8 g9 g10 g11 g12 g13 g14 g15 g16 g17 g18 h1 h2 h3 s3 s4 c1 c2 c3 c4 c5 c6; do \
 	  $(CXX) -std=c++17 -O1 -g -pthread -fsanitize=address,undefined $(INC) tests/$$t.cpp -o $(BIN)/asan_$$t; \
 	  ASAN_OPTIONS=detect_leaks=1 $(BIN)/asan_$$t | tail -1; \
 	done
 	$(CXX) -std=c++17 -O1 -g -pthread -fsanitize=address,undefined $(INC) tests/w1.cpp -o $(BIN)/asan_w1
 	ASAN_OPTIONS=detect_leaks=1 $(BIN)/asan_w1 | tail -1
 	$(CXX) -std=c++17 -O1 -g -pthread -fsanitize=thread $(INC) tests/w1.cpp -o $(BIN)/tsan_w1
-	$(BIN)/tsan_w1 | tail -1
+	$(TSAN_WRAP) $(BIN)/tsan_w1 | tail -1
 	$(CXX) -std=c++17 -O1 -g -pthread -fsanitize=thread $(INC) tests/g7.cpp -o $(BIN)/tsan_g7
-	$(BIN)/tsan_g7 2>&1 | tail -1
+	$(TSAN_WRAP) $(BIN)/tsan_g7 2>&1 | tail -1
 	$(CXX) -std=c++17 -O1 -g -pthread -fsanitize=thread $(INC) tests/g11.cpp -o $(BIN)/tsan_g11
-	$(BIN)/tsan_g11 2>&1 | tail -1
+	$(TSAN_WRAP) $(BIN)/tsan_g11 2>&1 | tail -1
 	$(CXX) -std=c++17 -O1 -g -pthread -fsanitize=thread $(INC) tests/g13.cpp -o $(BIN)/tsan_g13
-	$(BIN)/tsan_g13 mode3 2>&1 | tail -1
+	$(TSAN_WRAP) $(BIN)/tsan_g13 mode3 2>&1 | tail -1
 	$(CXX) -std=c++17 -O1 -g -pthread -fsanitize=thread $(INC) tests/g17.cpp -o $(BIN)/tsan_g17
-	$(BIN)/tsan_g17 60 2>&1 | tail -1
+	$(TSAN_WRAP) $(BIN)/tsan_g17 60 2>&1 | tail -1
 	$(CXX) -std=c++17 -O1 -g -pthread -fsanitize=thread $(INC) tests/g14.cpp -o $(BIN)/tsan_g14
-	$(BIN)/tsan_g14 yield 2>&1 | tail -1
-	$(BIN)/tsan_g7 3 3000 4 2>&1 | tail -1
-	G7_EXCL=1 $(BIN)/tsan_g7 1 2000 2>&1 | tail -1
+	$(TSAN_WRAP) $(BIN)/tsan_g14 yield 2>&1 | tail -1
+	$(TSAN_WRAP) $(BIN)/tsan_g7 3 3000 4 2>&1 | tail -1
+	G7_EXCL=1 $(TSAN_WRAP) $(BIN)/tsan_g7 1 2000 2>&1 | tail -1
 	$(CXX) -std=c++17 -O1 -g -pthread -fsanitize=address,undefined $(INC) tests/r2.cpp -o $(BIN)/asan_r2
 	ASAN_OPTIONS=detect_leaks=1 $(BIN)/asan_r2 | tail -1
 	$(CXX) -std=c++17 -O1 -g -pthread -fsanitize=address,undefined $(INC) tests/s2.cpp -o $(BIN)/asan_s2
 	ASAN_OPTIONS=detect_leaks=1 $(BIN)/asan_s2 | tail -1
+
+# 轻量：仅新增功能 sanitizer（空间轨开发期）；全量仍 make asan（后期统筹）
+asan-new: | $(BIN)
+	$(CXX) -std=c++17 -O1 -g -pthread -fsanitize=address,undefined $(INC) tests/c3.cpp -o $(BIN)/asan_c3
+	ASAN_OPTIONS=detect_leaks=1 $(BIN)/asan_c3
+	$(CXX) -std=c++17 -O1 -g -pthread -fsanitize=thread $(INC) tests/c3.cpp -o $(BIN)/tsan_c3
+	$(TSAN_WRAP) $(BIN)/tsan_c3
+	$(CXX) -std=c++17 -O1 -g -pthread -fsanitize=address,undefined $(INC) tests/c4.cpp -o $(BIN)/asan_c4
+	ASAN_OPTIONS=detect_leaks=1 $(BIN)/asan_c4
+	$(CXX) -std=c++17 -O1 -g -pthread -fsanitize=thread $(INC) tests/c4.cpp -o $(BIN)/tsan_c4
+	$(TSAN_WRAP) $(BIN)/tsan_c4
+	$(CXX) -std=c++17 -O1 -g -pthread -fsanitize=address,undefined $(INC) tests/c5.cpp -o $(BIN)/asan_c5
+	ASAN_OPTIONS=detect_leaks=1 $(BIN)/asan_c5
+	$(CXX) -std=c++17 -O1 -g -pthread -fsanitize=thread $(INC) tests/c5.cpp -o $(BIN)/tsan_c5
+	$(TSAN_WRAP) $(BIN)/tsan_c5
+	$(CXX) -std=c++17 -O1 -g -pthread -fsanitize=address,undefined $(INC) tests/c6.cpp -o $(BIN)/asan_c6
+	ASAN_OPTIONS=detect_leaks=1 $(BIN)/asan_c6
+	$(CXX) -std=c++17 -O1 -g -pthread -fsanitize=thread $(INC) tests/c6.cpp -o $(BIN)/tsan_c6
+	$(TSAN_WRAP) $(BIN)/tsan_c6
+
+harness-ab-space:
+	bash scripts/harness_ab_space.sh
+
+$(BIN)/layout: bench/probe/layout.cpp include/fcs.h | $(BIN)
+	$(CXX) $(CXXFLAGS) $(INC) $< -o $@
+$(BIN)/tiny_space: bench/probe/tiny_space.cpp include/fcs.h | $(BIN)
+	$(CXX) $(CXXFLAGS) $(INC) $< -o $@
+$(BIN)/soft_a1: bench/probe/soft_a1.cpp include/fcs.h | $(BIN)
+	$(CXX) $(CXXFLAGS) $(INC) $< -o $@
+# Soft A1 峰值归因（坑 126）：quiet 大涨 ATTR + dead_est；日志 → backup/soft-a1/
+# argv: N B VSZ quiet inv p1 bf_mode bf_skip_pct
+soft-a1: $(BIN)/soft_a1
+	@mkdir -p backup/soft-a1
+	$(BIN)/soft_a1 200000 500 32 1 2>&1 | tee backup/soft-a1/soft_a1_200k.log
+	@grep -E '^== |ATTR=' backup/soft-a1/soft_a1_200k.log | tail -40
+	@echo SOFT_A1_OK
+soft-a1-p1: $(BIN)/soft_a1
+	@mkdir -p backup/soft-a1
+	$(BIN)/soft_a1 200000 500 32 1 0 0 0 0 2>&1 | tee backup/soft-a1/soft_a1_p1_off.log
+	$(BIN)/soft_a1 200000 500 32 1 0 1 0 0 2>&1 | tee backup/soft-a1/soft_a1_p1_on.log
+	@echo '--- P1 A/B SUMMARY ---'
+	@grep -aE '^# Soft|^== SUMMARY|^== ATTR_COUNTS|^== AT_PEAK|^== maint' backup/soft-a1/soft_a1_p1_off.log backup/soft-a1/soft_a1_p1_on.log || true
+	@echo SOFT_A1_P1_OK
+soft-a1-bf: $(BIN)/soft_a1
+	@mkdir -p backup/soft-a1
+	$(BIN)/soft_a1 200000 500 32 1 0 0 0 0 2>&1 | tee backup/soft-a1/soft_a1_bf_off.log
+	$(BIN)/soft_a1 200000 500 32 1 0 0 1 0 2>&1 | tee backup/soft-a1/soft_a1_bf_on.log
+	@echo '--- P1c best-fit A/B SUMMARY ---'
+	@grep -aE '^# Soft|^== SUMMARY|^== ATTR_COUNTS|^== AT_PEAK|^== maint' backup/soft-a1/soft_a1_bf_off.log backup/soft-a1/soft_a1_bf_on.log || true
+	@echo SOFT_A1_BF_OK
+soft-a1-bf-lat:
+	bash scripts/bench_bf_latency_ab.sh
+# 坑 135：bf 模式矩阵消融（峰+延迟）→ VERDICT_P1d.md
+soft-a1-bf-ablate:
+	bash scripts/ablate_bf_modes.sh
+
+# 坑 138：P2 α/β 消融（starve_fit / starve_promote）argv9/10；Soft 默认关
+# argv: N B VSZ quiet inv p1 bf_mode bf_skip starve_fit starve_promote
+soft-a1-p2: $(BIN)/soft_a1
+	@mkdir -p backup/soft-a1
+	$(BIN)/soft_a1 200000 500 32 1 0 0 0 0 0 0 2>&1 | tee backup/soft-a1/soft_a1_p2_off.log
+	$(BIN)/soft_a1 200000 500 32 1 0 0 0 0 1 0 2>&1 | tee backup/soft-a1/soft_a1_p2_fit.log
+	$(BIN)/soft_a1 200000 500 32 1 0 0 0 0 0 1 2>&1 | tee backup/soft-a1/soft_a1_p2_prom.log
+	$(BIN)/soft_a1 200000 500 32 1 0 0 0 0 1 1 2>&1 | tee backup/soft-a1/soft_a1_p2_both.log
+	@echo '--- P2 starve A/B SUMMARY ---'
+	@grep -aE '^# Soft|^== SUMMARY|^== ATTR_COUNTS|^== AT_PEAK|^== maint' \
+	  backup/soft-a1/soft_a1_p2_off.log backup/soft-a1/soft_a1_p2_fit.log \
+	  backup/soft-a1/soft_a1_p2_prom.log backup/soft-a1/soft_a1_p2_both.log || true
+	@echo SOFT_A1_P2_OK
+# 坑 138：P2 both · A2 tiny / A3 Soft peers / Soft sync 写延迟门 → VERDICT_P2_GATE.md
+soft-a1-p2-gate:
+	bash scripts/gate_p2_a2a3_lat.sh
+# 坑 140：P2 税刀配对矩阵（抗抖）→ VERDICT_P2_TAX_MATRIX.md；确认 → VERDICT_P2_TAX_CONFIRM.md
+soft-a1-p2-tax:
+	bash scripts/a1_p2_tax_matrix.sh
+	bash scripts/a1_p2_tax_confirm.sh
+# 坑 144：P2 Soft 默认开后全量验证 → VERDICT_P2_SOFT_ON.md
+soft-p2-on:
+	bash scripts/soft_p2_on_verify.sh
+# 坑 144：P2 Soft-on · Soft peers vs SQLite/LMDB → backup/peers-p2/PEERS_P2.md
+peers-p2:
+	bash scripts/peers_p2_ab.sh
+# 坑 151：Post Soft 默认开后验证 → VERDICT_POST_SOFT_ON.md
+soft-post-on:
+	bash scripts/soft_post_on_verify.sh
+# 坑 150/151：Soft±Post peers → backup/peers-post/PEERS_POST.md
+peers-post:
+	bash scripts/peers_post_ab.sh
+
+# 坑 136：外碎片时空分布（timeline.csv + holes.csv）
+$(BIN)/frag_trace: bench/probe/frag_trace.cpp include/fcs.h | $(BIN)
+	$(CXX) $(CXXFLAGS) $(INC) $< -o $@
+frag-trace: $(BIN)/frag_trace
+	@mkdir -p backup/frag-trace
+	$(BIN)/frag_trace 50000 500 32 backup/frag-trace 0 0
+	@echo '--- summary ---'; cat backup/frag-trace/summary.txt
+	@echo FRAG_TRACE_OK
 
 dbg: | $(BIN)
 	$(CXX) $(CXXFLAGS) $(INC) -DXDB_ASSERT_SORTED -DXDB_SETTLE_CHECK -DXDB_CORRUPT_TRACE tests/t3.cpp -o $(BIN)/t3dbg

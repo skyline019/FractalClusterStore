@@ -1,0 +1,32 @@
+== N=50000 arm=0 idle=8000 streak=5 ==
+arm=soft N=50000 idle_us=8000 streak=5 runs=10 debt=0 peak_used=962 live=666 peak_x=1.444 insert=6.909 update=7.627 range=35.329 cursors=12.38 idle_tidies=0
+== N=50000 arm=1 idle=8000 streak=5 ==
+arm=eager N=50000 idle_us=8000 streak=5 runs=2 debt=0 peak_used=1464 live=471 peak_x=3.108 insert=19.733 update=10.653 range=5.840 cursors=2.34 idle_tidies=0
+== N=50000 arm=2 idle=8000 streak=5 ==
+arm=idle N=50000 idle_us=8000 streak=5 runs=2 debt=0 peak_used=1096 live=478 peak_x=2.293 insert=8.633 update=9.413 range=3.638 cursors=1.17 idle_tidies=11
+== N=50000 arm=3 idle=8000 streak=5 ==
+arm=post N=50000 idle_us=8000 streak=5 runs=1 debt=32 peak_used=1251 live=470 peak_x=2.662 insert=9.325 update=9.953 range=4.434 cursors=1.17 idle_tidies=19
+== N=50000 arm=4 idle=8000 streak=5 ==
+arm=polish N=50000 idle_us=8000 streak=5 runs=1 debt=0 peak_used=1465 live=477 peak_x=3.071 insert=7.045 update=7.459 range=3.794 cursors=1.25 idle_tidies=0
+== N=200000 arm=0 idle=8000 streak=5 ==
+arm=soft N=200000 idle_us=8000 streak=5 runs=33 debt=0 peak_used=3100 live=2100 peak_x=1.476 insert=6.811 update=11.253 range=21.885 cursors=6.48 idle_tidies=0
+== N=200000 arm=1 idle=8000 streak=5 ==
+arm=eager N=200000 idle_us=8000 streak=5 runs=1 debt=0 peak_used=9494 live=1881 peak_x=5.047 insert=48.623 update=86.579 range=5.841 cursors=1.16 idle_tidies=0
+== N=200000 arm=2 idle=8000 streak=5 ==
+arm=idle N=200000 idle_us=8000 streak=5 runs=9 debt=0 peak_used=3981 live=2322 peak_x=1.714 insert=12.723 update=14.129 range=10.015 cursors=2.99 idle_tidies=49
+== N=200000 arm=3 idle=8000 streak=5 ==
+arm=post N=200000 idle_us=8000 streak=5 runs=1 debt=32 peak_used=6435 live=1871 peak_x=3.439 insert=12.300 update=11.374 range=5.899 cursors=1.18 idle_tidies=58
+== N=200000 arm=4 idle=8000 streak=5 ==
+arm=polish N=200000 idle_us=8000 streak=5 runs=1 debt=0 peak_used=4707 live=1876 peak_x=2.509 insert=6.638 update=11.807 range=6.125 cursors=1.30 idle_tidies=0
+--- csv ---
+arm,N,idle_us,streak,runs,debt,peak_x,insert,update,range,cursors,idle_tidies
+soft,50000,8000,5,10,0,1.444,6.909,7.627,35.329,12.38,0
+eager,50000,8000,5,2,0,3.108,19.733,10.653,5.840,2.34,0
+idle,50000,8000,5,2,0,2.293,8.633,9.413,3.638,1.17,11
+post,50000,8000,5,1,32,2.662,9.325,9.953,4.434,1.17,19
+polish,50000,8000,5,1,0,3.071,7.045,7.459,3.794,1.25,0
+soft,200000,8000,5,33,0,1.476,6.811,11.253,21.885,6.48,0
+eager,200000,8000,5,1,0,5.047,48.623,86.579,5.841,1.16,0
+idle,200000,8000,5,9,0,1.714,12.723,14.129,10.015,2.99,49
+post,200000,8000,5,1,32,3.439,12.300,11.374,5.899,1.18,58
+polish,200000,8000,5,1,0,2.509,6.638,11.807,6.125,1.30,0

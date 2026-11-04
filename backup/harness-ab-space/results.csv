@@ -1,0 +1,11 @@
+profile,arm,N,pages,peak_tail,live,peak_x,space_accels,hw_bytes,note
+A1,soft_accel,200000,,3428,1843,1.860,0,,protect+hw150
+A1,soft_ablate,200000,,3427,1843,1.859,0,,protect+hw150
+A2,soft_accel,4000,256,221,210,1.052,32,,tiny_space
+A2,soft_ablate,4000,256,221,210,1.052,0,,tiny_space
+A2,soft_accel,8000,512,446,429,1.040,64,,tiny_space
+A2,soft_ablate,8000,512,446,429,1.040,0,,tiny_space
+A2,soft_accel,12000,1024,884,596,1.483,14770,,tiny_space
+A2,soft_ablate,12000,1024,884,596,1.483,0,,tiny_space
+A3,soft_accel,50000,,,2854912,1.122,0,3203072,bench4_soft_sync
+A3,soft_ablate,50000,,,2854912,1.122,0,3203072,bench4_soft_sync

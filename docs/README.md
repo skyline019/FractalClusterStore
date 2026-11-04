@@ -35,6 +35,11 @@ docs/
 | 路径 | 用途 |
 |---|---|
 | [`10-design/DESIGN3.md`](10-design/DESIGN3.md) | **现行设计主文**（基准矩阵、§12 坑表、轮次摘要） |
+| [`10-design/PIT_LOG.md`](10-design/PIT_LOG.md) | **活坑表**（占号 / OPEN / FIXED；工程债轨） |
+| [`../CONSTRAINTS.md`](../CONSTRAINTS.md) · [`../AGENTS.md`](../AGENTS.md) | 质量契约与 Agent 入口 |
+| [`00-entry/EVAL_ENG_DEBT_P1.md`](00-entry/EVAL_ENG_DEBT_P1.md) | 工程债一期评估（CRC/soak/asan/坑纪律；拆头未做） |
+| [`30-discuss/DISCUSS_HARNESS_AB_SPACE.md`](30-discuss/DISCUSS_HARNESS_AB_SPACE.md) | 空间峰 harness A/B · GGUF 卸载类比 · vs 双 memtable |
+| [`30-discuss/ENG_DEBT_SOAK_CRC.md`](30-discuss/ENG_DEBT_SOAK_CRC.md) · [`ENG_DEBT_SPLIT.md`](30-discuss/ENG_DEBT_SPLIT.md) | 工程债：soak/CRC、拆头 |
 | [`10-design/DESIGN2.md`](10-design/DESIGN2.md) | v2 设计（历史） |
 | [`10-design/P2_DESIGN.md`](10-design/P2_DESIGN.md) | P2 格式 v2 设计稿（P2a/b/c） |
 

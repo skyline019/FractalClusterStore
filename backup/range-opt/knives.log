@@ -1,0 +1,20 @@
+== mode=0 ==
+mode=0 runs=32 cells=571 range=14.067 cursors=6.48 skips=0.03 rows=199871
+mode=0 runs=31 cells=564 range=9.831 cursors=6.47 skips=0.03 rows=199871
+== mode=1 ==
+mode=1 runs=1 cells=564 range=4.168 cursors=1.30 skips=0.00 rows=199871
+mode=1 runs=1 cells=569 range=6.698 cursors=1.30 skips=0.00 rows=199871
+== mode=2 ==
+mode=2 runs=7 cells=480 range=19.969 cursors=7.56 skips=0.04 rows=199871
+mode=2 runs=7 cells=480 range=21.783 cursors=7.56 skips=0.04 rows=199871
+== mode=3 ==
+mode=3 runs=32 cells=564 range=16.737 cursors=6.47 skips=0.03 rows=199871
+mode=3 runs=35 cells=567 range=13.910 cursors=6.47 skips=0.03 rows=199871
+== mode=4 ==
+mode=4 runs=32 cells=565 range=16.141 cursors=6.47 skips=0.03 rows=199871
+mode=4 runs=20 cells=564 range=15.094 cursors=6.47 skips=0.03 rows=199871
+=== range_tax P2 ===
+# range_tax N=200000 p2=1 runs=30 cells=619 peak_tail≈2760
+# range: 159.557 µs/scan rows=199871 cursors/scan=6.54 sp_skips/scan=0.03 fits=4 prom=0
+# range_tax N=200000 p2=0 runs=25 cells=573 peak_tail≈2744
+# range: 146.353 µs/scan rows=199871 cursors/scan=6.54 sp_skips/scan=0.04 fits=0 prom=0

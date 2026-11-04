@@ -1,0 +1,5 @@
+# host: Linux voyagerStar 6.18.33.2-microsoft-standard-WSL2 #1 SMP PREEMPT_DYNAMIC Thu Jun 18 21:54:43 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux 
+# date: 2026-11-04T00:28:03+08:00
+# knife: Soft protect_holes + space_accel (pit 125); ablate=0
+# skip: full make asan (per user)
+BUILD_OK
