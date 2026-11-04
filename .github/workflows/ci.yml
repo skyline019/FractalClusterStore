@@ -8,9 +8,12 @@ on:
     branches: [main]
   workflow_dispatch:
 
+# main：勿 cancel-in-progress —— 连续 push 会掐掉未跑完的 test/asan，
+# Strict CI OK 把 cancelled 当失败（见 Soft Post 推送后被文档提交取消）。
+# PR 仍可取消旧跑，避免堆积。
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:
   contents: read
