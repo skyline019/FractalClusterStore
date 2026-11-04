@@ -25,7 +25,8 @@ docs/
 | [`00-entry/EVAL17.md`](00-entry/EVAL17.md) | **滚动全量评估**（含 Soft+Post peers · 坑 151） |
 | [`../backup/peers-post/PEERS_POST.md`](../backup/peers-post/PEERS_POST.md) | 现行 Soft Post vs SQLite/LMDB 全表 |
 | [`00-entry/BATTLE.md`](00-entry/BATTLE.md) | 包 A/B/L 对照与升格说明 |
-| [`00-entry/RELEASE_NOTES_v0.1.0.md`](00-entry/RELEASE_NOTES_v0.1.0.md) | v0.1.0 发布说明 |
+| [`00-entry/RELEASE_NOTES_v0.2.0.md`](00-entry/RELEASE_NOTES_v0.2.0.md) | **现行** v0.2.0（Soft 默认 Post） |
+| [`00-entry/RELEASE_NOTES_v0.1.0.md`](00-entry/RELEASE_NOTES_v0.1.0.md) | v0.1.0 首个公开里程碑 |
 
 数字细节以 EVAL17 / DESIGN3 / DETAIL 为准；对外叙事以根 README 为准。
 

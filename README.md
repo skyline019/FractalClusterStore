@@ -7,7 +7,7 @@
 
 <p align="center">
   <a href="https://github.com/skyline019/FractalClusterStore/actions/workflows/ci.yml"><img src="https://github.com/skyline019/FractalClusterStore/actions/workflows/ci.yml/badge.svg" alt="Strict CI"></a>
-  <a href="https://github.com/skyline019/FractalClusterStore/releases/tag/v0.1.0"><img src="https://img.shields.io/github/v/release/skyline019/FractalClusterStore" alt="Release"></a>
+  <a href="https://github.com/skyline019/FractalClusterStore/releases/tag/v0.2.0"><img src="https://img.shields.io/github/v/release/skyline019/FractalClusterStore" alt="Release"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License: MIT"></a>
 </p>
 
@@ -15,7 +15,7 @@ FractalClusterStore（**FCS**）面向嵌入式设备与单进程服务，提供
 
 | | |
 |:---|:---|
-| **公开版本** | [v0.1.0](https://github.com/skyline019/FractalClusterStore/releases/tag/v0.1.0) |
+| **公开版本** | [v0.2.0](https://github.com/skyline019/FractalClusterStore/releases/tag/v0.2.0)（[v0.1.0](https://github.com/skyline019/FractalClusterStore/releases/tag/v0.1.0)） |
 | **质量门禁** | Strict CI：Compile（`-Werror`）→ Smoke → Full test → Sanitizers → **Strict CI OK** |
 | **许可** | [MIT](LICENSE) |
 
@@ -154,6 +154,7 @@ s.get(42, buf, sizeof buf, &n);
 | [EVAL17](docs/00-entry/EVAL17.md) | 正确性 / 性能 / 空间 / 风险（冻结评估） |
 | [DESIGN3](docs/10-design/DESIGN3.md) | 现行设计主文与缺陷表 |
 | [文档索引](docs/README.md) | 轮次记录、讨论稿、LaTeX |
+| [v0.2.0 说明](docs/00-entry/RELEASE_NOTES_v0.2.0.md) | Soft 默认 Post 里程碑 |
 | [v0.1.0 说明](docs/00-entry/RELEASE_NOTES_v0.1.0.md) | 首个公开里程碑 |
 | [fcs-anim.html](fcs-anim.html) · [fcs-pits.html](fcs-pits.html) | 离线结构与缺陷对照讲解 |
 

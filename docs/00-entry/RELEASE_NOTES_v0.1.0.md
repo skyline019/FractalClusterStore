@@ -2,6 +2,8 @@
 
 首个公开里程碑：**FCS / XDB v3** 产品主树（R17 定稿 + R18 Soft 整理态），Strict CI 四门全绿。
 
+> **现行发布：** [v0.2.0](RELEASE_NOTES_v0.2.0.md)（Soft 默认 Post · P2 Soft-on · peers-post · 2026-11-04）
+
 ## Highlights
 
 - **嵌入式有序 KV**：u64 键、追加 run + 单元目录 + 分层归并 + 分片 TRIM
@@ -22,13 +24,4 @@ make asan     # ASan + UBSan + TSan
 
 ## Known gaps
 
-单进程、键固定 u64；无小时 soak / 真拔电 / 多进程锁；合并峰与 LMDB range 读仍是「写换读」权衡（细节见 EVAL17）。
-
-## 主树滚动（v0.1.0 之后 · 2026-11-04）
-
-未另切版本号；产品 Soft 已累计：
-
-- **P2 Soft-on**（坑 144）：`configure_deploy` 默认洞饿 fit+promote  
-- **SoftCons::Post**（坑 150/151）：写中只记债；读前 `soft_cons_repay()`（或 `polish()`）  
-- peers 全表：`backup/peers-post/PEERS_POST.md` · 门禁：`backup/soft-a1/VERDICT_POST_SOFT_ON.md`  
-- 契约：`CONSTRAINTS.md` · 滚动评估：`EVAL17.md`（至 2026-11-04）
+单进程、键固定 u64；无小时 soak / 真拔电 / 多进程锁；合并峰与 LMDB range 读仍是「写换读」权衡（细节见 EVAL17）。后续产品滚动见 **v0.2.0**。
