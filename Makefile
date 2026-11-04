@@ -199,7 +199,10 @@ asan:
 	$(CXX) -std=c++17 -O1 -g -pthread -fsanitize=thread $(INC) tests/g13.cpp -o $(BIN)/tsan_g13
 	$(TSAN_WRAP) $(BIN)/tsan_g13 mode3 2>&1 | tail -1
 	$(CXX) -std=c++17 -O1 -g -pthread -fsanitize=thread $(INC) tests/g17.cpp -o $(BIN)/tsan_g17
-	$(TSAN_WRAP) $(BIN)/tsan_g17 60 2>&1 | tail -1
+	# 坑 154：失败时保留全文（勿只 tail -1，否则 CI 看不到是哪段 FAIL）
+	@$(TSAN_WRAP) $(BIN)/tsan_g17 60 >$(BIN)/tsan_g17.log 2>&1 || { echo '--- tsan_g17 log ---'; cat $(BIN)/tsan_g17.log; exit 1; }
+	@tail -1 $(BIN)/tsan_g17.log
+
 	$(CXX) -std=c++17 -O1 -g -pthread -fsanitize=thread $(INC) tests/g14.cpp -o $(BIN)/tsan_g14
 	$(TSAN_WRAP) $(BIN)/tsan_g14 yield 2>&1 | tail -1
 	$(TSAN_WRAP) $(BIN)/tsan_g7 3 3000 4 2>&1 | tail -1

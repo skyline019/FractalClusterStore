@@ -2005,6 +2005,8 @@ public:
             std::unique_lock<std::mutex> ml(ml_mu_, std::try_to_lock);
             if (!ml.owns_lock()) {
                 maint_deferred_.fetch_add(1, std::memory_order_relaxed);
+                // 坑 154：mode 3 仍要 kick——否则持锁者在 body 里、其余提交全跳过时后台可能饿死
+                if (maint_mode_ == 3) kick_maint_thread();
             } else {
                 if (maint_mode_ == 1) maint_loop_body_(maint_budget_us_);
                 else if (maint_mode_ == 3) {   // 后台线程干；L0 积压时提交线程自己也干一个预算（背压）

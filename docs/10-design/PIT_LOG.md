@@ -61,6 +61,7 @@
 | **151** | FIXED | Soft 默认升 Post | verified：门禁可议通过 — 消融 200k insert **0.98×** cursors **1.30**；Soft A1 peak **+0.4%** insert **+12.4%**；peers sync range SQL **3.97→0.46×**。`configure_deploy`/Soft → Post；读前 `soft_cons_repay`/`polish`；消融 Off | `VERDICT_POST_SOFT_ON.md` · `soft_post_on_verify.sh` · `g18` |
 | **152** | NOTE | Strict CI 连 push 假红 | verified：`cancel-in-progress: true` 在 main 上被后续 push 取消 test/asan ⇒ `Strict CI OK` 把 cancelled 当失败（Soft Post `38443ff`）。**非产品回归**；compile+smoke 已绿。修：main 不取消、仅 PR 取消 | `.github/workflows/ci.yml` concurrency |
 | **153** | FIXED | TSan：多写者 `maint_loop` 竞态 `starve_prom_defer_` | verified：CI `make asan` / 本地 `TSAN_OPTIONS=halt_on_error=1 setarch -R tsan_w1` 报 data race@2021/2044；多写者 commit 放锁后并发进 maint_loop。排除：仅 Soft Post 假象（w1 未 Soft）；排除假阳性（halt 复现）。修：`ml_mu_` 串行 maint_loop/maintain/soft_idle；commit 路径 try_lock | `w1` · `make asan` tsan_w1 |
+| **154** | FIXED | CI `tsan_g17` 逻辑 FAIL（asan_g17 绿） | leading→verified 组合：① mode3 + ml_mu_ try_lock 失败时未 kick ⇒ 后台可饿（补 kick）；② TSan 下 get-during-sync 20 ms / 窗口半数过严（放宽预算+加长 sync delay）；③ Makefile `tail -1` 吞子段 FAIL。本地 stress×15 曾全绿 ⇒ CI 时序敏感 | `g17` TSan 预算 · asan 目标日志 |
 
 ## 新坑模板
 
