@@ -960,6 +960,7 @@ public:
     // 产物 run 的 sync 在这 max_units 个单元**全部跑完后只做一次**（锁外）：maintain(1) 紧循环 = 每条产物一次 fdatasync，
     // 想省 fsync 就把 max_units 给大一点（比如 16）。
     RC maintain(u32 max_units = 1) {
+        std::lock_guard<std::mutex> ml(ml_mu_);   // 坑 153：与 maint_loop / 提交后维护互斥
         RC last = RC::OK;
         bool need_sync = false;
         starve_prom_defer_ = true;
@@ -1999,22 +2000,33 @@ public:
             rc = commit_phase3(t, rc);               // µs 级：发布 sb_synced_ / durable_gen_、放行挂起页
         }
         // R3-lite：提交点已落盘、锁已放；维护按单元做，单元之间读者/写者都能插进来。
+        // 坑 153：多写者 commit 后可能并发进 maint_loop ⇒ ml_mu_ try_lock 串行；抢不到则记 deferred。
         if (rc == RC::OK && durable) {
-            if (maint_mode_ == 1) maint_loop(maint_budget_us_);
-            else if (maint_mode_ == 3) {   // 后台线程干；L0 积压时提交线程自己也干一个预算（背压）
-                kick_maint_thread();
-                if (backlog_.load(std::memory_order_relaxed)) maint_loop(maint_budget_us_, true);   // 第 14 轮：背压也守预算（后台线程还在干；以前积压时不限 ⇒ 提交 max 869 ms）
+            std::unique_lock<std::mutex> ml(ml_mu_, std::try_to_lock);
+            if (!ml.owns_lock()) {
+                maint_deferred_.fetch_add(1, std::memory_order_relaxed);
+            } else {
+                if (maint_mode_ == 1) maint_loop_body_(maint_budget_us_);
+                else if (maint_mode_ == 3) {   // 后台线程干；L0 积压时提交线程自己也干一个预算（背压）
+                    kick_maint_thread();
+                    if (backlog_.load(std::memory_order_relaxed)) maint_loop_body_(maint_budget_us_, true);   // 第 14 轮：背压也守预算
+                }
+                // 坑 149/150：Idle 谷整理；Post 只记债（还债走 soft_cons_repay）
+                if (soft_cons_ == (int)SoftCons::Idle || soft_cons_ == (int)SoftCons::Post)
+                    soft_idle_tidy_after_();
             }
-            // 坑 149/150：Idle 谷整理；Post 只记债（还债走 soft_cons_repay）
-            if (soft_cons_ == (int)SoftCons::Idle || soft_cons_ == (int)SoftCons::Post)
-                soft_idle_tidy_after_();
         }
         return rc;                         // mode 2：维护留给应用的 maintain()
     }
     // 一次 commit() 之后的维护循环：{拿锁 → 一个单元 → 放锁}，直到没有维护可做、到达单元上限或用完墙钟预算。
     // 第一个单元 = retire + rebalance（split/compact 本身就是按单元有界的），之后每个单元 = 一片层合并。
     // 任何一步失败：账可能已脏 ⇒ dirty_（下次公开调用按盘重建，损失的只是这次维护的产物）；用户的提交不受影响。
+    // 坑 153：外层 ml_mu_ 保证同一时刻只有一个 maint_loop（含 starve_prom_defer_ / last_maint_us_）。
     void maint_loop(u64 budget_us, bool hard = false) {   // hard：积压也不突破预算（mode 3 提交线程的背压）
+        std::lock_guard<std::mutex> ml(ml_mu_);
+        maint_loop_body_(budget_us, hard);
+    }
+    void maint_loop_body_(u64 budget_us, bool hard = false) {   // 调用方已持 ml_mu_
         bool need_sync = false;
         const u64 t0 = prog_us();
         RC r = RC::OK;
@@ -6711,12 +6723,13 @@ private:
     u64 hw2_gen_ = 0;                                 // 上次搬挡路 run 时的 sb_built_+1：同一提交点内不再搬第二条
     u32 avoid_lo_ = 0, avoid_hi_ = 0;                 // 第 15 轮：alloc_pages 临时绕开的地址窗 [lo,hi)（搬挡路 run 时不许它落回正在并的洞里）
     u64 unit_t0_ = 0;                      // 当前维护单元开始持锁的时刻（maint_yield_now 用）
-    std::atomic<u64> maint_deferred_{0};   // 观测：因预算用完而中断的维护循环次数（锁外递增；mode 3 下两个线程都可能跑 maint_loop）
+    std::atomic<u64> maint_deferred_{0};   // 观测：预算用完 / 坑 153 抢不到 ml_mu_ 而跳过
     std::atomic<bool> maint_more_{false};  // 上次维护循环结束时是否还有活
     std::atomic<bool> backlog_{false};     // L0 ≥ 4·lvl_t
     std::thread mthr_;                     // mode 3 后台维护线程
     std::mutex mmu_;
     std::condition_variable mcv_;
+    std::mutex ml_mu_;                     // 坑 153：maint_loop / maintain / soft_idle 外层互斥
     bool m_stop_ = false, m_kick_ = false;
     bool split_pending_ = false;           // 坑 100：上一轮 split_pass 到了 128 刀上限还有单元 > BMAX
     // 第 17 轮：SB 代数拆成两个（DISCUSS15 §2.3）。单线程时两者相等，退化成以前的单一代数。
