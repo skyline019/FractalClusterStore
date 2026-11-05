@@ -2,7 +2,7 @@
 
 **Soft default Post** product milestone (on top of v0.1.0 R17/R18 Soft). HEAD at tag time aligned with Strict CI green (ASan/TSan).
 
-> **Current release:** [v0.2.1](RELEASE_NOTES_v0.2.1.md) (header split · eval-full · 2026-11-05)
+> **Current release:** [v0.2.2](RELEASE_NOTES_v0.2.2.md) · prior [v0.2.1](RELEASE_NOTES_v0.2.1.md)
 
 ## Highlights
 

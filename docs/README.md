@@ -25,7 +25,8 @@ docs/
 | [`00-entry/EVAL17.md`](00-entry/EVAL17.md) | **滚动全量评估**（含 Soft+Post peers · 坑 151） |
 | [`../backup/peers-post/PEERS_POST.md`](../backup/peers-post/PEERS_POST.md) | 现行 Soft Post vs SQLite/LMDB 全表 |
 | [`00-entry/BATTLE.md`](00-entry/BATTLE.md) | 包 A/B/L 对照与升格说明 |
-| [`00-entry/RELEASE_NOTES_v0.2.1.md`](00-entry/RELEASE_NOTES_v0.2.1.md) | **现行** v0.2.1（拆头 · eval-full · 英文 README） |
+| [`00-entry/RELEASE_NOTES_v0.2.2.md`](00-entry/RELEASE_NOTES_v0.2.2.md) | **现行** v0.2.2（收敛 170–172 · Soft 食谱 · 小时 soak） |
+| [`00-entry/RELEASE_NOTES_v0.2.1.md`](00-entry/RELEASE_NOTES_v0.2.1.md) | v0.2.1 拆头 · eval-full |
 | [`00-entry/SOFT_RECIPE.md`](00-entry/SOFT_RECIPE.md) · [`30-discuss/CONVERGE_OPS.md`](30-discuss/CONVERGE_OPS.md) | Soft 食谱 · **收敛运维 ACTIVE（坑 170–172）** |
 | [`../backup/converge/`](../backup/converge/) | 收敛期 soak 等运维日志 |
 | [`00-entry/RELEASE_NOTES_v0.2.0.md`](00-entry/RELEASE_NOTES_v0.2.0.md) | v0.2.0 Soft 默认 Post |

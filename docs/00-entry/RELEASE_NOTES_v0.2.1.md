@@ -2,6 +2,8 @@
 
 Maintenance release on top of **v0.2.0** (Soft default Post). Same public API and Soft defaults; engineering header split, full eval refresh, and documented read-path floor.
 
+> **Current release:** [v0.2.2](RELEASE_NOTES_v0.2.2.md) (converge/ops · hour soak · Soft recipe)
+
 **Date:** 2026-11-05 · **Author:** skyline019
 
 ## Highlights
@@ -33,10 +35,6 @@ make ci-smoke   # smoke subset
 
 Entry: [`README.md`](../../README.md) · Eval: [`EVAL17.md`](EVAL17.md) · Full pack: [`EVAL_FULL.md`](../../backup/eval-full/2026-11-05/EVAL_FULL.md) · Split: [`ENG_DEBT_SPLIT.md`](../30-discuss/ENG_DEBT_SPLIT.md) · Prior: [v0.2.0](RELEASE_NOTES_v0.2.0.md)
 
-## Post-tag ops (same day · converge)
+## Known gaps (at v0.2.1 tag)
 
-After the v0.2.1 tag, the tree entered **converge/ops** (pits **170–172**): Soft surface frozen; short oneseg `limit` dead branch removed; hour soak Soft+`verify_reads` recorded PASS under `backup/converge/` (still **not** a power-loss contract). Recipe: `SOFT_RECIPE.md` · `make soft-example`.
-
-## Known gaps
-
-Single-process; fixed `u64` keys; no true power-loss contract; `get` CRC still opt-in (`set_verify_reads`); short-window range vs LMDB remains a non-mmap floor (pits 145 / 167). Header split **done** (169); hour soak **recorded** (172).
+Single-process; fixed `u64` keys; no true power-loss contract; `get` CRC still opt-in; short-window range vs LMDB non-mmap floor (145 / 167). Header split done at tag (169). Converge/ops + hour soak shipped in **v0.2.2**.

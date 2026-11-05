@@ -7,7 +7,7 @@
 
 <p align="center">
   <a href="https://github.com/skyline019/FractalClusterStore/actions/workflows/ci.yml"><img src="https://github.com/skyline019/FractalClusterStore/actions/workflows/ci.yml/badge.svg" alt="Strict CI"></a>
-  <a href="https://github.com/skyline019/FractalClusterStore/releases/tag/v0.2.1"><img src="https://img.shields.io/github/v/release/skyline019/FractalClusterStore" alt="Release"></a>
+  <a href="https://github.com/skyline019/FractalClusterStore/releases/tag/v0.2.2"><img src="https://img.shields.io/github/v/release/skyline019/FractalClusterStore" alt="Release"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License: MIT"></a>
   <img src="https://img.shields.io/badge/C%2B%2B-17-blue.svg" alt="C++17">
   <img src="https://img.shields.io/badge/keys-u64-lightgrey.svg" alt="u64 keys">
@@ -17,7 +17,7 @@ FractalClusterStore (**FCS**) is a single-process, embeddable ordered KV engine 
 
 | | |
 |:---|:---|
-| **Latest release** | [v0.2.1](https://github.com/skyline019/FractalClusterStore/releases/tag/v0.2.1) · [notes](docs/00-entry/RELEASE_NOTES_v0.2.1.md) ([v0.2.0](docs/00-entry/RELEASE_NOTES_v0.2.0.md) · [v0.1.0](docs/00-entry/RELEASE_NOTES_v0.1.0.md)) |
+| **Latest release** | [v0.2.2](https://github.com/skyline019/FractalClusterStore/releases/tag/v0.2.2) · [notes](docs/00-entry/RELEASE_NOTES_v0.2.2.md) ([v0.2.1](docs/00-entry/RELEASE_NOTES_v0.2.1.md) · [v0.2.0](docs/00-entry/RELEASE_NOTES_v0.2.0.md)) |
 | **Working mode** | **Converge/ops ACTIVE** (pits 170–172) — Soft surface frozen; see [`CONVERGE_OPS.md`](docs/30-discuss/CONVERGE_OPS.md) |
 | **CI** | Strict CI: Compile (`-Werror`) → Smoke → Full test → Sanitizers → **Strict CI OK** |
 | **License** | [MIT](LICENSE) |
