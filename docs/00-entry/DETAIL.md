@@ -8,7 +8,7 @@
 |---|---|---|---|
 | v1 | `../src/engine.cpp` | 页内定位式 B+ 树 | 56.2× |
 | v2 | `include/store.h` | B+ 树 + 事务/快照/崩溃自愈 | 22.5× |
-| **v3（FCS）** | **`include/fcs.h`** | **cell / 段 / run 的分形视图 + 布隆门控 + 页内前缀压缩 + 零写回收 + 分层合并 + 异步组提交 + run 元数据页 + 溢出页大值 + 32 位页号** | **2.70×（大提交 2.35×）** |
+| **v3（FCS）** | **`include/fcs.h`**（聚合；实现 `fcs_codec/dir/sync/store.h`，坑 169） | **cell / 段 / run 的分形视图 + 布隆门控 + 页内前缀压缩 + 零写回收 + 分层合并 + 异步组提交 + run 元数据页 + 溢出页大值 + 32 位页号** | **2.70×（大提交 2.35×）** |
 
 文档分类索引：[`../README.md`](../README.md)。  
 v3 设计见 **[`../10-design/DESIGN3.md`](../10-design/DESIGN3.md)**；评估主文 **[`EVAL17.md`](EVAL17.md)**；v2 设计见 [`../10-design/DESIGN2.md`](../10-design/DESIGN2.md)。

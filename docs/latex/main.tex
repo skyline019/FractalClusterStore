@@ -99,9 +99,9 @@
 \title{\textbf{FCS：Fractal Cluster Store}\\[0.35em]
 \large 嵌入式有序 KV 内核\\详细技术文档\\[0.25em]
 \normalsize 代码详解 · 伪代码 · 流程图 · 踩坑对照\\[0.15em]
-\footnotesize 公开标签 \texttt{v0.2.0} · Soft 默认 Post · 产品树 \texttt{embdb/x}}
-\author{基于 DESIGN3 · EVAL17 · ROUND13--18 · Soft Post（坑 144/150--154）· g15--g18}
-\date{2026-11-04}
+\footnotesize 公开标签 \texttt{v0.2.0} · Soft 默认 Post · 头已拆（坑 169）· 产品树 \texttt{embdb/x}}
+\author{基于 DESIGN3 · EVAL17 · ROUND13--18 · Soft Post（坑 144/150--154）· 拆头 169 · g15--g18}
+\date{2026-11-05}
 
 \begin{document}
 \maketitle
@@ -110,7 +110,7 @@
 \noindent
 本文面向两类读者：\textbf{（1）}仅有基础数据库知识、需要自底向上读懂实现的工程师——见第~\ref{sec:code-deep}~章（图解 + 手算示例 + API 剧本）；\textbf{（2）}已熟悉架构、需要伪代码/流程图与踩坑修前修后对照的维护者。
 产品 Soft（\texttt{configure\_deploy}）自 \textbf{v0.2.0} 起默认 \texttt{SoftCons::Post}：写中只记债，读前 \texttt{soft\_cons\_repay}/\texttt{polish}。
-配套：\texttt{fcs-pits.html}、\texttt{include/fcs.h}、\texttt{backup/peers-post/}。标注「实测」的数字来自 ROUND/EVAL/peers，非本编译复测。
+配套：\texttt{fcs-pits.html}、\texttt{include/fcs.h}（聚合；实现见 \texttt{fcs\_*.h}，坑 169）、\texttt{backup/peers-post/}。标注「实测」的数字来自 ROUND/EVAL/peers，非本编译复测。
 \end{abstract}
 
 \tableofcontents

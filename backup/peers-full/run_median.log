@@ -1,0 +1,88 @@
+# peers_full_median R=5 host=voyagerStar date=2026-11-05T10:05:23+08:00
+== round 1/5 ==
+  b4 sync_t1d0
+  b7 sync_t1d0
+  b4 sync_t0d0
+  b7 sync_t0d0
+  b4 sync_t1d1
+  b7 sync_t1d1
+  b4 async_t1d0
+  b7 async_t1d0
+== round 2/5 ==
+  b4 sync_t1d0
+  b7 sync_t1d0
+  b4 sync_t0d0
+  b7 sync_t0d0
+  b4 sync_t1d1
+  b7 sync_t1d1
+  b4 async_t1d0
+  b7 async_t1d0
+== round 3/5 ==
+  b4 sync_t1d0
+  b7 sync_t1d0
+  b4 sync_t0d0
+  b7 sync_t0d0
+  b4 sync_t1d1
+  b7 sync_t1d1
+  b4 async_t1d0
+  b7 async_t1d0
+== round 4/5 ==
+  b4 sync_t1d0
+  b7 sync_t1d0
+  b4 sync_t0d0
+  b7 sync_t0d0
+  b4 sync_t1d1
+  b7 sync_t1d1
+  b4 async_t1d0
+  b7 async_t1d0
+== round 5/5 ==
+  b4 sync_t1d0
+  b7 sync_t1d0
+  b4 sync_t0d0
+  b7 sync_t0d0
+  b4 sync_t1d1
+  b7 sync_t1d1
+  b4 async_t1d0
+  b7 async_t1d0
+# Soft Post 完整 peers 消融（中位 ×5）vs SQLite / LMDB
+
+比值 FCS/对手；<1 = FCS 更快。空间 MB。坑 163/165/166。
+复现：`R=5 bash scripts/peers_full_median.sh` · `backup/peers-full/`
+
+## vs SQLite（中位）
+
+| 臂 | insert | update | get | range | space | /SQL ins | /SQL upd | /SQL get | /SQL rng | /SQL sp |
+|----|-------:|-------:|----:|------:|------:|---------:|---------:|---------:|---------:|--------:|
+| sync tip=on dual=off (产品) | 5.772 | 6.843 | 0.357 | 0.408 | 2.50 | 1.01× | 0.60× | 0.20× | 0.22× | 1.12× |
+| sync tip=off dual=off | 5.706 | 6.878 | 0.380 | 0.417 | 2.50 | 1.11× | 0.55× | 0.21× | 0.22× | 1.12× |
+| sync tip=on dual=on | 6.119 | 5.788 | 0.377 | 0.414 | 2.50 | 1.18× | 0.49× | 0.21× | 0.22× | 1.12× |
+| async tip=on dual=off (产品) | 0.405 | 0.666 | 0.311 | 0.405 | 2.15 | 0.08× | 0.06× | 0.17× | 0.20× | 0.96× |
+
+## vs LMDB（中位）
+
+| 臂 | insert | update | get | range | space | /LMDB ins | /LMDB upd | /LMDB get | /LMDB rng | /LMDB sp |
+|----|-------:|-------:|----:|------:|------:|----------:|----------:|----------:|----------:|---------:|
+| sync tip=on dual=off (产品) | 6.175 | 5.950 | 0.379 | 0.465 | 2.50 | 0.95× | 0.44× | 1.16× | 1.35× | 0.47× |
+| sync tip=off dual=off | 6.728 | 7.221 | 0.386 | 0.423 | 2.50 | 1.04× | 0.48× | 1.04× | 1.24× | 0.47× |
+| sync tip=on dual=on | 5.360 | 5.735 | 0.430 | 0.473 | 2.50 | 0.81× | 0.46× | 1.28× | 1.36× | 0.47× |
+| async tip=on dual=off (产品) | 0.407 | 0.740 | 0.330 | 0.397 | 2.15 | 0.06× | 0.06× | 1.01× | 1.16× | 0.41× |
+
+## 消融判决（sync 中位）
+
+- tip on/off（dual=off）：insert 1.01× · update 0.99× · get 0.94× · range 0.98× · space 1.00×
+- dual on/off（tip=on）：insert 1.06× · update 0.85× · get 1.06× · range 1.01× · space 1.00×
+
+## 产品臂（中位）
+
+### sync tip=on dual=off
+- vs SQL：ins 1.01× · upd 0.60× · get 0.20× · rng 0.22× · sp 1.12×
+- vs LMDB：ins 0.95× · upd 0.44× · get 1.16× · rng 1.35× · sp 0.47×
+
+### async tip=on dual=off
+- vs SQL：ins 0.08× · upd 0.06× · get 0.17× · rng 0.20× · sp 0.96×
+- vs LMDB：ins 0.06× · upd 0.06× · get 1.01× · rng 1.16× · sp 0.41×
+
+- tip：**KEEP**（163 bloom；中位 insert 相对 tip-off 无稳定回归才维持；见上 tip 行）
+- dual：Soft 默认仍关（Negate-keep）
+
+Wrote backup/peers-full/PEERS_FULL_MED.md

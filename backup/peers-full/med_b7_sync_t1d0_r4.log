@@ -1,0 +1,12 @@
+# FCS vs LMDB  N=50000 B=500 val=32B R=50000 S=2000×100  fcs(async=0 group=0 cons=0 shr=0 soft=1 starve_fit=1 starve_promote=1 soft_cons=3 dual_mem=0 flush_tip=1)
+# LittleFS: 暂缓（非有序KV；禁测其不擅长能力）。每 B 次一持久屏障 | LMDB 大端键
+# fcs soft_cons=Post after repay: runs=1 debt=0 tidies=2
+# fcs done insert=5.583 update=5.950 get=0.385 range=0.465 space=2625536 B
+# lmdb done insert=6.488 update=13.534 get=0.324 range=0.354 space=5541888 B
+
+phase                   fcs         lmdb     fcs/lmdb
+insert us/op          5.583        6.488         0.86
+update us/op          5.950       13.534         0.44
+get us/op             0.385        0.324         1.19
+range us/scan         0.465        0.354         1.31
+space bytes         2625536      5541888

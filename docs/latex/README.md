@@ -1,6 +1,6 @@
 # FCS 技术文档（XeLaTeX）
 
-对齐公开标签 **v0.2.0**（Soft 默认 Post · P2 Soft-on · peers-post）。
+对齐公开标签 **v0.2.0**（Soft 默认 Post · P2 Soft-on · peers-post）+ **坑 169 拆头**（2026-11-05）。
 
 ## 依赖（WSL）
 
@@ -29,8 +29,8 @@ make
 | `chapters/02`--`05` | 架构 → 格式 → 路径 → 合并/P2 Soft-on |
 | `chapters/06-fsync-tidy` | fsync 出锁 · SoftCons::Post · repay |
 | `chapters/07-evaluation` | peers-post 对标 · 峰值刀 |
-| `chapters/08-engineering` | CONSTRAINTS · PIT · Strict CI |
-| `chapters/09`--`10` | 图示 · 踩坑（含 150--154） |
+| `chapters/08-engineering` | CONSTRAINTS · PIT · Strict CI · 头文件布局（169） |
+| `chapters/09`--`10` | 图示 · 踩坑（含 150--154、169） |
 | `chapters/A-api` / `B-repro` | API · 复现 |
 
 Markdown 正文分类见上一级 [`../README.md`](../README.md)。

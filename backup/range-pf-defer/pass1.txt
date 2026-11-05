@@ -1,0 +1,8 @@
+runs=1 cells=100 page_view=1 pf_eager=0
+r1 short defer=0.623 eager=0.727 d/e=0.857 | full defer=1538.563 eager=1087.225 d/e=1.415
+r2 short defer=0.557 eager=0.760 d/e=0.732 | full defer=1171.340 eager=1349.858 d/e=0.868
+r3 short defer=0.532 eager=0.740 d/e=0.719 | full defer=1067.242 eager=1083.607 d/e=0.985
+r4 short defer=0.528 eager=0.592 d/e=0.892 | full defer=1125.979 eager=1072.867 d/e=1.050
+r5 short defer=0.508 eager=0.575 d/e=0.885 | full defer=1074.633 eager=1088.577 d/e=0.987
+median short defer=0.532 eager=0.727 defer/eager=0.732
+median full  defer=1125.979 eager=1087.225 defer/eager=1.036

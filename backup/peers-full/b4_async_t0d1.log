@@ -1,0 +1,34 @@
+# FCS vs SQLite   N=50000 B=500 val=32B 读=50000 区间=2000×100  kidx=0 async=1 group=1 lvl_t=8 key=随机 soft=1 bf_mode=0 bf_skip=0 starve_fit=1 starve_promote=1 soft_cons=3 dual_mem=1 flush_tip=0
+# 单位: µs/op（越小越好） | 写字节 = 引擎自计 / 块层实测 / 逻辑值字节
+# fcs insert: max commit = 26680 µs  mem high-water = 2100000 B
+# fcs dual_mem: flushes=1 excl_us=11383 enc_us=4944 settle_us=1046
+# fcs soft_cons=Post after repay: runs=1 debt=0 tidies=1
+# fcs 收缩: rc=0  文件 2256896 B (551 页)  top=551 活页=503 空闲块=1/最大2  合计 5.4 ms
+# fcs reads: 0.01 页/get  probes/get=1.00  hits=50000
+# fcs range cache: hits/scan=1.06 misses/scan=0.000 sp_skips/scan=0.00
+# fcs io jobs=0  async=1
+# fcs range cursors/scan=0.00
+# fcs range: 0.40 µs/scan  rows=2000  (0.40 µs/row)
+# fcs space: file=2256896 B hw=2256896 B (live_pages=2060288 free=8192 largest_free=2 pg extents=1)  live_recs=50000  bytes/rec=45.1  runs=1 cells=128  hw_reclaims=0 space_accels=0 pending=0
+# fcs p2: starve_fits=0 starve_promotes=0 merge_parts=0 part_frags=0 hole_fits=0
+# fcs r17: merge src_max=2 cur_max=2 hole_fits=0 durable=159
+# sqlite range: 2.43 µs/scan rows=2000 (2.43 µs/row)
+# sqlite space: file=2347008 B live_recs=50000 bytes/rec=46.9
+
+phase                 us/op       block B/op     logical B/op
+fcs insert            0.690             44.7             44.6
+sqlite insert         5.539             80.4              0.0
+fcs update            0.713              0.0             35.6
+sqlite update        13.122              0.0              0.0
+fcs get               0.362              0.0              0.0
+sqlite get            1.958              0.0              0.0
+fcs range             0.402              0.0              0.0
+sqlite range          2.428              0.0              0.0
+
+                        fcs       sqlite   fcs/sqlite
+insert us/op          0.690        5.539         0.12
+update us/op          0.713       13.122         0.05
+get us/op             0.362        1.958         0.19
+range us/scan         0.402        2.428         0.17
+space bytes         2256896      2347008
+block write B       2236416      4018176

@@ -1,0 +1,33 @@
+# FCS vs SQLite   N=50000 B=500 val=32B 读=50000 区间=2000×100  kidx=0 async=0 group=0 lvl_t=8 key=随机 soft=1 bf_mode=0 bf_skip=0 starve_fit=1 starve_promote=1 soft_cons=3 dual_mem=1 flush_tip=0
+# 单位: µs/op（越小越好） | 写字节 = 引擎自计 / 块层实测 / 逻辑值字节
+# fcs insert: max commit = 16467 µs  mem high-water = 21000 B
+# fcs dual_mem: flushes=100 excl_us=7947 enc_us=3195 settle_us=1036
+# fcs soft_cons=Post after repay: runs=1 debt=0 tidies=2
+# fcs reads: 0.01 页/get  probes/get=1.00  hits=50000
+# fcs range cache: hits/scan=1.08 misses/scan=0.000 sp_skips/scan=0.00
+# fcs io jobs=0  async=0
+# fcs range cursors/scan=0.00
+# fcs range: 0.43 µs/scan  rows=2000  (0.43 µs/row)
+# fcs space: file=2625536 B hw=2625536 B (live_pages=2060288 free=376832 largest_free=90 pg extents=2)  live_recs=50000  bytes/rec=52.5  runs=1 cells=115  hw_reclaims=11 space_accels=0 pending=0
+# fcs p2: starve_fits=0 starve_promotes=0 merge_parts=0 part_frags=0 hole_fits=0
+# fcs r17: merge src_max=8 cur_max=8 hole_fits=0 durable=156
+# sqlite range: 1.85 µs/scan rows=2000 (1.85 µs/row)
+# sqlite space: file=2347008 B live_recs=50000 bytes/rec=46.9
+
+phase                 us/op       block B/op     logical B/op
+fcs insert            5.805            141.4            129.8
+sqlite insert         5.949             80.4              0.0
+fcs update            5.588              0.0            188.6
+sqlite update        12.656              0.0              0.0
+fcs get               0.363              0.0              0.0
+sqlite get            2.019              0.0              0.0
+fcs range             0.434              0.0              0.0
+sqlite range          1.854              0.0              0.0
+
+                        fcs       sqlite   fcs/sqlite
+insert us/op          5.805        5.949         0.98
+update us/op          5.588       12.656         0.44
+get us/op             0.363        2.019         0.18
+range us/scan         0.434        1.854         0.23
+space bytes         2625536      2347008
+block write B       7069696      4018176

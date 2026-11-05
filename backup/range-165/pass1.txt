@@ -1,0 +1,6 @@
+r1 short on=0.360 off=0.630 o/f=0.571 | full o/f=0.555 | get=0.288
+r2 short on=0.412 off=0.745 o/f=0.553 | full o/f=0.582 | get=0.313
+r3 short on=0.430 off=0.584 o/f=0.736 | full o/f=0.598 | get=0.274
+r4 short on=0.378 off=0.863 o/f=0.438 | full o/f=0.679 | get=0.294
+r5 short on=0.420 off=0.570 o/f=0.737 | full o/f=0.588 | get=0.286
+median short on/off=0.654 full on/off=0.591 get=0.288

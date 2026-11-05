@@ -9,6 +9,7 @@
   \item 消毒：\texttt{make asan}（ASan/UBSan + TSan 子集 w1/g7/g11/g13/g14/g17）；WSL TSan 用 \texttt{setarch -R}（坑 122）。
 \end{itemize}
 缺口：无小时级 soak 标真拔电；无多进程文件锁；默认 \texttt{get} 不查数据 CRC。
+头文件拆分（坑 169）已完成，不再列作工程缺口；见第工程组织章。
 
 \subsection{Peers（FCS / SQLite / LMDB）}
 \begin{itemize}[leftmargin=1.6em]

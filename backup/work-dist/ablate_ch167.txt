@@ -1,0 +1,4 @@
+cells=100 runs=1
+i1 rand=0.366 seq=0.221 seq/rand=0.604
+i2 rand=0.347 seq=0.220 seq/rand=0.633
+i3 rand=0.344 seq=0.223 seq/rand=0.649

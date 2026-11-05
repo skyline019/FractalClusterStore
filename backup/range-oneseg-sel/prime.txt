@@ -1,0 +1,6 @@
+prime r1 on=0.620 off=0.796 on/off=0.779
+prime r2 on=0.538 off=0.652 on/off=0.825
+prime r3 on=0.616 off=0.642 on/off=0.959
+prime r4 on=0.556 off=0.724 on/off=0.767
+prime r5 on=0.563 off=0.611 on/off=0.921
+median prime on/off=0.863

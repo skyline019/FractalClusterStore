@@ -1,0 +1,6 @@
+  t_protect: skips=2 a=2 stream_c=2 user_d=226  ok
+  t_frag: lowered part=40 (cap=80≤80) frags=2  ok
+  t_coal: need=117 blocker 97→3 coalesces=1  ok
+  t_tidy_sm: runs=1 layout=109% protect=1  ok
+  t_dual_mem: flushes=17 lock_us=284 enc_us=190 settle_us=33  ok
+g18 护洞+整理态+碎片A+并洞B+dual: PASS

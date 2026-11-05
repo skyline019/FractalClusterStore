@@ -81,6 +81,8 @@ int main(int argc, char** argv) {
     int starve_fit = argc > 21 ? atoi(argv[21]) : 0;       // 坑 138 P2α
     int starve_promote = argc > 22 ? atoi(argv[22]) : 0;   // 坑 138 P2β
     int soft_cons = argc > 23 ? atoi(argv[23]) : 0;        // 坑 149：0 Off 1 Eager 2 Idle 3 Post
+    int dual_mem = argc > 24 ? atoi(argv[24]) : 0;         // 坑 156：双 MemTable / flush 出锁（仅 sync 生效）
+    int flush_tip = argc > 25 ? atoi(argv[25]) : -1;       // 坑 163：-1=成员默认；0/1 覆盖 set_flush_tip
 
     const u64 KEYMASK = SKEY_MAX;                      // 56 位键（SQLite INTEGER 为有符号）
     std::vector<u64> keys;
@@ -96,9 +98,9 @@ int main(int argc, char** argv) {
     std::vector<u8> val(VSZ), val2(VSZ);
     for (u32 i = 0; i < VSZ; ++i) { val[i] = (u8)(i * 31 + 7); val2[i] = (u8)(i * 17 + 3); }
 
-    std::printf("# FCS vs SQLite   N=%u B=%u val=%uB 读=%u 区间=%u×%u  kidx=%d async=%d group=%d lvl_t=%d key=%s soft=%d bf_mode=%d bf_skip=%d starve_fit=%d starve_promote=%d soft_cons=%d\n",
+    std::printf("# FCS vs SQLite   N=%u B=%u val=%uB 读=%u 区间=%u×%u  kidx=%d async=%d group=%d lvl_t=%d key=%s soft=%d bf_mode=%d bf_skip=%d starve_fit=%d starve_promote=%d soft_cons=%d dual_mem=%d flush_tip=%d\n",
                 N, B, VSZ, R, S, K, kidx, async, gm, lvl_t, kmode ? "时间型" : "随机", soft, stream_bf, bf_skip,
-                starve_fit, starve_promote, soft_cons);
+                starve_fit, starve_promote, soft_cons, dual_mem, flush_tip);
     std::printf("# 单位: µs/op（越小越好） | 写字节 = 引擎自计 / 块层实测 / 逻辑值字节\n");
 
     // ---------------------------------------------------------------- FCS
@@ -129,6 +131,10 @@ int main(int argc, char** argv) {
         // 坑 151：argv 显式覆盖 Soft 默认 Post（含 0=Off 消融）
         if (argc > 23)
             s.set_soft_cons((Store::SoftCons)std::min(std::max(soft_cons, 0), 3));
+        // 坑 156：可选 dual_mem（Soft 默认关；async 路径不走 dual）
+        if (argc > 24) s.set_dual_mem(dual_mem != 0);
+        // 坑 163：flush_tip 消融（-1 保持默认 bloom 跳首写）
+        if (flush_tip >= 0) s.set_flush_tip(flush_tip != 0);
         if (lt) s.set_lvl_t((u32)lt);
         if (am) s.set_async_flush_min((u32)am);
         if (!soft) s.set_io_threads((u32)(ithr > 0 ? ithr : 1));
@@ -142,6 +148,12 @@ int main(int argc, char** argv) {
         }
         { double c0 = now_us(); s.commit(); double d = now_us() - c0; if (d > cmax) cmax = d; }
         std::printf("# fcs insert: max commit = %.0f µs  mem high-water = %llu B\n", cmax, (unsigned long long)s.mem_high_water());
+        if (s.dual_mem())
+            std::printf("# fcs dual_mem: flushes=%llu excl_us=%llu enc_us=%llu settle_us=%llu\n",
+                        (unsigned long long)s.dual_mem_flushes(),
+                        (unsigned long long)s.flush_excl_us(),
+                        (unsigned long long)s.dual_mem_encode_us(),
+                        (unsigned long long)s.dual_mem_settle_us());
         f1r.us = (now_us() - t0) / N; f1r.ops = N;
         f1r.wbytes = io_wbytes() - w0; f1r.logical = dev.st.write_bytes - e0;
 

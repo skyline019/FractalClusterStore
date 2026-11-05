@@ -1,0 +1,1 @@
+mode=stall arm=on wall_us=62026 insert_us_op=7 max_commit_us=1018 flush_excl_us=939 encode_us=2582 io_us=3609 flushes=21 get_max_us=1022 peak_tail=699 peak_x=0.000

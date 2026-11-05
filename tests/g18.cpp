@@ -203,6 +203,12 @@ int t_tidy_sm() {
     chk(s.soft_cons() == Store::SoftCons::Post, "Soft default Post", bad);
     chk(s.soft_consolidate(), "soft_consolidate true under Post", bad);
     chk(s.maybe_tidy() == RC::OK, "Soft+Post maybe_tidy no-op", bad);
+    // 坑 156 S1：dual_mem 可选；Soft/configure_deploy 不得默认打开
+    chk(!s.dual_mem(), "dual_mem Soft default off", bad);
+    s.set_dual_mem(true);
+    chk(s.dual_mem(), "dual_mem can enable", bad);
+    s.set_dual_mem(false);
+    chk(!s.dual_mem(), "dual_mem can disable", bad);
     s.set_soft_cons(Store::SoftCons::Off);
     chk(s.maybe_tidy() == RC::OK, "Soft Off maybe_tidy no-op", bad);
     chk(!s.soft_consolidate(), "soft_consolidate off when Off", bad);
@@ -258,12 +264,50 @@ int t_tidy_sm() {
 
 } // namespace
 
+// 坑 156 S2–S4：dual_mem 切表 + 锁外 encode；单线程正确性 + Soft 默认仍关
+int t_dual_mem() {
+    int bad = 0;
+    RamDev dev(16384);
+    u8* arena = new u8[1024 * PAGE];
+    Store s;
+    if (s.open(&dev, arena, 1024) != RC::OK) { std::printf("  t_dual_mem open fail\n"); delete[] arena; return 1; }
+    s.set_maint_mode(2);
+    s.set_dual_mem(true);
+    chk(s.dual_mem(), "dual on", bad);
+    std::vector<u8> v(64, 9);
+    for (u32 i = 0; i < 4000; ++i) {
+        s.put(i + 1, v.data(), 64);
+        if ((i + 1) % 250 == 0) chk(s.commit() == RC::OK, "dual commit batch", bad);
+    }
+    chk(s.commit() == RC::OK, "dual final commit", bad);
+    chk(s.dual_mem_flushes() > 0, "dual flush counter", bad);
+    u8 out[64]; u16 olen = 0;
+    chk(s.get(1, out, 64, &olen) == RC::OK && olen == 64 && out[0] == 9, "get after dual", bad);
+    chk(s.get(4000, out, 64, &olen) == RC::OK && olen == 64, "get last after dual", bad);
+    Report rep; chk(s.verify(&rep) == RC::OK && !rep.errors, "verify dual", bad);
+    chk(s.dual_mem_settle_pending() == 0, "settle drained after verify", bad);
+    // 覆盖写 + NOSPACE 路径不炸（大库近满另测；这里只保证 dual 开关下仍可提交）
+    for (u32 i = 0; i < 500; ++i) s.put(i + 1, v.data(), 64);
+    chk(s.commit() == RC::OK, "dual overwrite commit", bad);
+    s.wait_settle_idle();
+    chk(s.dual_mem_settle_pending() == 0, "settle idle after overwrite", bad);
+    std::printf("  t_dual_mem: flushes=%llu lock_us=%llu enc_us=%llu settle_us=%llu  %s\n",
+                (unsigned long long)s.dual_mem_flushes(),
+                (unsigned long long)s.dual_mem_lock_us(),
+                (unsigned long long)s.dual_mem_encode_us(),
+                (unsigned long long)s.dual_mem_settle_us(),
+                bad ? "FAIL" : "ok");
+    delete[] arena;
+    return bad;
+}
+
 int main() {
     int bad = 0;
     bad += t_protect();
     bad += t_frag();
     bad += t_coal();
     bad += t_tidy_sm();
-    std::printf("g18 护洞+整理态+碎片A+并洞B: %s\n", bad ? "FAIL" : "PASS");
+    bad += t_dual_mem();
+    std::printf("g18 护洞+整理态+碎片A+并洞B+dual: %s\n", bad ? "FAIL" : "PASS");
     return bad ? 1 : 0;
 }

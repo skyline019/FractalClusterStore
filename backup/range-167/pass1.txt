@@ -1,0 +1,7 @@
+r1 short on=0.423 off=0.424 o/f=0.997 | full on=616.028 off=606.270 o/f=1.016
+r2 short on=0.375 off=0.350 o/f=1.072 | full on=586.466 off=586.694 o/f=1.000
+r3 short on=0.367 off=0.378 o/f=0.972 | full on=624.399 off=597.625 o/f=1.045
+r4 short on=0.399 off=0.530 o/f=0.753 | full on=609.195 off=1089.912 o/f=0.559
+r5 short on=0.476 off=0.438 o/f=1.087 | full on=693.208 off=646.098 o/f=1.073
+median short on/off=0.942 full on/off=1.016
+oracle short 800/800 full 50000/50000 OK

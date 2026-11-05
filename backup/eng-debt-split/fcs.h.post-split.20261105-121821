@@ -1,0 +1,73 @@
+// ============================================================================
+//  fcs.h —— FCS: Fractal Cluster Store（XDB v3 内核）
+// ============================================================================
+//  命题：**「树」只是「平衡」的一种派生形态**。v2 的 B+ 树把大量复杂度花在
+//  「维持平衡」的副作用上：分隔键下推、父指针、级联分裂、根换位、回退时
+//  整树重建、每页 COW。
+//
+//  FCS 直接维护平衡本身，于是树消失了。三个同构（分形）层次：
+//
+//     store ── 有序「单元表 directory」 ── 单元 cell = 键区间 + 段视图
+//       run ── 有序「页表 fences」      ── 页 = 有序记录序列
+//      page ── 有序记录（页内二分/线性）
+//
+//  关键点：**单元不拥有数据**。数据只存在于不可变的段（run）里；单元只是
+//  「(段, 页区间)」的集合视图。因此
+//      · 分裂单元 = 把页区间一分为二  → 零数据重写，O(#段)
+//      · 合并单元 = 页区间取并        → 零数据重写，O(#段)
+//  平衡变成目录上的局部操作，不再自底向上传播。
+//
+//  三条不变量（平衡的定义，与树无关）：
+//    B1  单元物理字节 ≤ BMAX          —— 超了就在页边界切成两半
+//    B2  单元段数 ≤ SMAX              —— 超了就压实成一个段
+//    B3  每次提交的重写预算随垃圾产生速率自适应，0/1 背包按“净收益”分配
+//
+//  动态规划：把候选压实单元当作物品（成本 = 重写页数，收益 = 回收字节 +
+//  减少段数），在预算内求最优子集 —— 压实时机不是启发式。
+//
+//  写：mem → **每提交 1 个有序段**（顺序写，与单元数无关）→ 清单增量页
+//      → 4B 提交字。写放大 ≈ 1 + 记录头 + 压实摊销；无整页 COW。
+//  读：目录二分 O(log C) → 段按版本**从新到旧**探测，命中即停 → 通常 1 页。
+//  回退：快照 = {vers, tail, man_last, nman}；回退 = 指针回退 + 清单截断，
+//        **O(1)**，零数据页重写（快照存活期间页不回收）。
+//
+//  【模块 TOC】（与下方 Mxx 横幅一一对应；仅注释地图，无逻辑边界）
+//    M00  本导读
+//    M01  参数（容量 / 层 / 特性宏）
+//    M02  编解码（记录头 / 页内前缀）
+//    M03  内存表 MemTable
+//    M04  布隆过滤器
+//    M05  段 / 单元（Run · Seg · Cell）
+//    M06  线程槽 / 读写锁（P1）
+//    M07  Store（公开面 + 实现；子节 M07a…）
+//  修坏还原：backup/r18/pre-comment-modular/
+// ============================================================================
+#pragma once
+#include "common.h"
+#include "layout.h"
+#include "blockdev.h"
+#include <vector>
+#include <memory>
+#include <array>
+#include <thread>
+#include <mutex>
+#include <shared_mutex>
+#include <atomic>
+#include <condition_variable>
+#include <chrono>
+#include <deque>
+#include <set>
+#include <map>
+#include <unordered_map>
+#include <algorithm>
+#include <cstdio>
+#include <cstring>
+#include <climits>
+
+#include "fcs_codec.h"
+#include "fcs_dir.h"
+#include "fcs_sync.h"
+#include "fcs_store.h"
+
+// M01–M07 实现已机械拆至 fcs_codec.h / fcs_dir.h / fcs_sync.h / fcs_store.h（坑 169）
+// 对外仍只 #include "fcs.h"。还原：backup/eng-debt-split/fcs.h.pre-split

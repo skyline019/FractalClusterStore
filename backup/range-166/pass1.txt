@@ -1,0 +1,7 @@
+r1 short on=0.489 off=0.471 o/f=1.037 | full on=613.865 off=1014.724 o/f=0.605 | get=0.279
+r2 short on=0.390 off=0.504 o/f=0.773 | full on=613.486 off=1022.727 o/f=0.600 | get=0.264
+r3 short on=0.361 off=0.383 o/f=0.944 | full on=650.340 off=1004.236 o/f=0.648 | get=0.278
+r4 short on=0.375 off=0.375 o/f=0.999 | full on=640.544 off=1072.764 o/f=0.597 | get=0.282
+r5 short on=0.364 off=0.377 o/f=0.965 | full on=627.859 off=988.923 o/f=0.635 | get=0.270
+median short on/off=0.979 full on/off=0.619 get=0.278
+oracle short 800/800 full 50000/50000 OK

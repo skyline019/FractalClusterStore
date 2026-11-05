@@ -310,6 +310,17 @@ TSan 下放宽 g17 sync-window 预算；asan 目标失败保留全文日志。
 \paragraph{验证}
 \texttt{TSAN\_OPTIONS=halt\_on\_error=1} \texttt{tsan\_w1}；Strict CI run 绿；标签 \texttt{v0.2.0}。
 
+\subsection{坑 169：工程债完全拆头（NOTE）}
+\paragraph{现象}
+单头约 $9.4\,\mathrm{k}$ 行，审阅/合并成本高；工程债一期曾将拆头列为未完成项。
+
+\paragraph{做法}
+按 \texttt{Mxx} TOC \textbf{机械}切至 \texttt{fcs\_codec/dir/sync/store.h} + 薄 \texttt{fcs.h}；\textbf{无逻辑改写}；依赖无环。
+持久备份 \texttt{backup/eng-debt-split/}（含 \texttt{fcs.h.pre-split}）\textbf{保留}。
+
+\paragraph{验证}
+\texttt{make bins} / \texttt{ci-smoke} / \texttt{make test} PASS；检查单 \texttt{ENG\_DEBT\_SPLIT.md}。
+
 % ---------- 小结 ----------
 \subsection{对照方法论（可迁移）}
 \begin{enumerate}[leftmargin=1.6em]

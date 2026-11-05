@@ -1,0 +1,116 @@
+g++ -std=c++17 -O1 -g -pthread -fsanitize=address,undefined -Iinclude tests/f1.cpp -o build/asan_f1
+ASAN_OPTIONS=detect_leaks=1 build/asan_f1 | tail -1
+PASS
+g++ -std=c++17 -O1 -g -pthread -fsanitize=address,undefined -Iinclude tests/f4.cpp -o build/asan_f4
+ASAN_OPTIONS=detect_leaks=1 build/asan_f4 | tail -1
+PASS
+g++ -std=c++17 -O1 -g -pthread -fsanitize=address,undefined -Iinclude tests/q1.cpp -o build/asan_q1
+ASAN_OPTIONS=detect_leaks=1 build/asan_q1 | tail -1
+PASS
+g++ -std=c++17 -O1 -g -pthread -fsanitize=address,undefined -Iinclude tests/f5.cpp -o build/asan_f5
+g++ -std=c++17 -O1 -g -pthread -fsanitize=address,undefined -Iinclude tests/f6.cpp -o build/asan_f6
+ASAN_OPTIONS=detect_leaks=1 build/asan_f5 | tail -1
+PASS
+ASAN_OPTIONS=detect_leaks=1 build/asan_f6 | tail -1
+PASS
+g++ -std=c++17 -O1 -g -pthread -fsanitize=address,undefined -Iinclude tests/t3.cpp -o build/asan_t3
+tests/t3.cpp: In lambda function:
+tests/t3.cpp:258:58: warning: format ‘%u’ expects argument of type ‘unsigned int’, but argument 6 has type ‘xdb::u64’ {aka ‘long unsigned int’} [-Wformat=]
+  258 |             std::fprintf(f, "P%u level=%u nslots=%u nid=%u footvers=?\n", p2, ih.level, ih.nslots, ih.nid);
+      |                                                         ~^                                         ~~~~~~
+      |                                                          |                                            |
+      |                                                          unsigned int                                 xdb::u64 {aka long unsigned int}
+      |                                                         %lu
+build/asan_t3
+scale: pages=289 leaves=286 inners=3 pubs=18085 orphans=0 err=0()
+  keys=17142 scan=17142 leaves=286
+  snapshot at vers=42 (open=42) snaps=1
+  chain dup pages=0
+  after rollback: err=0() firstpage=0
+  reopen: err=0() pages=230 firstpage=0
+FAILURES: 0
+g++ -std=c++17 -O1 -g -pthread -fsanitize=address,undefined -Iinclude tests/t2.cpp -o build/asan_t2
+ASAN_OPTIONS=detect_leaks=1 build/asan_t2 2
+round 0 ok: pages=6 leaves=5 inners=1 pubs=291 orphans=0 keys=218 free=1
+round 1 ok: pages=8 leaves=7 inners=1 pubs=436 orphans=0 keys=294 free=1
+  reopened ok (vers=22)
+round 2 ok: pages=9 leaves=8 inners=1 pubs=475 orphans=0 keys=339 free=1
+round 3 ok: pages=10 leaves=9 inners=1 pubs=559 orphans=0 keys=342 free=1
+  reopened ok (vers=44)
+round 4 ok: pages=10 leaves=9 inners=1 pubs=577 orphans=0 keys=384 free=1
+round 5 ok: pages=10 leaves=9 inners=1 pubs=543 orphans=0 keys=371 free=1
+  reopened ok (vers=66)
+FAILURES: 0
+g++ -std=c++17 -O1 -g -pthread -fsanitize=address,undefined -Iinclude tests/m1.cpp -o build/asan_m1
+ASAN_OPTIONS=detect_leaks=1 build/asan_m1 | tail -1
+PASS
+for t in v1 g1 g2 g3 g4 g5 g6 g7 g8 g9 g10 g11 g12 g13 g14 g15 g16 g17 g18 h1 h2 h3 s3 s4 c1 c2 c3 c4 c5 c6; do \
+  g++ -std=c++17 -O1 -g -pthread -fsanitize=address,undefined -Iinclude tests/$t.cpp -o build/asan_$t; \
+  ASAN_OPTIONS=detect_leaks=1 build/asan_$t | tail -1; \
+done
+PASS
+PASS
+PASS
+PASS
+PASS
+PASS
+PASS
+PASS
+PASS (fails=0)
+In file included from tests/g9.cpp:11:
+tests/../bench/probe/storm.cpp: In function ‘int storm_run(const std::string&, int, xdb::u32, xdb::u32, xdb::u32, xdb::u32)’:
+tests/../bench/probe/storm.cpp:175:86: warning: narrowing conversion of ‘s->fcs::Store::last_commit()’ from ‘xdb::u64’ {aka ‘long unsigned int’} to ‘xdb::u32’ {aka ‘unsigned int’} [-Wnarrowing]
+  175 |                 if (s->snapshot() == RC::OK) { snaps.push_back(Snap{m, s->last_commit(), c, 5 + (u32)R(36)}); durable = m; ++n_snap;
+      |                                                                        ~~~~~~~~~~~~~~^~
+g9 墓碑账目口径（坑 92/93/94/95）+ 风暴 6 组: PASS (14.5 s)
+g10 R2 层合并预算 + 分步维护 + R7 墓碑自动归一 + R8 局部 TRIM: PASS (13.0 s)
+g11 第 12 轮：提交后维护 + 分步层合并作业 + 坑 99 + 并发 + 惰性存活账: PASS (17.2 s)
+g12 坑 102 版本回绕（70000 次逻辑提交 + 跨回绕快照）: PASS
+g13 第 13 轮：流式产物 + 64 位序号 / v1 清单链升级（第 16 轮改写）+ 层合并规则 + 维护预算 / mode 3: PASS (234.6 s)
+g14 第 14 轮：作业增量账 + 文件高水位 + 读者让路: PASS (16.7 s)
+g15 OK
+g16 第 16 轮：P2b 分片归并 + RUN_TRIM（分片 / 重开 / 回退 / 快照 / 溢出链 / 墓碑）: PASS (8.0 s)
+g17 第 17 轮：fsync 出锁（提交分段 / 顺序器 / 两个代数 / durable_vers）+ 家族虚拟源游标 + 中等产物按洞分片: PASS (29.5 s)
+g18 护洞+整理态+碎片A+并洞B+dual: PASS
+h1 挂载模糊: PASS (3.6 s)
+h2 golden 镜像兼容（v2 三件套 + v1 老库只读/升级/重开）: PASS
+h3 多写者 × 异步 × 掉电: PASS
+PASS
+PASS
+PASS
+PASS
+PASS
+PASS
+PASS
+c6 PASS (pit 138/144 starve_fit Soft-on)
+g++ -std=c++17 -O1 -g -pthread -fsanitize=address,undefined -Iinclude tests/w1.cpp -o build/asan_w1
+ASAN_OPTIONS=detect_leaks=1 build/asan_w1 | tail -1
+PASS
+g++ -std=c++17 -O1 -g -pthread -fsanitize=thread -Iinclude tests/w1.cpp -o build/tsan_w1
+setarch x86_64 -R build/tsan_w1 | tail -1
+PASS
+g++ -std=c++17 -O1 -g -pthread -fsanitize=thread -Iinclude tests/g7.cpp -o build/tsan_g7
+setarch x86_64 -R build/tsan_g7 2>&1 | tail -1
+PASS
+g++ -std=c++17 -O1 -g -pthread -fsanitize=thread -Iinclude tests/g11.cpp -o build/tsan_g11
+setarch x86_64 -R build/tsan_g11 2>&1 | tail -1
+g11 第 12 轮：提交后维护 + 分步层合并作业 + 坑 99 + 并发 + 惰性存活账: PASS (35.3 s)
+g++ -std=c++17 -O1 -g -pthread -fsanitize=thread -Iinclude tests/g13.cpp -o build/tsan_g13
+setarch x86_64 -R build/tsan_g13 mode3 2>&1 | tail -1
+g13 第 13 轮：流式产物 + 64 位序号 / v1 清单链升级（第 16 轮改写）+ 层合并规则 + 维护预算 / mode 3: PASS (5.9 s)
+g++ -std=c++17 -O1 -g -pthread -fsanitize=thread -Iinclude tests/g17.cpp -o build/tsan_g17
+# 坑 154：失败时保留全文（勿只 tail -1，否则 CI 看不到是哪段 FAIL）
+g17 第 17 轮：fsync 出锁（提交分段 / 顺序器 / 两个代数 / durable_vers）+ 家族虚拟源游标 + 中等产物按洞分片: PASS (42.5 s)
+g++ -std=c++17 -O1 -g -pthread -fsanitize=thread -Iinclude tests/g14.cpp -o build/tsan_g14
+setarch x86_64 -R build/tsan_g14 yield 2>&1 | tail -1
+g14 第 14 轮：作业增量账 + 文件高水位 + 读者让路: PASS (17.0 s)
+setarch x86_64 -R build/tsan_g7 3 3000 4 2>&1 | tail -1
+PASS
+G7_EXCL=1 setarch x86_64 -R build/tsan_g7 1 2000 2>&1 | tail -1
+PASS
+g++ -std=c++17 -O1 -g -pthread -fsanitize=address,undefined -Iinclude tests/r2.cpp -o build/asan_r2
+ASAN_OPTIONS=detect_leaks=1 build/asan_r2 | tail -1
+PASS
+g++ -std=c++17 -O1 -g -pthread -fsanitize=address,undefined -Iinclude tests/s2.cpp -o build/asan_s2
+ASAN_OPTIONS=detect_leaks=1 build/asan_s2 | tail -1
+PASS

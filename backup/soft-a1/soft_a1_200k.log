@@ -1,21 +1,329 @@
-# Soft A1: N=200000 B=500 VSZ=32 protect=1 hw=150 space_accel=0 frag=1
-ins #65 tail 380->691 (+311) r0=1.022 r1=1.066 holes=2/43 maxh=40 pend=328 L0=1 L1=0 L2=1 L3=0 dead_est=0 owned=316 ATTR=HOLE_STARVE
-ins #129 tail 691->1002 (+311) r0=1.009 r1=1.042 holes=2/40 maxh=30 pend=328 L0=1 L1=0 L2=2 L3=0 dead_est=6 owned=627 ATTR=HOLE_STARVE
-ins #193 tail 1043->1354 (+311) r0=1.044 r1=1.062 holes=6/79 maxh=30 pend=328 L0=1 L1=0 L2=3 L3=0 dead_est=18 owned=938 ATTR=HOLE_STARVE
-ins #257 tail 1395->1706 (+311) r0=1.062 r1=1.074 holes=7/117 maxh=30 pend=328 L0=1 L1=0 L2=4 L3=0 dead_est=36 owned=1249 ATTR=HOLE_STARVE
-ins #321 tail 1706->2017 (+311) r0=1.049 r1=1.060 holes=7/115 maxh=29 pend=328 L0=1 L1=0 L2=5 L3=0 dead_est=59 owned=1560 ATTR=HOLE_STARVE
-ins #385 tail 2017->2328 (+311) r0=1.040 r1=1.051 holes=9/112 maxh=29 pend=328 L0=1 L1=0 L2=6 L3=0 dead_est=88 owned=1871 ATTR=HOLE_STARVE
-== after insert: tail=2328 live=1778 peak=2328 runs=8
-upd #451 tail 2328->2617 (+289) r0=1.052 r1=1.044 holes=11/111 maxh=29 pend=322 L0=2 L1=0 L2=7 L3=0 dead_est=314 owned=2165 ATTR=HOLE_STARVE
-upd #516 tail 2617->2904 (+287) r0=1.043 r1=1.037 holes=12/104 maxh=29 pend=321 L0=3 L1=0 L2=8 L3=0 dead_est=603 owned=2457 ATTR=HOLE_STARVE
-upd #545 tail 2904->3011 (+107) r0=1.071 r1=1.126 holes=19/337 maxh=41 pend=96 L0=8 L1=3 L2=8 L3=2 dead_est=746 owned=2768 ATTR=HOLE_STARVE
-upd #546 tail 3011->3116 (+105) r0=1.126 r1=1.173 holes=19/460 maxh=41 pend=94 L0=9 L1=3 L2=8 L3=3 dead_est=752 owned=2846 ATTR=HOLE_STARVE
-upd #547 tail 3116->3252 (+136) r0=1.173 r1=1.217 holes=20/580 maxh=41 pend=0 L0=10 L1=3 L2=8 L3=3 dead_est=758 owned=2851 ATTR=HOLE_STARVE
-upd #549 tail 3218->3354 (+136) r0=1.218 r1=1.261 holes=20/694 maxh=51 pend=0 L0=12 L1=3 L2=8 L3=4 dead_est=769 owned=2931 ATTR=HOLE_STARVE
-upd #569 tail 3324->3428 (+104) r0=1.333 r1=1.185 holes=18/535 maxh=102 pend=987 L0=24 L1=4 L2=0 L3=22 dead_est=43 owned=1879 ATTR=PRE_DIRTY
-== SUMMARY Soft A1 peak_tail=3428 peak_x=1.860 end_tail=2692 end_x=1.461 live_logic=1843 live_phys=2016
-== ATTR_COUNTS big_grows=13 PRE_DIRTY=1 HOLE_STARVE=12 SB_LAG=10 sum_delta=3560
-== MERGE_START tail=2617 live=2508 ratio=1.043 (first big L2/L3 wave)
-== AT_PEAK commit=569 dead_est=43 owned=1879 dead/live=0.023 maxh=102 pend=987 L0=24 L1=4 L2=0 L3=22
-== DECOMP leading: pre_dirty≈1.043 + residual≈0.817 (peak_x)  P2c_gate dead/live=0.023 →勿开P2c(死页不足)
-== maint hole_fits=1 hw_reclaims=19 part_frags=7 stream_extends=0
+# Soft A1: N=200000 B=500 VSZ=32 protect=1 p1=0 bf_mode=0 bf_skip=0 starve_fit=1 starve_promote=1 floor=32 slices=12 max_prom=1 min_pend=64 soft_cons=3 hw=150 space_accel=0 frag=1
+== LIVE_INV PEAK_c66 tail=504
+   pages: FREE=59 PEND=69 DEF=0 MAN=2 OVFL=0 META=55 ANCHOR=8 DATA_LIVE=193 DATA_MIX=116 DATA_DEAD=0 UNCLAIMED=0
+   records: nrec=33324 exact_live=32665 dead=659 dead_frac=0.020
+   top dirty runs (page0 lvl np nrec live_exact pgL/M/D/A trim):
+     129 L1 np=37 nrec=2674 live=2545 pages L/M/D/A=6/19/0/1 trim=12
+     170 L1 np=37 nrec=2671 live=2544 pages L/M/D/A=9/16/0/1 trim=12
+     83 L1 np=37 nrec=2674 live=2571 pages L/M/D/A=1/24/0/1 trim=12
+     298 L1 np=37 nrec=2676 live=2585 pages L/M/D/A=14/11/0/1 trim=12
+     216 L1 np=37 nrec=2672 live=2610 pages L/M/D/A=17/8/0/1 trim=12
+     339 L1 np=37 nrec=2672 live=2618 pages L/M/D/A=23/2/0/1 trim=12
+     257 L1 np=37 nrec=2562 live=2516 pages L/M/D/A=8/16/0/1 trim=13
+     42 L1 np=37 nrec=2562 live=2518 pages L/M/D/A=7/17/0/1 trim=13
+     380 L2 np=32 nrec=3557 live=3554 pages L/M/D/A=29/3/0/0 trim=0
+     2 L0 np=5 nrec=500 live=500 pages L/M/D/A=5/0/0/0 trim=0
+     211 L0 np=5 nrec=500 live=500 pages L/M/D/A=5/0/0/0 trim=0
+     429 L2 np=33 nrec=3587 live=3587 pages L/M/D/A=33/0/0/0 trim=0
+   reclaim_gate: DATA_DEAD+ANCHOR=8 (0.025 of data_pages=317); MIX=116 (P2c-ish partial); FREE+PEND=0.254 of tail
+   FRAG by_level (dead_recs/nrec mix_pages/np):
+     L0 dead_frac=0.000 dead=0/1000 mix_pages=0/10
+     L1 dead_frac=0.031 dead=656/21163 mix_pages=113/296
+     L2 dead_frac=0.000 dead=3/11161 mix_pages=3/101
+   FRAG dens_hist MIX pages dead_frac [<10%]=116 [10-25)=0 [25-50)=0 [50-75)=0 [≥75]=0
+   FRAG in_page: dead_recs tertiles lo/mid/hi=65/62/65 (34/32/34%)  MIX sparse(<25%dead)=116 dense(≥25%)=0  avg_max_dead_streak=1.04
+   FRAG mechanism_hint: tertile≈flat⇒随机覆盖写打散；prefix-heavy⇒TRIM边界/有序键；dense MIX⇒可议页内回收；sparse+PEND⇒峰主因非页内死字节
+ins #66 tail 429->504 (+75) r0=1.111 r1=1.133 holes=10/59 maxh=35 pend=69 L0=2 L1=8 L2=3 L3=0 dead_est=4 owned=462 ATTR=HOLE_STARVE
+== LIVE_INV PEAK_c67 tail=575
+   pages: FREE=123 PEND=67 DEF=0 MAN=2 OVFL=0 META=61 ANCHOR=8 DATA_LIVE=232 DATA_MIX=80 DATA_DEAD=0 UNCLAIMED=0
+   records: nrec=33582 exact_live=33155 dead=427 dead_frac=0.013
+   top dirty runs (page0 lvl np nrec live_exact pgL/M/D/A trim):
+     216 L1 np=37 nrec=1789 live=1687 pages L/M/D/A=13/4/0/1 trim=20
+     339 L1 np=37 nrec=1788 live=1694 pages L/M/D/A=14/3/0/1 trim=20
+     129 L1 np=37 nrec=1793 live=1701 pages L/M/D/A=5/12/0/1 trim=20
+     42 L1 np=37 nrec=1682 live=1641 pages L/M/D/A=5/11/0/1 trim=21
+     83 L1 np=37 nrec=1684 live=1656 pages L/M/D/A=1/15/0/1 trim=21
+     170 L1 np=37 nrec=1681 live=1657 pages L/M/D/A=5/11/0/1 trim=21
+     257 L1 np=37 nrec=1681 live=1662 pages L/M/D/A=6/10/0/1 trim=21
+     298 L1 np=37 nrec=1686 live=1667 pages L/M/D/A=9/7/0/1 trim=21
+     380 L2 np=32 nrec=3557 live=3552 pages L/M/D/A=27/5/0/0 trim=0
+     465 L2 np=36 nrec=4017 live=4014 pages L/M/D/A=34/2/0/0 trim=0
+     2 L0 np=5 nrec=500 live=500 pages L/M/D/A=5/0/0/0 trim=0
+     7 L0 np=5 nrec=500 live=500 pages L/M/D/A=5/0/0/0 trim=0
+   reclaim_gate: DATA_DEAD+ANCHOR=8 (0.025 of data_pages=320); MIX=80 (P2c-ish partial); FREE+PEND=0.330 of tail
+   FRAG by_level (dead_recs/nrec mix_pages/np):
+     L0 dead_frac=0.000 dead=0/1500 mix_pages=0/15
+     L1 dead_frac=0.030 dead=419/13784 mix_pages=73/296
+     L2 dead_frac=0.000 dead=8/18298 mix_pages=7/166
+   FRAG dens_hist MIX pages dead_frac [<10%]=80 [10-25)=0 [25-50)=0 [50-75)=0 [≥75]=0
+   FRAG in_page: dead_recs tertiles lo/mid/hi=45/47/40 (34/36/30%)  MIX sparse(<25%dead)=80 dense(≥25%)=0  avg_max_dead_streak=1.04
+   FRAG mechanism_hint: tertile≈flat⇒随机覆盖写打散；prefix-heavy⇒TRIM边界/有序键；dense MIX⇒可议页内回收；sparse+PEND⇒峰主因非页内死字节
+ins #67 tail 504->575 (+71) r0=1.133 r1=1.272 holes=10/123 maxh=30 pend=67 L0=3 L1=8 L2=5 L3=0 dead_est=6 owned=538 ATTR=HOLE_STARVE
+== LIVE_INV PEAK_c130 tail=1050
+   pages: FREE=66 PEND=328 DEF=0 MAN=5 OVFL=0 META=68 ANCHOR=0 DATA_LIVE=318 DATA_MIX=263 DATA_DEAD=0 UNCLAIMED=0
+   records: nrec=64315 exact_live=63684 dead=631 dead_frac=0.010
+   top dirty runs (page0 lvl np nrec live_exact pgL/M/D/A trim):
+     429 L2 np=33 nrec=3587 live=3502 pages L/M/D/A=2/31/0/0 trim=0
+     380 L2 np=32 nrec=3557 live=3477 pages L/M/D/A=3/29/0/0 trim=0
+     465 L2 np=36 nrec=4017 live=3937 pages L/M/D/A=5/31/0/0 trim=0
+     69 L2 np=34 nrec=3730 live=3658 pages L/M/D/A=3/31/0/0 trim=0
+     504 L2 np=32 nrec=3535 live=3466 pages L/M/D/A=5/27/0/0 trim=0
+     539 L2 np=33 nrec=3602 live=3534 pages L/M/D/A=3/30/0/0 trim=0
+     2 L2 np=32 nrec=3555 live=3491 pages L/M/D/A=2/30/0/0 trim=0
+     43 L2 np=24 nrec=2601 live=2544 pages L/M/D/A=1/23/0/0 trim=0
+     168 L2 np=31 nrec=3460 live=3409 pages L/M/D/A=5/26/0/0 trim=0
+     739 L2 np=284 nrec=31671 live=31666 pages L/M/D/A=279/5/0/0 trim=0
+     37 L0 np=5 nrec=500 live=500 pages L/M/D/A=5/0/0/0 trim=0
+     340 L0 np=5 nrec=500 live=500 pages L/M/D/A=5/0/0/0 trim=0
+   reclaim_gate: DATA_DEAD+ANCHOR=0 (0.000 of data_pages=581); MIX=263 (P2c-ish partial); FREE+PEND=0.375 of tail
+   FRAG by_level (dead_recs/nrec mix_pages/np):
+     L0 dead_frac=0.000 dead=0/1000 mix_pages=0/10
+     L2 dead_frac=0.010 dead=631/63315 mix_pages=263/571
+   FRAG dens_hist MIX pages dead_frac [<10%]=263 [10-25)=0 [25-50)=0 [50-75)=0 [≥75]=0
+   FRAG in_page: dead_recs tertiles lo/mid/hi=219/203/209 (35/32/33%)  MIX sparse(<25%dead)=263 dense(≥25%)=0  avg_max_dead_streak=1.05
+   FRAG mechanism_hint: tertile≈flat⇒随机覆盖写打散；prefix-heavy⇒TRIM边界/有序键；dense MIX⇒可议页内回收；sparse+PEND⇒峰主因非页内死字节
+ins #130 tail 739->1050 (+311) r0=1.106 r1=1.067 holes=4/66 maxh=35 pend=328 L0=2 L1=0 L2=10 L3=0 dead_est=1 owned=649 ATTR=HOLE_STARVE
+== LIVE_INV PEAK_c193 tail=1325
+   pages: FREE=47 PEND=328 DEF=0 MAN=8 OVFL=0 META=82 ANCHOR=0 DATA_LIVE=353 DATA_MIX=505 DATA_DEAD=0 UNCLAIMED=0
+   records: nrec=95083 exact_live=93610 dead=1473 dead_frac=0.015
+   top dirty runs (page0 lvl np nrec live_exact pgL/M/D/A trim):
+     178 L2 np=283 nrec=31583 live=31059 pages L/M/D/A=44/239/0/0 trim=0
+     539 L2 np=33 nrec=3602 live=3445 pages L/M/D/A=0/33/0/0 trim=0
+     69 L2 np=34 nrec=3730 live=3590 pages L/M/D/A=0/34/0/0 trim=0
+     504 L2 np=32 nrec=3535 live=3397 pages L/M/D/A=1/31/0/0 trim=0
+     2 L2 np=32 nrec=3555 live=3428 pages L/M/D/A=0/32/0/0 trim=0
+     43 L2 np=24 nrec=2601 live=2495 pages L/M/D/A=0/24/0/0 trim=0
+     679 L2 np=36 nrec=3924 live=3843 pages L/M/D/A=4/32/0/0 trim=0
+     575 L2 np=31 nrec=3407 live=3336 pages L/M/D/A=5/26/0/0 trim=0
+     644 L2 np=32 nrec=3474 live=3406 pages L/M/D/A=4/28/0/0 trim=0
+     609 L2 np=32 nrec=3497 live=3436 pages L/M/D/A=6/26/0/0 trim=0
+     498 L0 np=5 nrec=500 live=500 pages L/M/D/A=5/0/0/0 trim=0
+     1014 L2 np=284 nrec=31675 live=31675 pages L/M/D/A=284/0/0/0 trim=0
+   reclaim_gate: DATA_DEAD+ANCHOR=0 (0.000 of data_pages=858); MIX=505 (P2c-ish partial); FREE+PEND=0.283 of tail
+   FRAG by_level (dead_recs/nrec mix_pages/np):
+     L0 dead_frac=0.000 dead=0/500 mix_pages=0/5
+     L2 dead_frac=0.016 dead=1473/94583 mix_pages=505/853
+   FRAG dens_hist MIX pages dead_frac [<10%]=505 [10-25)=0 [25-50)=0 [50-75)=0 [≥75]=0
+   FRAG in_page: dead_recs tertiles lo/mid/hi=515/459/499 (35/31/34%)  MIX sparse(<25%dead)=505 dense(≥25%)=0  avg_max_dead_streak=1.07
+   FRAG mechanism_hint: tertile≈flat⇒随机覆盖写打散；prefix-heavy⇒TRIM边界/有序键；dense MIX⇒可议页内回收；sparse+PEND⇒峰主因非页内死字节
+ins #193 tail 1014->1325 (+311) r0=1.012 r1=1.037 holes=5/47 maxh=15 pend=328 L0=1 L1=0 L2=11 L3=0 dead_est=10 owned=940 ATTR=HOLE_STARVE
+== LIVE_INV PEAK_c257 tail=1677
+   pages: FREE=85 PEND=328 DEF=0 MAN=11 OVFL=0 META=109 ANCHOR=0 DATA_LIVE=326 DATA_MIX=816 DATA_DEAD=0 UNCLAIMED=0
+   records: nrec=126763 exact_live=123482 dead=3281 dead_frac=0.026
+   top dirty runs (page0 lvl np nrec live_exact pgL/M/D/A trim):
+     178 L2 np=283 nrec=31583 live=30444 pages L/M/D/A=3/280/0/0 trim=0
+     1014 L2 np=284 nrec=31675 live=31042 pages L/M/D/A=29/255/0/0 trim=0
+     539 L2 np=33 nrec=3602 live=3367 pages L/M/D/A=0/33/0/0 trim=0
+     69 L2 np=34 nrec=3730 live=3519 pages L/M/D/A=0/34/0/0 trim=0
+     504 L2 np=32 nrec=3535 live=3339 pages L/M/D/A=0/32/0/0 trim=0
+     2 L2 np=32 nrec=3555 live=3372 pages L/M/D/A=0/32/0/0 trim=0
+     43 L2 np=24 nrec=2601 live=2450 pages L/M/D/A=0/24/0/0 trim=0
+     679 L2 np=36 nrec=3924 live=3778 pages L/M/D/A=2/34/0/0 trim=0
+     644 L2 np=32 nrec=3474 live=3337 pages L/M/D/A=1/31/0/0 trim=0
+     575 L2 np=31 nrec=3407 live=3275 pages L/M/D/A=1/30/0/0 trim=0
+     609 L2 np=32 nrec=3497 live=3379 pages L/M/D/A=1/31/0/0 trim=0
+     147 L0 np=5 nrec=500 live=500 pages L/M/D/A=5/0/0/0 trim=0
+   reclaim_gate: DATA_DEAD+ANCHOR=0 (0.000 of data_pages=1142); MIX=816 (P2c-ish partial); FREE+PEND=0.246 of tail
+   FRAG by_level (dead_recs/nrec mix_pages/np):
+     L0 dead_frac=0.000 dead=0/500 mix_pages=0/5
+     L2 dead_frac=0.026 dead=3281/126263 mix_pages=816/1137
+   FRAG dens_hist MIX pages dead_frac [<10%]=811 [10-25)=5 [25-50)=0 [50-75)=0 [≥75]=0
+   FRAG in_page: dead_recs tertiles lo/mid/hi=1088/1053/1140 (33/32/35%)  MIX sparse(<25%dead)=816 dense(≥25%)=0  avg_max_dead_streak=1.15
+   FRAG mechanism_hint: tertile≈flat⇒随机覆盖写打散；prefix-heavy⇒TRIM边界/有序键；dense MIX⇒可议页内回收；sparse+PEND⇒峰主因非页内死字节
+ins #257 tail 1366->1677 (+311) r0=1.038 r1=1.053 holes=6/85 maxh=26 pend=328 L0=1 L1=0 L2=12 L3=0 dead_est=28 owned=1251 ATTR=HOLE_STARVE
+== LIVE_INV PEAK_c321 tail=1988
+   pages: FREE=83 PEND=328 DEF=0 MAN=13 OVFL=0 META=136 ANCHOR=0 DATA_LIVE=326 DATA_MIX=1100 DATA_DEAD=0 UNCLAIMED=0
+   records: nrec=158446 exact_live=152758 dead=5688 dead_frac=0.036
+   top dirty runs (page0 lvl np nrec live_exact pgL/M/D/A trim):
+     178 L2 np=283 nrec=31583 live=29818 pages L/M/D/A=0/283/0/0 trim=0
+     1014 L2 np=284 nrec=31675 live=30445 pages L/M/D/A=3/281/0/0 trim=0
+     1366 L2 np=284 nrec=31680 live=31085 pages L/M/D/A=33/251/0/0 trim=0
+     539 L2 np=33 nrec=3602 live=3301 pages L/M/D/A=0/33/0/0 trim=0
+     69 L2 np=34 nrec=3730 live=3439 pages L/M/D/A=0/34/0/0 trim=0
+     504 L2 np=32 nrec=3535 live=3275 pages L/M/D/A=0/32/0/0 trim=0
+     2 L2 np=32 nrec=3555 live=3313 pages L/M/D/A=0/32/0/0 trim=0
+     679 L2 np=36 nrec=3924 live=3698 pages L/M/D/A=0/36/0/0 trim=0
+     644 L2 np=32 nrec=3474 live=3271 pages L/M/D/A=1/31/0/0 trim=0
+     575 L2 np=31 nrec=3407 live=3207 pages L/M/D/A=0/31/0/0 trim=0
+     43 L2 np=24 nrec=2601 live=2403 pages L/M/D/A=0/24/0/0 trim=0
+     609 L2 np=32 nrec=3497 live=3320 pages L/M/D/A=0/32/0/0 trim=0
+   reclaim_gate: DATA_DEAD+ANCHOR=0 (0.000 of data_pages=1426); MIX=1100 (P2c-ish partial); FREE+PEND=0.207 of tail
+   FRAG by_level (dead_recs/nrec mix_pages/np):
+     L0 dead_frac=0.000 dead=0/500 mix_pages=0/5
+     L2 dead_frac=0.036 dead=5688/157946 mix_pages=1100/1421
+   FRAG dens_hist MIX pages dead_frac [<10%]=1071 [10-25)=29 [25-50)=0 [50-75)=0 [≥75]=0
+   FRAG in_page: dead_recs tertiles lo/mid/hi=1882/1871/1935 (33/33/34%)  MIX sparse(<25%dead)=1100 dense(≥25%)=0  avg_max_dead_streak=1.22
+   FRAG mechanism_hint: tertile≈flat⇒随机覆盖写打散；prefix-heavy⇒TRIM边界/有序键；dense MIX⇒可议页内回收；sparse+PEND⇒峰主因非页内死字节
+ins #321 tail 1677->1988 (+311) r0=1.029 r1=1.044 holes=6/83 maxh=26 pend=328 L0=1 L1=0 L2=13 L3=0 dead_est=50 owned=1562 ATTR=HOLE_STARVE
+== LIVE_INV PEAK_c385 tail=2299
+   pages: FREE=80 PEND=328 DEF=0 MAN=16 OVFL=0 META=163 ANCHOR=0 DATA_LIVE=316 DATA_MIX=1394 DATA_DEAD=0 UNCLAIMED=0
+   records: nrec=190114 exact_live=181389 dead=8725 dead_frac=0.046
+   top dirty runs (page0 lvl np nrec live_exact pgL/M/D/A trim):
+     178 L2 np=283 nrec=31583 live=29241 pages L/M/D/A=0/283/0/0 trim=0
+     1014 L2 np=284 nrec=31675 live=29837 pages L/M/D/A=0/284/0/0 trim=0
+     1366 L2 np=284 nrec=31680 live=30493 pages L/M/D/A=0/284/0/0 trim=0
+     1677 L2 np=284 nrec=31683 live=31029 pages L/M/D/A=26/258/0/0 trim=0
+     69 L2 np=34 nrec=3730 live=3366 pages L/M/D/A=0/34/0/0 trim=0
+     539 L2 np=33 nrec=3602 live=3243 pages L/M/D/A=0/33/0/0 trim=0
+     504 L2 np=32 nrec=3535 live=3194 pages L/M/D/A=0/32/0/0 trim=0
+     2 L2 np=32 nrec=3555 live=3241 pages L/M/D/A=0/32/0/0 trim=0
+     679 L2 np=36 nrec=3924 live=3617 pages L/M/D/A=0/36/0/0 trim=0
+     575 L2 np=31 nrec=3407 live=3141 pages L/M/D/A=0/31/0/0 trim=0
+     644 L2 np=32 nrec=3474 live=3210 pages L/M/D/A=1/31/0/0 trim=0
+     43 L2 np=24 nrec=2601 live=2354 pages L/M/D/A=0/24/0/0 trim=0
+   reclaim_gate: DATA_DEAD+ANCHOR=0 (0.000 of data_pages=1710); MIX=1394 (P2c-ish partial); FREE+PEND=0.177 of tail
+   FRAG by_level (dead_recs/nrec mix_pages/np):
+     L0 dead_frac=0.000 dead=0/500 mix_pages=0/5
+     L2 dead_frac=0.046 dead=8725/189614 mix_pages=1394/1705
+   FRAG dens_hist MIX pages dead_frac [<10%]=1271 [10-25)=123 [25-50)=0 [50-75)=0 [≥75]=0
+   FRAG in_page: dead_recs tertiles lo/mid/hi=2848/2903/2974 (33/33/34%)  MIX sparse(<25%dead)=1394 dense(≥25%)=0  avg_max_dead_streak=1.31
+   FRAG mechanism_hint: tertile≈flat⇒随机覆盖写打散；prefix-heavy⇒TRIM边界/有序键；dense MIX⇒可议页内回收；sparse+PEND⇒峰主因非页内死字节
+ins #385 tail 1988->2299 (+311) r0=1.023 r1=1.036 holes=5/80 maxh=26 pend=328 L0=1 L1=0 L2=14 L3=0 dead_est=80 owned=1873 ATTR=HOLE_STARVE
+== after insert: tail=2299 live=1779 peak=2299 runs=16
+== PHASE_US insert_total=6973710 insert_us_op=34.869
+== LIVE_INV PEAK_c450 tail=2588
+   pages: FREE=84 PEND=322 DEF=0 MAN=18 OVFL=0 META=189 ANCHOR=0 DATA_LIVE=269 DATA_MIX=1704 DATA_DEAD=0 UNCLAIMED=0
+   records: nrec=219428 exact_live=187995 dead=31433 dead_frac=0.143
+   top dirty runs (page0 lvl np nrec live_exact pgL/M/D/A trim):
+     178 L2 np=283 nrec=31583 live=25756 pages L/M/D/A=0/283/0/0 trim=0
+     1014 L2 np=284 nrec=31675 live=26085 pages L/M/D/A=0/284/0/0 trim=0
+     1366 L2 np=284 nrec=31680 live=26685 pages L/M/D/A=0/284/0/0 trim=0
+     1677 L2 np=284 nrec=31683 live=26960 pages L/M/D/A=0/284/0/0 trim=0
+     1988 L2 np=284 nrec=31668 live=27458 pages L/M/D/A=0/284/0/0 trim=0
+     69 L2 np=34 nrec=3730 live=2963 pages L/M/D/A=0/34/0/0 trim=0
+     539 L2 np=33 nrec=3602 live=2840 pages L/M/D/A=0/33/0/0 trim=0
+     679 L2 np=36 nrec=3924 live=3173 pages L/M/D/A=0/36/0/0 trim=0
+     504 L2 np=32 nrec=3535 live=2814 pages L/M/D/A=0/32/0/0 trim=0
+     2 L2 np=32 nrec=3555 live=2871 pages L/M/D/A=0/32/0/0 trim=0
+     609 L2 np=32 nrec=3497 live=2859 pages L/M/D/A=0/32/0/0 trim=0
+     644 L2 np=32 nrec=3474 live=2840 pages L/M/D/A=1/31/0/0 trim=0
+   reclaim_gate: DATA_DEAD+ANCHOR=0 (0.000 of data_pages=1973); MIX=1704 (P2c-ish partial); FREE+PEND=0.157 of tail
+   FRAG by_level (dead_recs/nrec mix_pages/np):
+     L0 dead_frac=0.000 dead=0/499 mix_pages=0/5
+     L2 dead_frac=0.144 dead=31433/218929 mix_pages=1704/1968
+   FRAG dens_hist MIX pages dead_frac [<10%]=85 [10-25)=1570 [25-50)=49 [50-75)=0 [≥75]=0
+   FRAG in_page: dead_recs tertiles lo/mid/hi=10320/10501/10612 (33/33/34%)  MIX sparse(<25%dead)=1655 dense(≥25%)=49  avg_max_dead_streak=2.32
+   FRAG mechanism_hint: tertile≈flat⇒随机覆盖写打散；prefix-heavy⇒TRIM边界/有序键；dense MIX⇒可议页内回收；sparse+PEND⇒峰主因非页内死字节
+upd #450 tail 2299->2588 (+289) r0=1.022 r1=1.034 holes=9/84 maxh=25 pend=322 L0=1 L1=0 L2=15 L3=0 dead_est=304 owned=2162 ATTR=HOLE_STARVE
+== LIVE_INV PEAK_c514 tail=2875
+   pages: FREE=81 PEND=321 DEF=0 MAN=22 OVFL=0 META=215 ANCHOR=0 DATA_LIVE=266 DATA_MIX=1968 DATA_DEAD=0 UNCLAIMED=0
+   records: nrec=248579 exact_live=187995 dead=60584 dead_frac=0.244
+   top dirty runs (page0 lvl np nrec live_exact pgL/M/D/A trim):
+     178 L2 np=283 nrec=31583 live=21899 pages L/M/D/A=0/283/0/0 trim=0
+     1014 L2 np=284 nrec=31675 live=22014 pages L/M/D/A=0/284/0/0 trim=0
+     1366 L2 np=284 nrec=31680 live=22565 pages L/M/D/A=0/284/0/0 trim=0
+     1677 L2 np=284 nrec=31683 live=22665 pages L/M/D/A=0/284/0/0 trim=0
+     1988 L2 np=284 nrec=31668 live=23073 pages L/M/D/A=0/284/0/0 trim=0
+     2299 L2 np=263 nrec=29315 live=24587 pages L/M/D/A=0/263/0/0 trim=0
+     679 L2 np=36 nrec=3924 live=2688 pages L/M/D/A=0/36/0/0 trim=0
+     539 L2 np=33 nrec=3602 live=2402 pages L/M/D/A=0/33/0/0 trim=0
+     69 L2 np=34 nrec=3730 live=2534 pages L/M/D/A=0/34/0/0 trim=0
+     504 L2 np=32 nrec=3535 live=2416 pages L/M/D/A=0/32/0/0 trim=0
+     2 L2 np=32 nrec=3555 live=2438 pages L/M/D/A=0/32/0/0 trim=0
+     609 L2 np=32 nrec=3497 live=2443 pages L/M/D/A=0/32/0/0 trim=0
+   reclaim_gate: DATA_DEAD+ANCHOR=0 (0.000 of data_pages=2234); MIX=1968 (P2c-ish partial); FREE+PEND=0.140 of tail
+   FRAG by_level (dead_recs/nrec mix_pages/np):
+     L0 dead_frac=0.000 dead=0/499 mix_pages=0/5
+     L2 dead_frac=0.244 dead=60584/248080 mix_pages=1968/2229
+   FRAG dens_hist MIX pages dead_frac [<10%]=8 [10-25)=494 [25-50)=1466 [50-75)=0 [≥75]=0
+   FRAG in_page: dead_recs tertiles lo/mid/hi=19783/20154/20647 (33/33/34%)  MIX sparse(<25%dead)=502 dense(≥25%)=1466  avg_max_dead_streak=3.35
+   FRAG mechanism_hint: tertile≈flat⇒随机覆盖写打散；prefix-heavy⇒TRIM边界/有序键；dense MIX⇒可议页内回收；sparse+PEND⇒峰主因非页内死字节
+upd #514 tail 2588->2875 (+287) r0=1.018 r1=1.029 holes=8/81 maxh=25 pend=321 L0=1 L1=0 L2=16 L3=0 dead_est=589 owned=2449 ATTR=HOLE_STARVE
+== LIVE_INV PEAK_c546 tail=2979
+   pages: FREE=305 PEND=0 DEF=0 MAN=24 OVFL=0 META=236 ANCHOR=8 DATA_LIVE=88 DATA_MIX=2244 DATA_DEAD=0 UNCLAIMED=72
+   records: nrec=258710 exact_live=187995 dead=70715 dead_frac=0.273
+   top dirty runs (page0 lvl np nrec live_exact pgL/M/D/A trim):
+     1014 L2 np=284 nrec=29100 live=18605 pages L/M/D/A=0/261/0/1 trim=23
+     178 L2 np=283 nrec=29121 live=18633 pages L/M/D/A=0/261/0/1 trim=22
+     1366 L2 np=284 nrec=29109 live=19045 pages L/M/D/A=0/261/0/1 trim=23
+     1677 L2 np=284 nrec=29110 live=19092 pages L/M/D/A=0/261/0/1 trim=23
+     1988 L2 np=284 nrec=29095 live=19396 pages L/M/D/A=0/261/0/1 trim=23
+     2299 L2 np=263 nrec=26966 live=20600 pages L/M/D/A=0/242/0/1 trim=21
+     2588 L2 np=261 nrec=26802 live=24521 pages L/M/D/A=0/240/0/1 trim=21
+     679 L2 np=36 nrec=3924 live=2472 pages L/M/D/A=0/36/0/0 trim=0
+     69 L2 np=34 nrec=3730 live=2318 pages L/M/D/A=0/34/0/0 trim=0
+     539 L2 np=33 nrec=3602 live=2214 pages L/M/D/A=0/33/0/0 trim=0
+     504 L2 np=32 nrec=3535 live=2208 pages L/M/D/A=0/32/0/0 trim=0
+     2 L2 np=32 nrec=3555 live=2252 pages L/M/D/A=0/32/0/0 trim=0
+   reclaim_gate: DATA_DEAD+ANCHOR=8 (0.003 of data_pages=2340); MIX=2244 (P2c-ish partial); FREE+PEND=0.102 of tail
+   FRAG by_level (dead_recs/nrec mix_pages/np):
+     L0 dead_frac=0.011 dead=49/4497 mix_pages=24/45
+     L1 dead_frac=0.043 dead=506/11849 mix_pages=104/108
+     L2 dead_frac=0.307 dead=70062/228170 mix_pages=2051/2229
+     L3 dead_frac=0.007 dead=98/14194 mix_pages=65/128
+   FRAG dens_hist MIX pages dead_frac [<10%]=373 [10-25)=223 [25-50)=1645 [50-75)=3 [≥75]=0
+   FRAG in_page: dead_recs tertiles lo/mid/hi=22850/23420/24047 (32/33/34%)  MIX sparse(<25%dead)=596 dense(≥25%)=1648  avg_max_dead_streak=3.47
+   FRAG mechanism_hint: tertile≈flat⇒随机覆盖写打散；prefix-heavy⇒TRIM边界/有序键；dense MIX⇒可议页内回收；sparse+PEND⇒峰主因非页内死字节
+upd #546 tail 2875->2979 (+104) r0=1.085 r1=1.114 holes=13/305 maxh=38 pend=0 L0=9 L1=3 L2=16 L3=3 dead_est=745 owned=2746 ATTR=HOLE_STARVE
+== LIVE_INV PEAK_c548 tail=3084
+   pages: FREE=428 PEND=0 DEF=0 MAN=24 OVFL=0 META=238 ANCHOR=8 DATA_LIVE=87 DATA_MIX=2225 DATA_DEAD=0 UNCLAIMED=72
+   records: nrec=256470 exact_live=187995 dead=68475 dead_frac=0.267
+   top dirty runs (page0 lvl np nrec live_exact pgL/M/D/A trim):
+     178 L2 np=283 nrec=27671 live=17605 pages L/M/D/A=0/248/0/1 trim=35
+     1014 L2 np=284 nrec=27650 live=17599 pages L/M/D/A=0/248/0/1 trim=36
+     1366 L2 np=284 nrec=27768 live=18041 pages L/M/D/A=0/249/0/1 trim=35
+     1677 L2 np=284 nrec=27660 live=18080 pages L/M/D/A=0/248/0/1 trim=36
+     1988 L2 np=284 nrec=27757 live=18381 pages L/M/D/A=0/249/0/1 trim=35
+     2299 L2 np=263 nrec=25628 live=19471 pages L/M/D/A=0/230/0/1 trim=33
+     2588 L2 np=261 nrec=25576 live=23249 pages L/M/D/A=0/229/0/1 trim=32
+     679 L2 np=36 nrec=3924 live=2463 pages L/M/D/A=0/36/0/0 trim=0
+     69 L2 np=34 nrec=3730 live=2314 pages L/M/D/A=0/34/0/0 trim=0
+     539 L2 np=33 nrec=3602 live=2204 pages L/M/D/A=0/33/0/0 trim=0
+     504 L2 np=32 nrec=3535 live=2198 pages L/M/D/A=0/32/0/0 trim=0
+     2 L2 np=32 nrec=3555 live=2241 pages L/M/D/A=0/32/0/0 trim=0
+   reclaim_gate: DATA_DEAD+ANCHOR=8 (0.003 of data_pages=2320); MIX=2225 (P2c-ish partial); FREE+PEND=0.139 of tail
+   FRAG by_level (dead_recs/nrec mix_pages/np):
+     L0 dead_frac=0.015 dead=82/5496 mix_pages=37/55
+     L1 dead_frac=0.047 dead=559/11849 mix_pages=107/108
+     L2 dead_frac=0.311 dead=67634/217340 mix_pages=1953/2197
+     L3 dead_frac=0.009 dead=200/21785 mix_pages=128/196
+   FRAG dens_hist MIX pages dead_frac [<10%]=424 [10-25)=219 [25-50)=1579 [50-75)=3 [≥75]=0
+   FRAG in_page: dead_recs tertiles lo/mid/hi=22135/22604/23330 (33/33/34%)  MIX sparse(<25%dead)=643 dense(≥25%)=1582  avg_max_dead_streak=3.41
+   FRAG mechanism_hint: tertile≈flat⇒随机覆盖写打散；prefix-heavy⇒TRIM边界/有序键；dense MIX⇒可议页内回收；sparse+PEND⇒峰主因非页内死字节
+upd #548 tail 2980->3084 (+104) r0=1.112 r1=1.161 holes=15/428 maxh=38 pend=0 L0=11 L1=3 L2=15 L3=4 dead_est=743 owned=2794 ATTR=HOLE_STARVE
+== LIVE_INV PEAK_c569 tail=3401
+   pages: FREE=419 PEND=1072 DEF=0 MAN=26 OVFL=0 META=125 ANCHOR=0 DATA_LIVE=682 DATA_MIX=1075 DATA_DEAD=0 UNCLAIMED=0
+   records: nrec=193401 exact_live=187995 dead=5406 dead_frac=0.028
+   top dirty runs (page0 lvl np nrec live_exact pgL/M/D/A trim):
+     2907 L3 np=68 nrec=7591 live=7131 pages L/M/D/A=0/68/0/0 trim=0
+     719 L1 np=36 nrec=3952 live=3506 pages L/M/D/A=0/36/0/0 trim=0
+     759 L1 np=36 nrec=3950 live=3531 pages L/M/D/A=0/36/0/0 trim=0
+     3012 L3 np=64 nrec=7141 live=6767 pages L/M/D/A=0/64/0/0 trim=0
+     839 L3 np=47 nrec=5263 live=4890 pages L/M/D/A=0/47/0/0 trim=0
+     927 L3 np=44 nrec=4867 live=4548 pages L/M/D/A=0/44/0/0 trim=0
+     799 L1 np=36 nrec=3947 live=3631 pages L/M/D/A=0/36/0/0 trim=0
+     1325 L3 np=37 nrec=4064 live=3809 pages L/M/D/A=0/37/0/0 trim=0
+     1015 L3 np=40 nrec=4480 live=4245 pages L/M/D/A=0/40/0/0 trim=0
+     1367 L3 np=47 nrec=5259 live=5036 pages L/M/D/A=0/47/0/0 trim=0
+     2589 L3 np=64 nrec=7082 live=6901 pages L/M/D/A=3/61/0/0 trim=0
+     1715 L3 np=41 nrec=4493 live=4325 pages L/M/D/A=1/40/0/0 trim=0
+   reclaim_gate: DATA_DEAD+ANCHOR=0 (0.000 of data_pages=1757); MIX=1075 (P2c-ish partial); FREE+PEND=0.438 of tail
+   FRAG by_level (dead_recs/nrec mix_pages/np):
+     L0 dead_frac=0.032 dead=384/11989 mix_pages=103/120
+     L1 dead_frac=0.076 dead=1181/15544 mix_pages=108/142
+     L3 dead_frac=0.023 dead=3841/165868 mix_pages=864/1495
+   FRAG dens_hist MIX pages dead_frac [<10%]=1005 [10-25)=70 [25-50)=0 [50-75)=0 [≥75]=0
+   FRAG in_page: dead_recs tertiles lo/mid/hi=1622/1785/1999 (30/33/37%)  MIX sparse(<25%dead)=1075 dense(≥25%)=0  avg_max_dead_streak=1.21
+   FRAG mechanism_hint: tertile≈flat⇒随机覆盖写打散；prefix-heavy⇒TRIM边界/有序键；dense MIX⇒可议页内回收；sparse+PEND⇒峰主因非页内死字节
+upd #569 tail 3082->3401 (+319) r0=1.249 r1=1.141 holes=15/419 maxh=70 pend=1072 L0=24 L1=4 L2=0 L3=28 dead_est=38 owned=1882 ATTR=SB_LAG
+== PHASE_US update_total=16451377 update_us_op=164.514
+== SUMMARY Soft A1 peak_tail=3401 peak_x=1.836 end_tail=2739 end_x=1.479 live_logic=1852 live_phys=2049
+== ATTR_COUNTS big_grows=12 PRE_DIRTY=0 HOLE_STARVE=11 SB_LAG=10 sum_delta=3871
+== MERGE_START tail=739 live=668 ratio=1.106 (first big L2/L3 wave)
+== AT_PEAK commit=569 dead_est=38 owned=1882 dead/live=0.021 maxh=70 pend=1072 L0=24 L1=4 L2=0 L3=28
+== DECOMP leading: pre_dirty≈1.106 + residual≈0.730 (peak_x)  P2c_gate dead/live=0.021 →勿开P2c(死页不足)
+== maint hole_fits=2 hw_reclaims=12 part_frags=14 stream_extends=0 hole_protect_skips=19 p1=0 stream_best_fits=0 bf_mode=0 bf_skip=0 starve_fits=4 starve_promotes=0 starve_prom_ms=0.00
+== LIVE_INV END tail=2739
+   pages: FREE=690 PEND=0 DEF=0 MAN=29 OVFL=0 META=166 ANCHOR=0 DATA_LIVE=42 DATA_MIX=1810 DATA_DEAD=0 UNCLAIMED=0
+   records: nrec=205183 exact_live=187995 dead=17188 dead_frac=0.084
+   top dirty runs (page0 lvl np nrec live_exact pgL/M/D/A trim):
+     2097 L2 np=163 nrec=18168 live=17070 pages L/M/D/A=0/163/0/0 trim=0
+     839 L3 np=47 nrec=5263 live=4490 pages L/M/D/A=0/47/0/0 trim=0
+     1760 L3 np=74 nrec=8276 live=7550 pages L/M/D/A=0/74/0/0 trim=0
+     927 L3 np=44 nrec=4867 live=4161 pages L/M/D/A=0/44/0/0 trim=0
+     2589 L3 np=64 nrec=7082 live=6379 pages L/M/D/A=0/64/0/0 trim=0
+     2351 L3 np=74 nrec=8222 live=7550 pages L/M/D/A=0/74/0/0 trim=0
+     2658 L3 np=76 nrec=8423 live=7766 pages L/M/D/A=0/76/0/0 trim=0
+     643 L3 np=56 nrec=6246 live=5607 pages L/M/D/A=0/56/0/0 trim=0
+     1558 L2 np=99 nrec=11036 live=10408 pages L/M/D/A=0/99/0/0 trim=0
+     2031 L3 np=62 nrec=6920 live=6294 pages L/M/D/A=0/62/0/0 trim=0
+     1367 L3 np=47 nrec=5259 live=4635 pages L/M/D/A=0/47/0/0 trim=0
+     1168 L3 np=75 nrec=8313 live=7718 pages L/M/D/A=0/75/0/0 trim=0
+   reclaim_gate: DATA_DEAD+ANCHOR=0 (0.000 of data_pages=1852); MIX=1810 (P2c-ish partial); FREE+PEND=0.252 of tail
+   FRAG by_level (dead_recs/nrec mix_pages/np):
+     L1 dead_frac=0.021 dead=248/11883 mix_pages=70/110
+     L2 dead_frac=0.059 dead=1726/29204 mix_pages=262/262
+     L3 dead_frac=0.093 dead=15214/164096 mix_pages=1478/1480
+   FRAG dens_hist MIX pages dead_frac [<10%]=1251 [10-25)=557 [25-50)=2 [50-75)=0 [≥75]=0
+   FRAG in_page: dead_recs tertiles lo/mid/hi=5556/5704/5928 (32/33/34%)  MIX sparse(<25%dead)=1808 dense(≥25%)=2  avg_max_dead_streak=1.59
+   FRAG mechanism_hint: tertile≈flat⇒随机覆盖写打散；prefix-heavy⇒TRIM边界/有序键；dense MIX⇒可议页内回收；sparse+PEND⇒峰主因非页内死字节

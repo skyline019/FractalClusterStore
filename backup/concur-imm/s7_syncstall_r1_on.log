@@ -1,0 +1,1 @@
+mode=syncstall arm=on wall_us=649424 insert_us_op=81178 max_commit_us=0 flush_excl_us=1757 encode_us=822 io_us=76 settle_us=19 flushes=9 get_max_us=14 peak_tail=75 peak_x=0.000

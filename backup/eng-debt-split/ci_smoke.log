@@ -1,0 +1,62 @@
+build/f1
+scan=1
+round 0: bad=0 verify=OK cells=1 segs=3 runs=3 recs=466 bytes=9742 err=0(-)
+round 1: bad=0 verify=OK cells=1 segs=4 runs=4 recs=932 bytes=19238 err=0(-)
+round 2: bad=0 verify=OK cells=1 segs=5 runs=5 recs=1388 bytes=28606 err=0(-)
+round 3: bad=0 verify=OK cells=2 segs=10 runs=6 recs=1851 bytes=37860 err=0(-)
+round 4: bad=0 verify=OK cells=2 segs=11 runs=6 recs=2313 bytes=47156 err=0(-)
+round 5: bad=0 verify=OK cells=2 segs=12 runs=6 recs=2770 bytes=56448 err=0(-)
+reopen OK
+after reopen bad=0 scan=1668
+PASS
+build/g16
+  分片基本面：150 次提交 parts=201 trims=673 job_fast=27406 job_slow=15；tail 超出活页峰值 1554 页；清账后 runs=46  ok
+  跨重开：作业中途关库（重开后裁过的源 4 条、runs=27）⇒ 重放 TRIM、所有权、读全对；继续维护后家族并掉  ok
+  回退：分片中途 abort()、再 rollback(快照) ⇒ 状态与清单一致（verify 所有权 + 比对），继续维护正常  ok
+  快照：分片中途开快照（视图 7）⇒ 作业作废、快照读不变；放掉后维护收敛  ok
+  溢出链：1/3 大值负载 parts=6；重开（附件页过滤）+ 继续维护 ⇒ verify 无所有权错误  ok
+  墓碑：作业作废后删掉片键域里的 150 个键、再合并 ⇒ 复活 0 个  ok
+g16 第 16 轮：P2b 分片归并 + RUN_TRIM（分片 / 重开 / 回退 / 快照 / 溢出链 / 墓碑）: PASS (2.2 s)
+build/g17
+  t_basic: durable_vers 语义 / 代数 / 重开  ok
+  t_lockfree_sync: 6/6 轮抓到 sync 窗口；窗口内 get max 0.01 ms（sync 睡 40 ms×2）；提交 max 85 ms  ok
+  t_empty_ticket: 抓到 4/4 次；B（无新写）最短等待 81 ms  ok
+  t_phase2_fail: 单线程 IO→重建→恢复；并发粘性失败；重开一致  ok
+  t_snapshot_inflight: 在飞时 snapshot()（抓到 1）/ rollback  ok
+  t_multi_writers seed 1: 3 写者 × 150 轮（durable 360 / logical 90）+ 2 读者 12839 次 get，runs=6  ok
+  t_multi_writers seed 2: 3 写者 × 150 轮（durable 360 / logical 90）+ 2 读者 14792 次 get，runs=8  ok
+  t_wide_family: runs=122 src_max=72 cur_max=4 slices=1061  ok
+  t_hole_fit: on  peak=3299 (1.71x) tail=3299 runs=32 fits=1 | off peak=3588 (1.86x) tail=3588 runs=31 fits=0  ok
+g17 第 17 轮：fsync 出锁（提交分段 / 顺序器 / 两个代数 / durable_vers）+ 家族虚拟源游标 + 中等产物按洞分片: PASS (8.3 s)
+build/g18
+  t_protect: skips=2 a=2 stream_c=2 user_d=226  ok
+  t_frag: lowered part=40 (cap=80≤80) frags=2  ok
+  t_coal: need=117 blocker 97→3 coalesces=1  ok
+  t_tidy_sm: runs=1 layout=109% protect=1  ok
+  t_dual_mem: flushes=17 lock_us=293 enc_us=192 settle_us=34  ok
+g18 护洞+整理态+碎片A+并洞B+dual: PASS
+build/h2
+  h2 v2 small      20 页 runs=6：当前视图 627 键 verify=OK  ok
+  h2 v2 bigval    120 页 runs=5：当前视图 129 键 verify=OK  ok
+  h2 v2 tomb_snap  19 页 runs=5：当前视图 637 键 verify=OK  ok
+  h2 v1 small      20 页：只读 627 键 → 升级（v1→v2）→ 重开 runs=7 verify=OK  ok
+  h2 v1 bigval    120 页：只读 129 键 → 升级（v1→v2）→ 重开 runs=6 verify=OK  ok
+  h2 v1 tomb_snap  19 页：只读 637 键 → 升级（v1→v2）→ 重开 runs=6 verify=OK  ok
+h2 golden 镜像兼容（v2 三件套 + v1 老库只读/升级/重开）: PASS
+build/c2
+verify_reads get after flip: rc=NOTFOUND victim=2
+scrub: bad=1 first=2
+PASS
+build/c3
+  arm pages=128 accel_pct=50 nospace=29 accels=56 peak=109 gets=64
+  arm pages=128 accel_pct=0 nospace=29 accels=0 peak=109 gets=64
+  arm pages=256 accel_pct=85 nospace=29 accels=44 peak=221 gets=64
+  arm pages=512 accel_pct=85 nospace=28 accels=81 peak=445 gets=64
+  arm pages=1024 accel_pct=85 nospace=0 accels=0 peak=521 gets=64
+PASS
+build/c4
+PASS
+build/c5
+PASS
+build/c6
+c6 PASS (pit 138/144 starve_fit Soft-on)

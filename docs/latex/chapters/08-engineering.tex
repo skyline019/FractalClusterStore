@@ -3,13 +3,14 @@
 \subsection{目录（产品树）}
 \begin{verbatim}
 embdb/x/
-  include/     fcs.h common.h blockdev.h layout.h store.h(v2)
+  include/     fcs.h（聚合）· fcs_codec/dir/sync/store.h
+               common.h · blockdev.h · layout.h · store.h(v2)
   tests/       回归 + golden/
   bench/       bench2--7；probe/
   docs/        00-entry / 10-design / 20-rounds / 30-discuss
-  docs/latex/  本文档源 → build/main.pdf
+    docs/latex/  本文档源 → build/main.pdf
   web/         fcs-anim / fcs-pits 源
-  backup/      peers-post · soft-a1 · 轮次快照
+  backup/      peers-post · soft-a1 · eng-debt-split · 轮次快照
   CONSTRAINTS.md   质量契约（不可静默削弱）
   AGENTS.md        Agent 入口
 \end{verbatim}
@@ -17,15 +18,29 @@ embdb/x/
 \subsection{质量门禁}
 \begin{itemize}[leftmargin=1.6em]
   \item \textbf{CONSTRAINTS.md}：Floor（compile/smoke/test/asan）+ Soft 默认不得退回 mode~0 / 关护洞 / 关 Post。
-  \item \textbf{PIT\_LOG.md}：新正确性坑先占号；收工登记 NOTE（坑 152--155：CI 假红、TSan maint、tsan\_g17、v0.2.0）。
+  \item \textbf{PIT\_LOG.md}：新正确性坑先占号；收工登记 NOTE（坑 152--155：CI 假红、TSan maint、tsan\_g17、v0.2.0；\textbf{169 拆头}）。
   \item Strict CI：main \textbf{不} \texttt{cancel-in-progress}（仅 PR 取消；坑 152）。
   \item 本地：\texttt{make ci-smoke} / \texttt{make ci} / \texttt{make asan}；Soft peers：\texttt{make peers-post}。
 \end{itemize}
 
-\subsection{注释模块地图}
-\texttt{fcs.h} 文件头含模块 TOC（M01--M07\ldots）；修坏还原见
-\texttt{backup/r18/pre-comment-modular/RESTORE.md}。
-清扫清单：\texttt{backup/r18/swept/CLEAN\_MANIFEST.md}。
+\subsection{头文件布局（坑 169）}
+对外仍只 \texttt{\#include "fcs.h"}（薄聚合 + M00 导读）。实现按 \texttt{Mxx} TOC 机械切开：
+\begin{center}
+\begin{tabular}{@{}lll@{}}
+\toprule
+切片 & 文件 & 内容 \\
+\midrule
+A & \texttt{fcs\_codec.h} & M01--M02 参数 / 编解码 \\
+B & \texttt{fcs\_dir.h} & M03--M05 MemTable / Bloom / Run·Seg·Cell \\
+C & \texttt{fcs\_sync.h} & M06 锁 / TLS \\
+D & \texttt{fcs\_store.h} & M07 Store 公开面 + 实现 \\
+\bottomrule
+\end{tabular}
+\end{center}
+依赖无环：\texttt{codec}$\,\leftarrow\,$\texttt{dir}/\texttt{sync}$\,\leftarrow\,$\texttt{store}。\\
+持久备份（\textbf{保留}）：\texttt{backup/eng-debt-split/}（含 \texttt{fcs.h.pre-split}）。\\
+计划与检查单：\texttt{docs/30-discuss/ENG\_DEBT\_SPLIT.md}。\\
+更早注释模块化还原：\texttt{backup/r18/pre-comment-modular/}。
 
 \subsection{可视化}
 \begin{itemize}[leftmargin=1.6em]
@@ -36,7 +51,7 @@ embdb/x/
 
 \subsection{已知工程债}
 \begin{itemize}[leftmargin=1.6em]
-  \item 单头文件体量（约 $8.6\,\mathrm{k}$ 行）：拆头计划见 \texttt{ENG\_DEBT\_SPLIT.md}（行为零 diff）。
+  \item \textbf{拆头已完成}（坑 169；\texttt{make test} 绿）。后续再切须行为零 diff。
   \item 旋钮多：部署请走 \texttt{configure\_deploy}；读 SLA 走 \texttt{soft\_cons\_repay}/\texttt{polish}。
   \item P2c（\texttt{M\_RUN\_HOLE}）仅占 op 号；\texttt{space\_accel} Soft 默认关。
   \item 小时 soak / 真拔电矩阵未宣称覆盖。

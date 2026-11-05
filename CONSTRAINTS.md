@@ -19,7 +19,7 @@
 |------|------|------|
 | 读路径 CRC | `set_verify_reads(true)` 有测（`c2` 进 `make test` / `ci-smoke`）；默认 **关**；开启时清页缓存；坏活页不得 `get` OK | 坑 120 |
 | Soak | `make soak-smoke`（默认 30s）挂在本地 `make ci`；长时 `make soak`；**不得**标「已覆盖真拔电」 | 坑 121 · `soak1` |
-| 拆头 | 任何把 `fcs.h` 切开的 PR：**行为零 diff**（同负载 `make test` + Soft peers 关键 KPI 不动） | 见 `docs/30-discuss/ENG_DEBT_SPLIT.md` |
+| 拆头 | **已完成**（坑 169 · `fcs_codec/dir/sync/store.h` + 薄 `fcs.h`）；后续再切须 **行为零 diff**（同负载 `make test`；Soft peers 关键 KPI 不动） | `docs/30-discuss/ENG_DEBT_SPLIT.md` · `backup/eng-debt-split/` |
 | 坑记录 | 新正确性/静默失败缺陷 → `docs/10-design/PIT_LOG.md` **先占号**再合码；DESIGN3 §12 / `fcs-pits` 同轮或下一轮跟进 | Skill: `fcs-pit-discipline` |
 
 ## 明确禁止（静默降标）
@@ -56,3 +56,13 @@
 - 键固定 `u64`；单进程；非 SQL
 - 未整理 range vs LMDB 慢 = 「写换读」权衡，靠 Soft + `polish`，不是默默改读模型
 - **路径 B** `set_soft_cons`（坑 146–151）：`Off|Eager|Idle|Post`。**坑 151：`configure_deploy` / Soft 默认 Post**（写中记债；读前 `soft_cons_repay` 或 `polish`）。写税刀 `min_gap=32`/`run_hi=16`。消融 `set_soft_cons(Off)`。门禁：`backup/soft-a1/VERDICT_POST_SOFT_ON.md` · `scripts/soft_post_on_verify.sh`
+- **坑 157**：Post 记债默认 **不** 走 `tidy_snap→free_`（`set_soft_post_debt_snap` 消融）；range k1 快路径已 Negate 删除
+- **坑 158**：`range_open_fast` 默认开（空 mem + 单段 prime）；消融 `set_range_open_fast(false)`。peers range vs LMDB 剩余差 leading=页 load/memcpy + 每 select 新 open（非 k-way）
+- **坑 159 / 162 / 163**：Soft sync 墙钟大头 = phase2 I/O（勿默减屏障）。`flush_tip` **默认开**（163：仅 bloom 跳首写 settle；禁止 tip.osz 免 probe）。消融 `set_flush_tip(false)`。完整 peers：`backup/peers-full/PEERS_FULL.md`。工作分布：`backup/work-dist/WORK_DIST.md`
+- **坑 160**：Soft `configure_deploy` 开 `range_page_view`（扫描钉 page 免拷）；消融 `set_range_page_view(false)`。**select/scan 回调内禁止 get/page**（会挪 pin）
+- **坑 161**：Soft `configure_deploy` 关 `range_pf_eager`（翻页才预取；首填不预取）。消融 `set_range_pf_eager(true)`。短窗/1 行扫 KEEP；全表扫 ≈中性
+- **坑 164**：Soft `configure_deploy` 开 `range_oneseg_sel`（空 mem + `limit==0` 单段直扫）。短窗勿开 oneseg 直扫。消融 `set_range_oneseg_sel(false)`
+- **坑 165**：`Cur::reuse()`（禁止 `Cur{}` 清 PAGE）；单段 prime 跳 `run_may_have`；`get` 走 `get_at_locked_`
+- **坑 166**：`Cursor::next` 空 mem+单 Cur 快路径（无旋钮）。短窗 oneseg 再消融仍 Negate。peers ×5 中位 sync range/LMDB ~**1.31×**（`PEERS_FULL_MED.md`）
+- **坑 167**：短窗 emit≈1；`Cur::load` fences+seek **Negate**（已回滚）。range vs LMDB 剩余=随机首页/非 mmap 地板，勿堆无消融胜微调
+- **并发错峰 A** 双 MemTable / `flush_mem` 出锁（坑 156 · `DISCUSS_CONCUR_IMM.md` · `VERDICT_DUAL_MEM`）：**可选、Soft 默认关（Negate-keep）**；KPI=锁内延迟/读者 max，**勿**当空间峰胜者；**禁止**进 `configure_deploy` 默认

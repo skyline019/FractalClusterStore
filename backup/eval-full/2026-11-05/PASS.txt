@@ -1,0 +1,6 @@
+bins
+make_test
+soak_smoke
+asan
+peers_median
+soft_a1

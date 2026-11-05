@@ -1,0 +1,55 @@
+g++ -std=c++17 -O2 -g -Wall -Wextra -Wno-unused-parameter -pthread -Iinclude tests/c5.cpp -o build/c5
+g++ -std=c++17 -O2 -g -Wall -Wextra -Wno-unused-parameter -pthread -Iinclude tests/c6.cpp -o build/c6
+g++ -std=c++17 -O2 -g -Wall -Wextra -Wno-unused-parameter -pthread -Iinclude tests/r2.cpp -o build/r2
+g++ -std=c++17 -O2 -g -Wall -Wextra -Wno-unused-parameter -pthread -Iinclude tests/s2.cpp -o build/s2
+g++ -std=c++17 -O2 -g -Wall -Wextra -Wno-unused-parameter -pthread -Iinclude tests/b1.cpp -o build/b1
+=== on r1 ===
+tip=1 insert=5.076 update=6.366 get=0.495 range=0.852 excl_ins=10827 settle_ins=1545 excl_upd=28110 settle_upd=20233
+=== on r2 ===
+tip=1 insert=6.856 update=7.786 get=0.372 range=0.547 excl_ins=13639 settle_ins=1864 excl_upd=31422 settle_upd=22967
+=== on r3 ===
+tip=1 insert=5.087 update=4.875 get=0.472 range=0.676 excl_ins=9254 settle_ins=1281 excl_upd=18862 settle_upd=13873
+=== on r4 ===
+tip=1 insert=5.246 update=7.351 get=0.513 range=0.721 excl_ins=11352 settle_ins=1654 excl_upd=32173 settle_upd=23078
+=== on r5 ===
+tip=1 insert=5.817 update=5.947 get=0.490 range=0.663 excl_ins=11414 settle_ins=1578 excl_upd=25535 settle_upd=18499
+=== off r1 ===
+tip=0 insert=5.344 update=6.090 get=0.522 range=0.995 excl_ins=10543 settle_ins=1610 excl_upd=24513 settle_upd=18326
+=== off r2 ===
+tip=0 insert=6.937 update=6.801 get=0.567 range=0.727 excl_ins=12445 settle_ins=1841 excl_upd=27174 settle_upd=20329
+=== off r3 ===
+tip=0 insert=6.699 update=6.427 get=0.361 range=0.582 excl_ins=11633 settle_ins=1780 excl_upd=25480 settle_upd=18891
+=== off r4 ===
+tip=0 insert=5.969 update=6.892 get=0.489 range=0.658 excl_ins=10564 settle_ins=1692 excl_upd=27244 settle_upd=19925
+=== off r5 ===
+tip=0 insert=6.333 update=8.511 get=0.555 range=0.687 excl_ins=10931 settle_ins=1800 excl_upd=32253 settle_upd=23805
+  t_protect: skips=2 a=2 stream_c=2 user_d=226  ok
+  t_frag: lowered part=40 (cap=80≤80) frags=2  ok
+  t_coal: need=117 blocker 97→3 coalesces=1  ok
+  t_tidy_sm: runs=1 layout=109% protect=1  ok
+  t_dual_mem: flushes=17 lock_us=585 enc_us=240 settle_us=36  ok
+g18 护洞+整理态+碎片A+并洞B+dual: PASS
+# VERDICT_FLUSH_TIP（坑 159）
+
+Soft sync Post 50k · 中位 · 5 轮 · 经典 tip 免 probe
+
+| metric | tip=on | tip=off | on/off |
+|--------|-------:|--------:|-------:|
+| insert | 5.246 | 6.333 | 0.83× |
+| update | 6.366 | 6.801 | 0.94× |
+| get | 0.490 | 0.522 | 0.94× |
+| range | 0.676 | 0.687 | 0.98× |
+| excl_ins | 11352 | 10931 | 1.04× |
+| settle_ins | 1578 | 1780 | 0.89× |
+| excl_upd | 28110 | 27174 | 1.03× |
+| settle_upd | 20233 | 19925 | 1.02× |
+
+settle_ins on/off=0.887× settle_upd=1.015× insert=0.828× update=0.936×
+
+## VERDICT: **KEEP flush_tip default on**
+
+工作分布见 WORK_DIST.md（Soft sync 墙钟≈97% 在 commit，phase2 I/O 为主）
+
+复现: `bash scripts/ablate_flush_tip.sh`
+
+Wrote backup/work-dist/VERDICT_FLUSH_TIP.md

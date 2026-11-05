@@ -1,0 +1,328 @@
+# host: Linux voyagerStar 6.18.33.2-microsoft-standard-WSL2 #1 SMP PREEMPT_DYNAMIC Thu Jun 18 21:54:43 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux 
+# date: 2026-11-05T10:03:41+08:00
+# Soft Post full ablate: tip×dual×sync/async vs SQL/LMDB
+== build ==
+BUILD_OK
+== bench4 sync_t1d0 dual=0 tip=1 async=0 ==
+# sqlite range: 2.14 µs/scan rows=2000 (2.14 µs/row)
+# sqlite space: file=2347008 B live_recs=50000 bytes/rec=46.9
+
+phase                 us/op       block B/op     logical B/op
+fcs insert            5.871            141.4            129.8
+sqlite insert         5.455             80.4              0.0
+fcs update            8.270              0.0            188.5
+sqlite update        13.527              0.0              0.0
+fcs get               0.328              0.0              0.0
+sqlite get            1.699              0.0              0.0
+fcs range             0.621              0.0              0.0
+sqlite range          2.141              0.0              0.0
+
+                        fcs       sqlite   fcs/sqlite
+insert us/op          5.871        5.455         1.08
+update us/op          8.270       13.527         0.61
+get us/op             0.328        1.699         0.19
+range us/scan         0.621        2.141         0.29
+space bytes         2625536      2347008
+block write B       7069696      4018176
+== bench4 sync_t0d0 dual=0 tip=0 async=0 ==
+# sqlite range: 1.93 µs/scan rows=2000 (1.93 µs/row)
+# sqlite space: file=2347008 B live_recs=50000 bytes/rec=46.9
+
+phase                 us/op       block B/op     logical B/op
+fcs insert            5.394            141.4            129.8
+sqlite insert         5.418             80.4              0.0
+fcs update            7.669              0.0            188.5
+sqlite update        15.515              0.0              0.0
+fcs get               0.350              0.0              0.0
+sqlite get            1.790              0.0              0.0
+fcs range             0.399              0.0              0.0
+sqlite range          1.932              0.0              0.0
+
+                        fcs       sqlite   fcs/sqlite
+insert us/op          5.394        5.418         1.00
+update us/op          7.669       15.515         0.49
+get us/op             0.350        1.790         0.20
+range us/scan         0.399        1.932         0.21
+space bytes         2625536      2347008
+block write B       7069696      4018176
+== bench4 sync_t1d1 dual=1 tip=1 async=0 ==
+# sqlite range: 1.84 µs/scan rows=2000 (1.84 µs/row)
+# sqlite space: file=2347008 B live_recs=50000 bytes/rec=46.9
+
+phase                 us/op       block B/op     logical B/op
+fcs insert            5.639            141.4            129.8
+sqlite insert         4.893             80.4              0.0
+fcs update            6.544              0.0            188.6
+sqlite update         8.529              0.0              0.0
+fcs get               0.444              0.0              0.0
+sqlite get            1.734              0.0              0.0
+fcs range             0.399              0.0              0.0
+sqlite range          1.843              0.0              0.0
+
+                        fcs       sqlite   fcs/sqlite
+insert us/op          5.639        4.893         1.15
+update us/op          6.544        8.529         0.77
+get us/op             0.444        1.734         0.26
+range us/scan         0.399        1.843         0.22
+space bytes         2625536      2347008
+block write B       7069696      4018176
+== bench4 sync_t0d1 dual=1 tip=0 async=0 ==
+# sqlite range: 1.85 µs/scan rows=2000 (1.85 µs/row)
+# sqlite space: file=2347008 B live_recs=50000 bytes/rec=46.9
+
+phase                 us/op       block B/op     logical B/op
+fcs insert            5.805            141.4            129.8
+sqlite insert         5.949             80.4              0.0
+fcs update            5.588              0.0            188.6
+sqlite update        12.656              0.0              0.0
+fcs get               0.363              0.0              0.0
+sqlite get            2.019              0.0              0.0
+fcs range             0.434              0.0              0.0
+sqlite range          1.854              0.0              0.0
+
+                        fcs       sqlite   fcs/sqlite
+insert us/op          5.805        5.949         0.98
+update us/op          5.588       12.656         0.44
+get us/op             0.363        2.019         0.18
+range us/scan         0.434        1.854         0.23
+space bytes         2625536      2347008
+block write B       7069696      4018176
+== bench4 async_t1d0 dual=0 tip=1 async=1 ==
+# sqlite range: 1.89 µs/scan rows=2000 (1.89 µs/row)
+# sqlite space: file=2347008 B live_recs=50000 bytes/rec=46.9
+
+phase                 us/op       block B/op     logical B/op
+fcs insert            0.431             44.7             44.6
+sqlite insert         5.236             80.4              0.0
+fcs update            0.808              0.0             35.6
+sqlite update        14.510              0.0              0.0
+fcs get               0.326              0.0              0.0
+sqlite get            2.036              0.0              0.0
+fcs range             0.545              0.0              0.0
+sqlite range          1.891              0.0              0.0
+
+                        fcs       sqlite   fcs/sqlite
+insert us/op          0.431        5.236         0.08
+update us/op          0.808       14.510         0.06
+get us/op             0.326        2.036         0.16
+range us/scan         0.545        1.891         0.29
+space bytes         2256896      2347008
+block write B       2236416      4018176
+== bench4 async_t0d0 dual=0 tip=0 async=1 ==
+# sqlite range: 1.74 µs/scan rows=2000 (1.74 µs/row)
+# sqlite space: file=2347008 B live_recs=50000 bytes/rec=46.9
+
+phase                 us/op       block B/op     logical B/op
+fcs insert            0.521             44.7             44.6
+sqlite insert         5.070             80.4              0.0
+fcs update            0.942              0.0             35.6
+sqlite update         7.713              0.0              0.0
+fcs get               0.506              0.0              0.0
+sqlite get            1.749              0.0              0.0
+fcs range             0.417              0.0              0.0
+sqlite range          1.738              0.0              0.0
+
+                        fcs       sqlite   fcs/sqlite
+insert us/op          0.521        5.070         0.10
+update us/op          0.942        7.713         0.12
+get us/op             0.506        1.749         0.29
+range us/scan         0.417        1.738         0.24
+space bytes         2256896      2347008
+block write B       2236416      4018176
+== bench4 async_t1d1 dual=1 tip=1 async=1 ==
+# sqlite range: 2.10 µs/scan rows=2000 (2.10 µs/row)
+# sqlite space: file=2347008 B live_recs=50000 bytes/rec=46.9
+
+phase                 us/op       block B/op     logical B/op
+fcs insert            0.510             44.7             44.6
+sqlite insert         6.277             80.4              0.0
+fcs update            0.571              0.0             35.6
+sqlite update        14.893              0.0              0.0
+fcs get               0.352              0.0              0.0
+sqlite get            1.919              0.0              0.0
+fcs range             0.410              0.0              0.0
+sqlite range          2.096              0.0              0.0
+
+                        fcs       sqlite   fcs/sqlite
+insert us/op          0.510        6.277         0.08
+update us/op          0.571       14.893         0.04
+get us/op             0.352        1.919         0.18
+range us/scan         0.410        2.096         0.20
+space bytes         2256896      2347008
+block write B       2236416      4018176
+== bench4 async_t0d1 dual=1 tip=0 async=1 ==
+# sqlite range: 2.43 µs/scan rows=2000 (2.43 µs/row)
+# sqlite space: file=2347008 B live_recs=50000 bytes/rec=46.9
+
+phase                 us/op       block B/op     logical B/op
+fcs insert            0.690             44.7             44.6
+sqlite insert         5.539             80.4              0.0
+fcs update            0.713              0.0             35.6
+sqlite update        13.122              0.0              0.0
+fcs get               0.362              0.0              0.0
+sqlite get            1.958              0.0              0.0
+fcs range             0.402              0.0              0.0
+sqlite range          2.428              0.0              0.0
+
+                        fcs       sqlite   fcs/sqlite
+insert us/op          0.690        5.539         0.12
+update us/op          0.713       13.122         0.05
+get us/op             0.362        1.958         0.19
+range us/scan         0.402        2.428         0.17
+space bytes         2256896      2347008
+block write B       2236416      4018176
+== bench7 sync_t1d0 dual=0 tip=1 async=0 ==
+# FCS vs LMDB  N=50000 B=500 val=32B R=50000 S=2000×100  fcs(async=0 group=0 cons=0 shr=0 soft=1 starve_fit=1 starve_promote=1 soft_cons=3 dual_mem=0 flush_tip=1)
+# LittleFS: 暂缓（非有序KV；禁测其不擅长能力）。每 B 次一持久屏障 | LMDB 大端键
+# fcs soft_cons=Post after repay: runs=1 debt=0 tidies=2
+# fcs done insert=6.210 update=7.672 get=0.456 range=0.568 space=2625536 B
+# lmdb done insert=8.532 update=10.736 get=0.336 range=0.341 space=5541888 B
+
+phase                   fcs         lmdb     fcs/lmdb
+insert us/op          6.210        8.532         0.73
+update us/op          7.672       10.736         0.71
+get us/op             0.456        0.336         1.36
+range us/scan         0.568        0.341         1.67
+space bytes         2625536      5541888
+== bench7 sync_t0d0 dual=0 tip=0 async=0 ==
+# FCS vs LMDB  N=50000 B=500 val=32B R=50000 S=2000×100  fcs(async=0 group=0 cons=0 shr=0 soft=1 starve_fit=1 starve_promote=1 soft_cons=3 dual_mem=0 flush_tip=0)
+# LittleFS: 暂缓（非有序KV；禁测其不擅长能力）。每 B 次一持久屏障 | LMDB 大端键
+# fcs soft_cons=Post after repay: runs=1 debt=0 tidies=2
+# fcs done insert=4.664 update=6.773 get=0.416 range=0.402 space=2625536 B
+# lmdb done insert=6.453 update=13.740 get=0.311 range=0.330 space=5541888 B
+
+phase                   fcs         lmdb     fcs/lmdb
+insert us/op          4.664        6.453         0.72
+update us/op          6.773       13.740         0.49
+get us/op             0.416        0.311         1.34
+range us/scan         0.402        0.330         1.22
+space bytes         2625536      5541888
+== bench7 sync_t1d1 dual=1 tip=1 async=0 ==
+# FCS vs LMDB  N=50000 B=500 val=32B R=50000 S=2000×100  fcs(async=0 group=0 cons=0 shr=0 soft=1 starve_fit=1 starve_promote=1 soft_cons=3 dual_mem=1 flush_tip=1)
+# LittleFS: 暂缓（非有序KV；禁测其不擅长能力）。每 B 次一持久屏障 | LMDB 大端键
+# fcs dual_mem: flushes=100 excl_us=5967 enc_us=2765 settle_us=742
+# fcs soft_cons=Post after repay: runs=1 debt=0 tidies=2
+# fcs done insert=4.786 update=5.014 get=0.326 range=0.426 space=2625536 B
+# lmdb done insert=5.569 update=8.659 get=0.319 range=0.348 space=5541888 B
+
+phase                   fcs         lmdb     fcs/lmdb
+insert us/op          4.786        5.569         0.86
+update us/op          5.014        8.659         0.58
+get us/op             0.326        0.319         1.02
+range us/scan         0.426        0.348         1.22
+space bytes         2625536      5541888
+== bench7 sync_t0d1 dual=1 tip=0 async=0 ==
+# FCS vs LMDB  N=50000 B=500 val=32B R=50000 S=2000×100  fcs(async=0 group=0 cons=0 shr=0 soft=1 starve_fit=1 starve_promote=1 soft_cons=3 dual_mem=1 flush_tip=0)
+# LittleFS: 暂缓（非有序KV；禁测其不擅长能力）。每 B 次一持久屏障 | LMDB 大端键
+# fcs dual_mem: flushes=100 excl_us=6100 enc_us=2586 settle_us=709
+# fcs soft_cons=Post after repay: runs=1 debt=0 tidies=2
+# fcs done insert=4.963 update=5.175 get=0.330 range=0.421 space=2625536 B
+# lmdb done insert=5.714 update=14.789 get=0.309 range=0.338 space=5541888 B
+
+phase                   fcs         lmdb     fcs/lmdb
+insert us/op          4.963        5.714         0.87
+update us/op          5.175       14.789         0.35
+get us/op             0.330        0.309         1.07
+range us/scan         0.421        0.338         1.24
+space bytes         2625536      5541888
+== bench7 async_t1d0 dual=0 tip=1 async=1 ==
+# FCS vs LMDB  N=50000 B=500 val=32B R=50000 S=2000×100  fcs(async=1 group=1 cons=1 shr=1 soft=1 starve_fit=1 starve_promote=1 soft_cons=3 dual_mem=0 flush_tip=1)
+# LittleFS: 暂缓（非有序KV；禁测其不擅长能力）。每 B 次一持久屏障 | LMDB 大端键
+# fcs soft_cons=Post after repay: runs=1 debt=0 tidies=1
+# fcs done insert=0.373 update=0.653 get=0.481 range=0.512 space=2256896 B
+# lmdb done insert=6.403 update=10.300 get=0.319 range=0.355 space=5541888 B
+
+phase                   fcs         lmdb     fcs/lmdb
+insert us/op          0.373        6.403         0.06
+update us/op          0.653       10.300         0.06
+get us/op             0.481        0.319         1.51
+range us/scan         0.512        0.355         1.44
+space bytes         2256896      5541888
+== bench7 async_t0d0 dual=0 tip=0 async=1 ==
+# FCS vs LMDB  N=50000 B=500 val=32B R=50000 S=2000×100  fcs(async=1 group=1 cons=1 shr=1 soft=1 starve_fit=1 starve_promote=1 soft_cons=3 dual_mem=0 flush_tip=0)
+# LittleFS: 暂缓（非有序KV；禁测其不擅长能力）。每 B 次一持久屏障 | LMDB 大端键
+# fcs soft_cons=Post after repay: runs=1 debt=0 tidies=1
+# fcs done insert=0.362 update=0.629 get=0.341 range=0.459 space=2256896 B
+# lmdb done insert=6.425 update=8.799 get=0.325 range=0.352 space=5541888 B
+
+phase                   fcs         lmdb     fcs/lmdb
+insert us/op          0.362        6.425         0.06
+update us/op          0.629        8.799         0.07
+get us/op             0.341        0.325         1.05
+range us/scan         0.459        0.352         1.30
+space bytes         2256896      5541888
+== bench7 async_t1d1 dual=1 tip=1 async=1 ==
+# FCS vs LMDB  N=50000 B=500 val=32B R=50000 S=2000×100  fcs(async=1 group=1 cons=1 shr=1 soft=1 starve_fit=1 starve_promote=1 soft_cons=3 dual_mem=1 flush_tip=1)
+# LittleFS: 暂缓（非有序KV；禁测其不擅长能力）。每 B 次一持久屏障 | LMDB 大端键
+# fcs dual_mem: flushes=1 excl_us=6764 enc_us=2722 settle_us=459
+# fcs soft_cons=Post after repay: runs=1 debt=0 tidies=1
+# fcs done insert=0.457 update=0.733 get=0.367 range=0.401 space=2256896 B
+# lmdb done insert=6.043 update=11.438 get=0.320 range=0.354 space=5541888 B
+
+phase                   fcs         lmdb     fcs/lmdb
+insert us/op          0.457        6.043         0.08
+update us/op          0.733       11.438         0.06
+get us/op             0.367        0.320         1.15
+range us/scan         0.401        0.354         1.13
+space bytes         2256896      5541888
+== bench7 async_t0d1 dual=1 tip=0 async=1 ==
+# FCS vs LMDB  N=50000 B=500 val=32B R=50000 S=2000×100  fcs(async=1 group=1 cons=1 shr=1 soft=1 starve_fit=1 starve_promote=1 soft_cons=3 dual_mem=1 flush_tip=0)
+# LittleFS: 暂缓（非有序KV；禁测其不擅长能力）。每 B 次一持久屏障 | LMDB 大端键
+# fcs dual_mem: flushes=1 excl_us=7421 enc_us=4799 settle_us=449
+# fcs soft_cons=Post after repay: runs=1 debt=0 tidies=1
+# fcs done insert=0.605 update=0.618 get=0.353 range=0.393 space=2256896 B
+# lmdb done insert=5.859 update=14.910 get=0.344 range=0.377 space=5541888 B
+
+phase                   fcs         lmdb     fcs/lmdb
+insert us/op          0.605        5.859         0.10
+update us/op          0.618       14.910         0.04
+get us/op             0.353        0.344         1.03
+range us/scan         0.393        0.377         1.04
+space bytes         2256896      5541888
+# Soft Post 完整 peers 消融（tip × dual × sync/async）vs SQLite / LMDB
+
+比值 FCS/对手；&lt;1 = FCS 更快。空间 MB。坑 156/161/163。
+复现：`bash scripts/peers_full_ab.sh` · `backup/peers-full/`
+
+## vs SQLite
+
+| 臂 | insert | update | get | range | space | /SQL ins | /SQL rng | /SQL sp |
+|----|-------:|-------:|----:|------:|------:|---------:|---------:|--------:|
+| sync tip=on dual=off (产品) | 5.871 | 8.270 | 0.328 | 0.621 | 2.50 | 1.08× | 0.29× | 1.12× |
+| sync tip=off dual=off | 5.394 | 7.669 | 0.350 | 0.399 | 2.50 | 1.00× | 0.21× | 1.12× |
+| sync tip=on dual=on | 5.639 | 6.544 | 0.444 | 0.399 | 2.50 | 1.15× | 0.22× | 1.12× |
+| sync tip=off dual=on | 5.805 | 5.588 | 0.363 | 0.434 | 2.50 | 0.98× | 0.23× | 1.12× |
+| async tip=on dual=off (产品) | 0.431 | 0.808 | 0.326 | 0.545 | 2.15 | 0.08× | 0.29× | 0.96× |
+| async tip=off dual=off | 0.521 | 0.942 | 0.506 | 0.417 | 2.15 | 0.10× | 0.24× | 0.96× |
+| async tip=on dual=on | 0.510 | 0.571 | 0.352 | 0.410 | 2.15 | 0.08× | 0.20× | 0.96× |
+| async tip=off dual=on | 0.690 | 0.713 | 0.362 | 0.402 | 2.15 | 0.12× | 0.17× | 0.96× |
+
+SQLite 基线（同 sync_t1d0 跑）：ins=5.455 upd=13.527 get=1.699 rng=2.141 sp=2.24
+
+## vs LMDB
+
+| 臂 | insert | update | get | range | space | /LMDB ins | /LMDB get | /LMDB rng | /LMDB sp |
+|----|-------:|-------:|----:|------:|------:|----------:|----------:|----------:|---------:|
+| sync tip=on dual=off (产品) | 6.210 | 7.672 | 0.456 | 0.568 | 2.50 | 0.73× | 1.36× | 1.67× | 0.47× |
+| sync tip=off dual=off | 4.664 | 6.773 | 0.416 | 0.402 | 2.50 | 0.72× | 1.34× | 1.22× | 0.47× |
+| sync tip=on dual=on | 4.786 | 5.014 | 0.326 | 0.426 | 2.50 | 0.86× | 1.02× | 1.22× | 0.47× |
+| sync tip=off dual=on | 4.963 | 5.175 | 0.330 | 0.421 | 2.50 | 0.87× | 1.07× | 1.25× | 0.47× |
+| async tip=on dual=off (产品) | 0.373 | 0.653 | 0.481 | 0.512 | 2.15 | 0.06× | 1.51× | 1.44× | 0.41× |
+| async tip=off dual=off | 0.362 | 0.629 | 0.341 | 0.459 | 2.15 | 0.06× | 1.05× | 1.30× | 0.41× |
+| async tip=on dual=on | 0.457 | 0.733 | 0.367 | 0.401 | 2.15 | 0.08× | 1.15× | 1.13× | 0.41× |
+| async tip=off dual=on | 0.605 | 0.618 | 0.353 | 0.393 | 2.15 | 0.10× | 1.03× | 1.04× | 0.41× |
+
+## 消融判决（sync）
+
+- tip on/off（dual=off）：insert 1.09× · update 1.08× · get 0.94× · range 1.56× · space 1.00×
+- dual on/off（tip=on）：insert 0.96× · update 0.79× · space 1.00×
+
+## 产品臂（sync tip=on dual=off）
+
+- vs SQL：ins 1.08× · upd 0.61× · get 0.19× · rng 0.29× · sp 1.12×
+- vs LMDB：ins 0.73× · get 1.36× · rng 1.67× · sp 0.47×
+
+- tip：若 insert 无胜且中性 → KEEP_NEUTRAL；若回归>5% → Negate
+- dual：Soft 默认仍关（Negate-keep）
+
+Wrote backup/peers-full/PEERS_FULL.md

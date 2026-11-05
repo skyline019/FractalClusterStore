@@ -1,0 +1,51 @@
+make: Nothing to be done for 'bins'.
+=== on r1 ===
+tip=1 insert=5.243 update=6.913 get=0.454 range=0.758 excl_ins=16655 settle_ins=844 excl_upd=33942 settle_upd=21306
+=== on r2 ===
+tip=1 insert=6.107 update=6.383 get=0.375 range=0.634 excl_ins=19304 settle_ins=913 excl_upd=26983 settle_upd=16873
+=== on r3 ===
+tip=1 insert=5.198 update=6.079 get=0.599 range=0.842 excl_ins=16033 settle_ins=799 excl_upd=27345 settle_upd=16948
+=== on r4 ===
+tip=1 insert=5.338 update=6.169 get=0.433 range=0.620 excl_ins=15663 settle_ins=744 excl_upd=28116 settle_upd=17532
+=== on r5 ===
+tip=1 insert=5.684 update=6.363 get=0.329 range=0.533 excl_ins=17646 settle_ins=827 excl_upd=28830 settle_upd=18238
+=== off r1 ===
+tip=0 insert=5.633 update=5.808 get=0.458 range=0.637 excl_ins=9959 settle_ins=1566 excl_upd=24506 settle_upd=18322
+=== off r2 ===
+tip=0 insert=4.767 update=6.967 get=0.452 range=0.641 excl_ins=8453 settle_ins=1568 excl_upd=28073 settle_upd=20733
+=== off r3 ===
+tip=0 insert=5.140 update=6.545 get=0.566 range=0.746 excl_ins=8920 settle_ins=1361 excl_upd=24268 settle_upd=17920
+=== off r4 ===
+tip=0 insert=5.443 update=7.146 get=0.324 range=0.537 excl_ins=9741 settle_ins=1474 excl_upd=30086 settle_upd=22225
+=== off r5 ===
+tip=0 insert=5.573 update=6.520 get=0.484 range=0.625 excl_ins=9491 settle_ins=1421 excl_upd=25250 settle_upd=18698
+  t_protect: skips=2 a=2 stream_c=2 user_d=226  ok
+  t_frag: lowered part=40 (cap=80≤80) frags=2  ok
+  t_coal: need=117 blocker 97→3 coalesces=1  ok
+  t_tidy_sm: runs=1 layout=109% protect=1  ok
+  t_dual_mem: flushes=17 lock_us=336 enc_us=218 settle_us=35  ok
+g18 护洞+整理态+碎片A+并洞B+dual: PASS
+# VERDICT_FLUSH_TIP（坑 159）
+
+Soft sync Post 50k · 中位 · 5 轮 · 经典 tip 免 probe
+
+| metric | tip=on | tip=off | on/off |
+|--------|-------:|--------:|-------:|
+| insert | 5.338 | 5.443 | 0.98× |
+| update | 6.363 | 6.545 | 0.97× |
+| get | 0.433 | 0.458 | 0.95× |
+| range | 0.634 | 0.637 | 1.00× |
+| excl_ins | 16655 | 9491 | 1.75× |
+| settle_ins | 827 | 1474 | 0.56× |
+| excl_upd | 28116 | 25250 | 1.11× |
+| settle_upd | 17532 | 18698 | 0.94× |
+
+settle_ins on/off=0.561× settle_upd=0.938× insert=0.981× update=0.972×
+
+## VERDICT: **KEEP_NEUTRAL**
+
+工作分布见 WORK_DIST.md（Soft sync 墙钟≈97% 在 commit，phase2 I/O 为主）
+
+复现: `bash scripts/ablate_flush_tip.sh`
+
+Wrote backup/work-dist/VERDICT_FLUSH_TIP.md

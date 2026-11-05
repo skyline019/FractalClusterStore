@@ -1,0 +1,7 @@
+runs=1 cells=100
+emit_avg=1.00
+slice RGuard=0.072 open=0.237 first_next=0.169 rest99=0.075 sum=0.553
+selectK=0.449 get=0.401 select/get=1.12
+lim1=0.299 lim10=0.327 lim100=0.365 win1key≈lim1/get
+sticky_open+nextK=0.349 (vs select≈0.449)
+hot_same_lo selectK=0.208

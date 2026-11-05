@@ -1,6 +1,6 @@
 # Agent 入口 — FractalClusterStore（`embdb/x`）
 
-产品路径：**FCS / XDB v3**，主实现 `include/fcs.h`。
+产品路径：**FCS / XDB v3**；公开 `#include "fcs.h"`（聚合），实现 `include/fcs_{codec,dir,sync,store}.h`（坑 169）。
 
 ## 必读
 
@@ -19,7 +19,8 @@
 - Soft / `configure_deploy` 是产品默认：**护洞 + P2 + SoftCons::Post**；勿退回 mode 0 / 关护洞 / 关 Post 当默认
 - 读 SLA：写后 `soft_cons_repay()` 或 `polish()`；消融用 `set_soft_cons(Off)`
 - Eager `soft_consolidate` / 写中 duty tidy：**勿**升 Soft 默认（坑 147）
-- 大改拆头 / P2c / 双 memtable：先讨论稿，后薄切片；热路径 peers：`make peers-post`
+- 双 MemTable / flush 出锁（坑 156 · `DISCUSS_CONCUR_IMM`）：**可选、Soft 默认关**；S5 判决 **Negate-keep**（`VERDICT_DUAL_MEM`）；勿当空间 KPI；勿进 `configure_deploy` 默认
+- 拆头已完成（坑 169）；再切头 / P2c：先讨论稿，后薄切片、行为零 diff；热路径 peers：`make peers-post`
 
 ## 非目标
 

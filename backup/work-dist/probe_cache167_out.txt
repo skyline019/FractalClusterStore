@@ -1,0 +1,5 @@
+c256 cache=256 select=1.066 hits=2236 miss=2124 rate=0.513 space=640
+c512 cache=512 select=0.533 hits=4350 miss=2 rate=1.000 space=640
+c1k cache=1024 select=0.453 hits=4329 miss=2 rate=1.000 space=641
+c2k cache=2048 select=0.650 hits=4329 miss=2 rate=1.000 space=641
+c8k cache=8192 select=0.613 hits=4329 miss=2 rate=1.000 space=641

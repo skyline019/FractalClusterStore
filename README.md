@@ -2,7 +2,7 @@
 
 <p align="center">
   <strong>嵌入式有序键值存储内核</strong><br>
-  <sub>产品名 FCS · 实现 XDB v3 · <code>include/fcs.h</code></sub>
+  <sub>产品名 FCS · 实现 XDB v3 · <code>include/fcs.h</code>（聚合；坑 169 已拆）</sub>
 </p>
 
 <p align="center">
@@ -54,8 +54,8 @@ FractalClusterStore（**FCS**）面向嵌入式设备与单进程服务，提供
 
 ```text
 应用
- └── Store                    include/fcs.h
-      ├── 内存表               提交落盘为 L0 run
+ └── Store                    include/fcs.h → fcs_store.h
+      ├── 内存表               fcs_dir.h · 提交落盘为 L0 run
       ├── cell / 段 / run      布隆 · 围栏 · 键域摘要
       ├── 清单 + 双槽超级块    崩溃恢复
       ├── 维护                 分层合并 · 分片 TRIM · Soft / Hard / Periodic
@@ -139,7 +139,8 @@ s.get(42, buf, sizeof buf, &n);
 
 | 项 | 路径 / 说明 |
 |:---|:---|
-| 主头文件 | `include/fcs.h` |
+| 公开头 | `include/fcs.h`（薄聚合） |
+| 实现头 | `fcs_codec.h` · `fcs_dir.h` · `fcs_sync.h` · `fcs_store.h`（坑 169） |
 | 附属头文件 | `blockdev.h` · `layout.h` · `common.h` |
 | 文件设备 | `FileDev` |
 | 完整 API | [详情手册](docs/00-entry/DETAIL.md) |

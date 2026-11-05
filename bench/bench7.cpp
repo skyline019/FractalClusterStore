@@ -79,6 +79,8 @@ int main(int argc, char** argv) {
     int starve_fit = argc > 12 ? atoi(argv[12]) : 0;       // 坑 138 P2α
     int starve_promote = argc > 13 ? atoi(argv[13]) : 0;   // 坑 138 P2β
     int soft_cons = argc > 14 ? atoi(argv[14]) : 0;        // 坑 149：0 Off … 3 Post
+    int dual_mem = argc > 15 ? atoi(argv[15]) : 0;         // 坑 156：dual_mem（仅 sync）
+    int flush_tip = argc > 16 ? atoi(argv[16]) : -1;       // 坑 163：-1=默认；0/1 覆盖
 
     const u64 KEYMASK = SKEY_MAX;
     std::vector<u64> keys;
@@ -92,8 +94,8 @@ int main(int argc, char** argv) {
     std::vector<u8> val(VSZ), val2(VSZ);
     for (u32 i = 0; i < VSZ; ++i) { val[i] = (u8)(i * 31 + 7); val2[i] = (u8)(i * 17 + 3); }
 
-    std::printf("# FCS vs LMDB  N=%u B=%u val=%uB R=%u S=%u×%u  fcs(async=%d group=%d cons=%d shr=%d soft=%d starve_fit=%d starve_promote=%d soft_cons=%d)\n",
-                N, B, VSZ, R, S, K, async, gm, cons, shr, soft, starve_fit, starve_promote, soft_cons);
+    std::printf("# FCS vs LMDB  N=%u B=%u val=%uB R=%u S=%u×%u  fcs(async=%d group=%d cons=%d shr=%d soft=%d starve_fit=%d starve_promote=%d soft_cons=%d dual_mem=%d flush_tip=%d)\n",
+                N, B, VSZ, R, S, K, async, gm, cons, shr, soft, starve_fit, starve_promote, soft_cons, dual_mem, flush_tip);
     std::printf("# LittleFS: 暂缓（非有序KV；禁测其不擅长能力）。每 B 次一持久屏障 | LMDB 大端键\n");
     std::fflush(stdout);
 
@@ -119,6 +121,8 @@ int main(int argc, char** argv) {
         // 坑 151：argv 显式覆盖 Soft 默认 Post（含 0=Off）
         if (argc > 14)
             s.set_soft_cons((Store::SoftCons)std::min(std::max(soft_cons, 0), 3));
+        if (argc > 15) s.set_dual_mem(dual_mem != 0);   // 坑 156
+        if (flush_tip >= 0) s.set_flush_tip(flush_tip != 0);  // 坑 163
         auto cb = [&] { if (gm) s.commit(false); else s.commit(); };
 
         double t0 = now_us();
@@ -128,6 +132,12 @@ int main(int argc, char** argv) {
         }
         s.commit();
         fi.us = (now_us() - t0) / N;
+        if (s.dual_mem())
+            std::printf("# fcs dual_mem: flushes=%llu excl_us=%llu enc_us=%llu settle_us=%llu\n",
+                        (unsigned long long)s.dual_mem_flushes(),
+                        (unsigned long long)s.flush_excl_us(),
+                        (unsigned long long)s.dual_mem_encode_us(),
+                        (unsigned long long)s.dual_mem_settle_us());
 
         t0 = now_us();
         for (u32 i = 0; i < N / 2; ++i) {

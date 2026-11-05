@@ -62,3 +62,15 @@ bash scripts/sync_work_trace.sh
 python3 scripts/plot_sync_work.py
 # backup/sync-work/n50000|n200000/{work_timeline.csv,work_rhythm.txt,svg,html}
 ```
+
+## 坑 159 分量（Soft sync 50k · 2026-11-05）
+
+| 轴 | 占 wall | 备注 |
+|----|--------:|------|
+| put | ~2% | MemTable |
+| phase2 I/O | **~81%** | wait_io + 双 sync；契约保留 |
+| level | ~10% | 峰内更高（§上表 0.66） |
+| flush_excl | 3.5% ins / **17% upd** | 159b tip+bloom KEEP |
+| 对照 async+group | µs/op ~1/11 | I/O 轴正解 |
+
+详见 `backup/work-dist/WORK_DIST.md` · `VERDICT_FLUSH_TIP.md`。

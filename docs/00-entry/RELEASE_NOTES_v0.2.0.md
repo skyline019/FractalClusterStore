@@ -32,4 +32,4 @@ make peers-post   # Soft Post peers（若已装对照库）
 
 ## Known gaps
 
-单进程、键固定 u64；无小时 soak / 真拔电合同；相对 LMDB range ~2.5×（单 run 地板，坑 145）；`fcs.h` 拆头未做；`get` 默认不 CRC。
+单进程、键固定 u64；无小时 soak / 真拔电合同；相对 LMDB range ~2.5×（单 run 地板，坑 145）；**发布时** `fcs.h` 拆头未做（其后 2026-11-05 坑 **169** 已完全拆头，见 `ENG_DEBT_SPLIT.md`）；`get` 默认不 CRC。

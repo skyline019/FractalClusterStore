@@ -1,0 +1,1 @@
+mode=lock arm=on wall_us=51467 insert_us_op=2 max_commit_us=2684 flush_excl_us=10450 encode_us=14124 io_us=22701 flushes=40 get_max_us=0 peak_tail=2919 peak_x=0.000

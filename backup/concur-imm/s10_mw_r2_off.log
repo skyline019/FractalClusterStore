@@ -1,0 +1,1 @@
+mode=mw arm=off wall_us=441325 insert_us_op=9 max_commit_us=3379 flush_excl_us=153583 encode_us=0 io_us=0 settle_us=0 flushes=0 get_max_us=3298 peak_tail=3403 peak_x=0.000

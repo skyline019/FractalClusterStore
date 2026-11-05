@@ -1,0 +1,24 @@
+=== pass1 ===
+runs=1 cells=100 oneseg_sel=1 open_fast=1
+r1 short on=0.646 off=0.988 o/f=0.654 | full on=706.040 off=1865.488 o/f=0.378 | get=0.362/0.371
+r2 short on=0.527 off=0.548 o/f=0.961 | full on=664.385 off=1134.984 o/f=0.585 | get=0.267/0.278
+r3 short on=0.542 off=0.613 o/f=0.885 | full on=671.739 off=1145.422 o/f=0.586 | get=0.297/0.290
+r4 short on=0.536 off=0.560 o/f=0.957 | full on=654.243 off=1094.257 o/f=0.598 | get=0.293/0.280
+r5 short on=0.556 off=0.582 o/f=0.955 | full on=651.241 off=1088.604 o/f=0.598 | get=0.266/0.272
+median short on/off=0.931 full on/off=0.585 get on=0.293
+=== pass2 ===
+runs=1 cells=100 oneseg_sel=1 open_fast=1
+r1 short on=0.716 off=0.751 o/f=0.954 | full on=705.568 off=1447.967 o/f=0.487 | get=0.326/0.332
+r2 short on=1.043 off=0.577 o/f=1.807 | full on=967.020 off=1182.235 o/f=0.818 | get=0.287/0.361
+r3 short on=0.612 off=0.582 o/f=1.051 | full on=650.434 off=1426.154 o/f=0.456 | get=0.275/0.292
+r4 short on=0.598 off=0.575 o/f=1.041 | full on=671.445 off=1165.884 o/f=0.576 | get=0.371/0.325
+r5 short on=0.541 off=0.604 o/f=0.896 | full on=642.425 off=1160.594 o/f=0.554 | get=0.270/0.307
+median short on/off=1.051 full on/off=0.568 get on=0.287
+=== prime xab ===
+prime r1 on=0.620 off=0.796 on/off=0.779
+prime r2 on=0.538 off=0.652 on/off=0.825
+prime r3 on=0.616 off=0.642 on/off=0.959
+prime r4 on=0.556 off=0.724 on/off=0.767
+prime r5 on=0.563 off=0.611 on/off=0.921
+median prime on/off=0.863
+ABLATED_RANGE_ONESEG_SEL_OK

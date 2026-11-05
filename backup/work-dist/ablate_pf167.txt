@@ -1,0 +1,6 @@
+pf paired pass1 on=0.419 off=0.339 o/f=1.235
+pf paired pass2 on=0.379 off=0.317 o/f=1.194
+pf paired pass3 on=0.357 off=0.315 o/f=1.133
+pf paired pass4 on=0.355 off=0.317 o/f=1.122
+pf paired pass5 on=0.372 off=0.318 o/f=1.172
+pf paired mean on/off=1.172 ( <1 means on faster)

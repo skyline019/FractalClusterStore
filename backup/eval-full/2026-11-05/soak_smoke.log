@@ -1,0 +1,4 @@
+g++ -std=c++17 -O2 -g -Wall -Wextra -Wno-unused-parameter -pthread -Iinclude tests/soak1.cpp -o build/soak1
+FCS_SOAK_SEC=${FCS_SOAK_SEC:-30} build/soak1
+soak1 sec=30 ops=31780 commits=4479 verifies=15 runs=10
+PASS

@@ -39,8 +39,9 @@ docs/
 | [`10-design/DESIGN3.md`](10-design/DESIGN3.md) | **现行设计主文**（基准矩阵、§12 坑表、轮次摘要） |
 | [`10-design/PIT_LOG.md`](10-design/PIT_LOG.md) | **活坑表**（占号 / OPEN / FIXED；工程债轨） |
 | [`../CONSTRAINTS.md`](../CONSTRAINTS.md) · [`../AGENTS.md`](../AGENTS.md) | 质量契约与 Agent 入口 |
-| [`00-entry/EVAL_ENG_DEBT_P1.md`](00-entry/EVAL_ENG_DEBT_P1.md) | 工程债一期评估（CRC/soak/asan/坑纪律；拆头未做） |
+| [`00-entry/EVAL_ENG_DEBT_P1.md`](00-entry/EVAL_ENG_DEBT_P1.md) | 工程债一期评估（CRC/soak/asan/坑纪律；拆头见 §6 / 坑 169） |
 | [`30-discuss/DISCUSS_HARNESS_AB_SPACE.md`](30-discuss/DISCUSS_HARNESS_AB_SPACE.md) | 空间峰 harness A/B · GGUF 卸载类比 · vs 双 memtable |
+| [`30-discuss/DISCUSS_CONCUR_IMM.md`](30-discuss/DISCUSS_CONCUR_IMM.md) | **并发错峰 A**：双 MemTable / flush 出锁（可选·消融·坑 156） |
 | [`30-discuss/ENG_DEBT_SOAK_CRC.md`](30-discuss/ENG_DEBT_SOAK_CRC.md) · [`ENG_DEBT_SPLIT.md`](30-discuss/ENG_DEBT_SPLIT.md) | 工程债：soak/CRC、拆头 |
 | [`10-design/DESIGN2.md`](10-design/DESIGN2.md) | v2 设计（历史） |
 | [`10-design/P2_DESIGN.md`](10-design/P2_DESIGN.md) | P2 格式 v2 设计稿（P2a/b/c） |
@@ -83,10 +84,10 @@ docs/
 | 路径 | 用途 |
 |---|---|
 | [`latex/README.md`](latex/README.md) | 编译说明（XeLaTeX / WSL） |
-| `latex/chapters/` | 概述 · **代码详解** · Soft Post · 架构 · 踩坑…（对齐 v0.2.0） |
-| `latex/build/main.pdf` | 编译产物（`cd latex && make`；约 37 页） |
+| `latex/chapters/` | 概述 · **代码详解** · Soft Post · 架构 · 踩坑 · 拆头 169…（对齐 v0.2.0+） |
+| `latex/build/main.pdf` | 编译产物（`cd latex && make`；XeLaTeX） |
 
-面向「基础数据库知识」读者：先读 PDF 第「代码详解」章，再对 `include/fcs.h`。
+面向「基础数据库知识」读者：先读 PDF 第「代码详解」章，再对 `include/fcs.h`（实现见 `fcs_*.h`）。
 
 ---
 
@@ -112,6 +113,7 @@ docs/
 | [`../backup/pre-battle-promote/`](../backup/pre-battle-promote/) | L 分叉快照 + 旧 ROUND16/EVAL14 |
 | [`../backup/r14/ROUND14.md`](../backup/r14/ROUND14.md) | 轮次旁路副本 |
 | [`../backup/r18/pre-comment-modular/RESTORE.md`](../backup/r18/pre-comment-modular/RESTORE.md) | 注释模块化还原 |
+| [`../backup/eng-debt-split/`](../backup/eng-debt-split/) | 完全拆头前整头备份（坑 169；**保留**） |
 
 ### 5.3 工程旁路 README
 

@@ -1,0 +1,1 @@
+mode=a1 arm=on wall_us=76221 insert_us_op=1 max_commit_us=0 flush_excl_us=12576 encode_us=2284 flushes=100 get_max_us=0 peak_tail=683 peak_x=1.556

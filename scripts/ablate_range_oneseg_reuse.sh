@@ -1,0 +1,118 @@
+#!/usr/bin/env bash
+# 坑 165：oneseg_cur_ 复用（免 Cur{} 清 PAGE）· 短窗+全表消融
+set -euo pipefail
+cd "$(dirname "$0")/.."
+OUT=backup/range-oneseg-reuse
+mkdir -p "$OUT"
+
+cat > /tmp/ablate_ros165.cpp <<'CPP'
+#include "include/fcs.h"
+#include <chrono>
+#include <cstdio>
+#include <vector>
+using namespace fcs;
+static u64 mix(u64 x) {
+    x ^= x >> 33; x *= 0xff51afd7ed558ccdull;
+    x ^= x >> 33; x *= 0xc4ceb9fe1a85ec53ull;
+    x ^= x >> 33; return x;
+}
+static double now_us() {
+    using namespace std::chrono;
+    return duration_cast<duration<double, std::micro>>(steady_clock::now().time_since_epoch()).count();
+}
+int main() {
+    const u32 N = 50000, B = 500, VSZ = 32, S = 3000, K = 100;
+    std::vector<u64> keys;
+    for (u32 i = 0; i < N; ++i) keys.push_back(mix(i * 2654435761u + 12345) & SKEY_MAX);
+    std::sort(keys.begin(), keys.end());
+    keys.erase(std::unique(keys.begin(), keys.end()), keys.end());
+    const u32 n = (u32)keys.size();
+    std::vector<u8> val(VSZ, 7);
+    const char* path = "/home/user/.fcs_ros165.db";
+    std::remove(path);
+    FileDev dev(path, (PageId)((n * (VSZ + 24) + 16 * 1024 * 1024) / PAGE + 8192));
+    Store s;
+    s.open(&dev, nullptr, 2048);
+    s.set_tidy_policy(Store::TidyPolicy::Soft);
+    for (u32 i = 0; i < n; ++i) {
+        s.put(keys[i], val.data(), (u16)VSZ);
+        if ((i + 1) % B == 0) s.commit();
+    }
+    s.commit();
+    (void)s.soft_cons_repay(64);
+    auto short_us = [&] {
+        double t0 = now_us();
+        for (u32 i = 0; i < S; ++i) {
+            u64 lo = keys[mix(i * 13 + 5) % n], c = 0;
+            s.select(lo, lo + 4096, [&](u64, const u8*, u16) { ++c; return true; }, K);
+        }
+        return (now_us() - t0) / S;
+    };
+    auto full_us = [&] {
+        double t0 = now_us();
+        for (u32 r = 0; r < 6; ++r) {
+            u64 c = 0;
+            s.select(0, IDX_BASE, [&](u64, const u8*, u16) { ++c; return true; }, 0);
+        }
+        return (now_us() - t0) / 6.0;
+    };
+    (void)short_us();
+    double on_s[5], off_s[5], on_f[5], off_f[5];
+    for (int r = 0; r < 5; ++r) {
+        s.set_range_oneseg_sel(true);
+        on_s[r] = short_us();
+        on_f[r] = full_us();
+        s.set_range_oneseg_sel(false);
+        off_s[r] = short_us();
+        off_f[r] = full_us();
+        std::printf("r%d short on=%.3f off=%.3f o/f=%.3f | full on=%.3f off=%.3f o/f=%.3f\n",
+                    r + 1, on_s[r], off_s[r], on_s[r] / off_s[r],
+                    on_f[r], off_f[r], on_f[r] / off_f[r]);
+    }
+    auto med = [](double* a) {
+        double b[5] = {a[0], a[1], a[2], a[3], a[4]};
+        for (int i = 0; i < 5; ++i)
+            for (int j = i + 1; j < 5; ++j)
+                if (b[j] < b[i]) { double t = b[i]; b[i] = b[j]; b[j] = t; }
+        return b[2];
+    };
+    std::printf("median short on/off=%.3f full on/off=%.3f\n",
+                med(on_s) / med(off_s), med(on_f) / med(off_f));
+    // oracle short+full
+    u64 ca = 0, cb = 0, xa = 0, xb = 0;
+    s.set_range_oneseg_sel(true);
+    for (u32 i = 0; i < 800; ++i) {
+        u64 lo = keys[mix(i * 13 + 5) % n];
+        s.select(lo, lo + 4096, [&](u64 k, const u8* v, u16 l) {
+            ++ca; xa ^= k + l + (l ? v[0] : 0); return true;
+        }, K);
+    }
+    u64 fa = 0, fx = 0;
+    s.select(0, IDX_BASE, [&](u64 k, const u8* v, u16 l) {
+        ++fa; fx ^= k + l + (l ? v[0] : 0); return true;
+    }, 0);
+    s.set_range_oneseg_sel(false);
+    for (u32 i = 0; i < 800; ++i) {
+        u64 lo = keys[mix(i * 13 + 5) % n];
+        s.select(lo, lo + 4096, [&](u64 k, const u8* v, u16 l) {
+            ++cb; xb ^= k + l + (l ? v[0] : 0); return true;
+        }, K);
+    }
+    u64 fb = 0, fy = 0;
+    s.select(0, IDX_BASE, [&](u64 k, const u8* v, u16 l) {
+        ++fb; fy ^= k + l + (l ? v[0] : 0); return true;
+    }, 0);
+    bool ok = ca == cb && xa == xb && fa == fb && fx == fy;
+    std::printf("oracle short %llu/%llu full %llu/%llu %s\n",
+                (unsigned long long)ca, (unsigned long long)cb,
+                (unsigned long long)fa, (unsigned long long)fb,
+                ok ? "OK" : "FAIL");
+    return ok ? 0 : 1;
+}
+CPP
+g++ -O2 -std=c++17 -I. /tmp/ablate_ros165.cpp -o /tmp/ablate_ros165 -lpthread
+echo "=== pass1 ==="
+/tmp/ablate_ros165 | tee "$OUT/pass1.txt"
+echo "=== pass2 ==="
+/tmp/ablate_ros165 | tee "$OUT/pass2.txt"
+echo "ABLATED_RANGE_ONESEG_REUSE_OK"

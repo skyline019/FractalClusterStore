@@ -1,0 +1,1 @@
+mode=write arm=on wall_us=304183 insert_us_op=6 max_commit_us=3018 flush_excl_us=6046 encode_us=3827 io_us=6910 settle_us=281784 flushes=250 get_max_us=0 peak_tail=1755 peak_x=0.000

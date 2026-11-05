@@ -18,7 +18,7 @@
 ## 编号
 
 - 历史坑 1–112+ 见 DESIGN3 §12 / `fcs-pits`（本表从**工程债轨起**补登记缺口与新号）。
-- 下一可用号：**139**。
+- 下一可用号：**170**。
 
 ## 工程债轨登记
 
@@ -29,7 +29,7 @@
 | **120** | FIXED | `get`/读路径默认不校验数据页 CRC，介质位翻转可静默吐坏键 | verified：`set_verify_reads(true)` 时 `page`/`prefetch` 装填校验；开启清缓存；失败不入缓存。**近误判**：曾翻「已退役 PK_DATA 残骸」或 `used` 外字节 → get/scrub 仍绿；活页+`[12,used)` 内翻位才成立 | `c2` · `fcs.h` `set_verify_reads` / `data_page_crc_ok` |
 | **121** | FIXED | 无门禁化短时 soak（长时仍人工） | verified：`soak1` 混合写+verify+scrub+reopen；`make soak-smoke` | `soak1` · Makefile |
 | **122** | NOTE | `make asan` 在 TSan 步 FATAL `unexpected memory mapping`（WSL 6.18） | **leading 曾疑**：产品数据竞争 / 地址耗尽。**verified**：同二进制反复 FATAL；`setarch $(uname -m) -R` 稳定 PASS；ASan 段已全绿。属 ASLR/TSan 运行时与新内核不兼容，非引擎竞态。Makefile `TSAN_WRAP`；`scripts/tsan_env_probe.sh` | `scripts/asan_tsan_tail.sh` → `ASAN_TSAN_TAIL_OK` |
-| **123** | NOTE | 工程债一期收口 | verified：CRC+短 soak+严格门+坑纪律达标；**拆头未做**；不可宣称 EVAL17 工程项全部关闭。全文 `docs/00-entry/EVAL_ENG_DEBT_P1.md` | 见该评估 §2 门禁表 |
+| **123** | NOTE | 工程债一期收口 | verified：CRC+短 soak+严格门+坑纪律达标；拆头当时未做（现见 **169**）；不可宣称 EVAL17 工程项全部关闭（长 soak/真掉电仍开）。全文 `docs/00-entry/EVAL_ENG_DEBT_P1.md` | 见该评估 §2 门禁表 |
 | **124** | NOTE | 空间轨探讨拍板 | verified 决议：R→T→可选P2c；A2=256/512/1024；卸载第一刀=护洞+近满加速；测=轻量+asan-new，全量后期。全文 `DISCUSS_HARNESS_AB_SPACE.md` | `make harness-ab-space` |
 | **125** | FIXED | Soft 近满时维护仍守预算，回收偏晚（空间峰/可写性） | verified 机制：`space_accel` 近满视同 backlog + NOSPACE 前 `hw_reclaim`。**消融**（`harness-ab-space` 2026-11-04）：A1/A2×3/A3 峰与消融臂无差 ⇒ **Soft 默认关**；旋钮保留。leading：A2 峰顶在 `user_lim`；A1/A3 不近满。见 `backup/harness-ab-space/VERDICT.md` | `c3` · `make harness-ab-space` |
 | **126** | NOTE | Soft A1 峰值归因落地 | **verified Soft A1**（`make soft-a1`）：peak **3428 / 1.860×**（同 harness）；插入期 6×(+311) `maxh<64`+`pend=328` ⇒ **HOLE_STARVE**；峰提交 `r0=1.333` `pend=987` L3 波；recount 后 **dead/live=0.023 ⇒ 勿开 P2c**。见 `backup/soft-a1/VERDICT.md` · `bench/probe/soft_a1.cpp` | `make soft-a1` |
@@ -63,6 +63,20 @@
 | **153** | FIXED | TSan：多写者 `maint_loop` 竞态 `starve_prom_defer_` | verified：CI `make asan` / 本地 `TSAN_OPTIONS=halt_on_error=1 setarch -R tsan_w1` 报 data race@2021/2044；多写者 commit 放锁后并发进 maint_loop。排除：仅 Soft Post 假象（w1 未 Soft）；排除假阳性（halt 复现）。修：`ml_mu_` 串行 maint_loop/maintain/soft_idle；commit 路径 try_lock | `w1` · `make asan` tsan_w1 |
 | **154** | FIXED | CI `tsan_g17` 逻辑 FAIL（asan_g17 绿） | leading→verified 组合：① mode3 + ml_mu_ try_lock 失败时未 kick ⇒ 后台可饿（补 kick）；② TSan 下 get-during-sync 20 ms / 窗口半数过严（放宽预算+加长 sync delay）；③ Makefile `tail -1` 吞子段 FAIL。本地 stress×15 曾全绿 ⇒ CI 时序敏感 | `g17` TSan 预算 · asan 目标日志 |
 | **155** | NOTE | v0.2.0 发布 | Soft 默认 Post + P2 Soft-on + peers-post + Strict CI 绿（坑 151–154）；说明 `RELEASE_NOTES_v0.2.0.md` | tag `v0.2.0` |
+| **156** | NOTE | 并发错峰 A：双 MemTable / flush 出锁 | S10：tip+osz 免 probe；write ~0.16× settle ~0.005×。peers（S10 后）：Soft Post sync insert SQL **1.17×** LMDB **0.69×**；space SQL **1.12×** LMDB **0.47×**；dual on sync insert +19% SQL、空间不变。**Negate-keep** | `VERDICT_DUAL_MEM_S10.md` · `PEERS_DUAL.md` · `g18` |
+| **157** | NOTE | peers 缺口：Post 记债 free_ 扫 + range k1 | verified：Post `soft_idle_tidy_after_` 每次 durable commit `tidy_snap→free_` 全扫；cheap=只看 `runs_.size()` ⇒ Soft sync insert **0.94×** snap（5 轮中位），update/get/range 无 >5% 回归 ⇒ **KEEP**。range k1 快路径 3 轮无胜 ⇒ **Negate 已删**。range vs LMDB ~2.4× 在 cursors=1 后仍在：leading=每 select open/prime vs LMDB 复用游标+mmap，非 k-way | `VERDICT_POST_DEBT_K1.md` · `set_soft_post_debt_snap` |
+| **158** | NOTE | range open 税（peers rows/scan≈1） | verified：Post repay 后 open 占 select **~83%**、rows/scan≈1。刀：空 mem 跳 `mem_sorted` + 单段 `try_prime_oneseg_`。同库交叉 5 轮中位 range **0.88–0.90×** ⇒ **KEEP**。剩余 open≈页 memcpy/load；vs LMDB 仍受复用游标+mmap 地板 | `VERDICT_RANGE_OPEN_FAST.md` · `set_range_open_fast` · `probe_xab.cpp` |
+| **159** | NOTE | Soft 工作分布 + 经典 flush tip | verified 分布：sync wall **97% commit**、~**81% phase2 I/O**。phase2 双屏障属契约；async+group 才是 I/O 轴。tip 语义见 162/163 | `WORK_DIST.md` · `set_flush_tip` |
+| **160** | NOTE | range 页视图免 PAGE memcpy | verified：open 占 select ~83% 后剩余大头是 fill 拷页。Soft `configure_deploy` 开 `range_page_view`（钉 `page()` pin，跳过 memcpy）。同库交叉中位 range **0.72–0.80×** ⇒ **KEEP**。约束：select/scan 回调勿 get/page | `VERDICT_RANGE_PAGE_VIEW.md` · `set_range_page_view` |
+| **161** | NOTE | Soft 1 行窗首填预取白烧 | verified：Post repay peers rows/scan≈1 时 `Cur::fill` 仍 prefetch PF=8。刀=翻页才预取（`range_pf_eager=false` Soft 默认）。同库 short **0.73–0.86×** eager；full ≈中性 | `VERDICT_RANGE_PF_DEFER.md` · `ablate_range_pf_defer.sh` · `set_range_pf_eager` |
+| **162** | FIXED | flush_tip 更新漏死账（S9） | verified：159b 首写不写 tip + S9 tip-miss 跳过 probe ⇒ live 漂移。中间修 tip 全量写仍不足（见 163） | `f1` · `VERDICT_FLUSH_TIP_162.md` |
+| **163** | FIXED | tip.osz 跨 TRIM 陈旧 ⇒ g16 账漂移 | verified：经典 tip 信 `DualTip.osz` 在 RUN_TRIM/分片后双计 dead（acct live 偏低）。修：经典路径 **仅 bloom 跳首写**、更新一律 `probe_prev`；TRIM bump `dual_tip_gen_`。`f1`/`g16`/`ci-smoke` 绿；消融 insert **0.83×** ⇒ **KEEP tip 默认 on**。完整 peers：`PEERS_FULL.md` | `g16` · `ablate_flush_tip.sh` · `peers_full_ab.sh` |
+| **164** | NOTE | Soft 读路径：oneseg select / prime / get | verified：全表 `limit=0` oneseg KEEP；短窗 oneseg 曾 1.22×（Cur{} 清 PAGE，见 165）。get 单段跳 bloom | `VERDICT_RANGE_ONESEG_SEL.md` |
+| **165** | NOTE | Cur::reuse + 单段跳 may_have + get 免双锁 | verified：**根因**短窗 oneseg 慢=Cur{} 清 4KB buf。刀：`reuse()`、单段跳 sp 二分、`get_at_locked_`。open_fast 包 short **0.65×** full **0.59×**。peers sync range/LMDB **1.70→1.32×**、async **1.39→1.16×** | `VERDICT_165.md` · `ablate_range_165.sh` · `*_165.log` |
+| **166** | NOTE | Cursor 单 Cur next 快路径；短窗 oneseg 再消融 | verified：空 mem+单 Cur 免 k/mem 归并壳。短窗 oneseg 再开 ~1.0× ⇒ **仍 Negate**。完整 peers **×5 中位**：sync range/LMDB **1.31×** [1.12–2.19]、get **1.06×**；async range **1.19×** get **1.02×**；tip KEEP insert 1.01×；dual Negate-keep。单次 peers 噪声大勿当 KPI | `VERDICT_166.md` · `PEERS_FULL_MED.md` · `peers_full_median.sh` |
+| **167** | NOTE | 短窗地板：emit≈1；fences+seek load Negate | verified：peers 短窗 **emit_avg=1.0**；cache≥512 已满命中。`Cur::load` fences+首填 seek 配对 **1.29×** ⇒ **Negate 已回滚**。剩余=随机首页 touch + 壳（vs LMDB mmap）。勿再堆无消融胜的 load 微调 | `VERDICT_167.md` · `ablate_r167_paired.cpp` · `probe_rem167` |
+| **168** | NOTE | 全量评 asan「假死」观感 | verified：`make asan` 墙钟 ~47 min **未卡死**（循环编跑 + g13 ASan 单测 234 s）；`\| tail -1` 管道缓冲导致长时间无新行。TSan 仍需 `setarch -R`（坑 122）。全量 PASS：`backup/eval-full/2026-11-05/EVAL_FULL.md` | `scripts/eval_full.sh` · `asan_progress.sh` |
+| **169** | NOTE | 工程债完全拆头 | verified：机械切 `fcs.h`→`fcs_codec/dir/sync/store.h` + 薄聚合；**无逻辑改写**；`make bins` + `ci-smoke` + `make test` PASS；持久备份 `backup/eng-debt-split/`（含 `fcs.h.pre-split`，**保留**）。脚本 `scripts/split_fcs_header.py`。门禁见 `ENG_DEBT_SPLIT.md` | `make test` · `backup/eng-debt-split/` |
 
 ## 新坑模板
 

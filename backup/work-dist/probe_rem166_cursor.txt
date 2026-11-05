@@ -1,0 +1,6 @@
+runs=1 cells=100 open_fast=1 page_view=1 oneseg=1
+split open=0.237 next=0.223 rows=1.00 open_frac=0.52 total=0.460
+select API K100=0.398 lim1=0.420
+get rand=0.313 seq=0.147 hot=0.133
+page_view on/off=0.653 0.801 0.728
+shared_reads get 0.341→0.268 (0.786×) sel 0.367→0.366 (0.996×)

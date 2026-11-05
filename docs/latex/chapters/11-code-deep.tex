@@ -2,13 +2,13 @@
 \label{sec:code-deep}
 
 本章面向\textbf{只熟悉基础数据库概念}的读者（表、主键、事务、提交、索引即可）。
-不要求读过 LSM / B+ 树论文。每一层先给「你已经知道的类比」，再落到 \texttt{embdb/x/include/fcs.h} 里的真实结构与调用链，并配图与\textbf{可手算的小例子}。
+不要求读过 LSM / B+ 树论文。每一层先给「你已经知道的类比」，再落到 \texttt{embdb/x/include/} 头文件里的真实结构与调用链，并配图与\textbf{可手算的小例子}。
 
 \begin{mdframed}[linecolor=boxline,linewidth=0.5pt,innertopmargin=4pt,innerbottommargin=4pt]
 \textbf{阅读约定}
 \begin{itemize}[leftmargin=1.4em,itemsep=0.2em]
-  \item 真相源：\texttt{include/fcs.h}（模块 \texttt{M01}--\texttt{M07}）、\texttt{common.h}（\texttt{PAGE=4096}）、\texttt{blockdev.h}。
-  \item 公开入口：\texttt{Store::put/get/del/commit/\ldots}；内部名出现时会标明文件位置含义。
+  \item 公开入口：\texttt{\#include "fcs.h"}（薄聚合）。实现按模块切开（坑 169）：\texttt{fcs\_codec.h}（M01--M02）、\texttt{fcs\_dir.h}（M03--M05）、\texttt{fcs\_sync.h}（M06）、\texttt{fcs\_store.h}（M07 Store）。另：\texttt{common.h}（\texttt{PAGE=4096}）、\texttt{blockdev.h}。
+  \item 公开 API：\texttt{Store::put/get/del/commit/\ldots}；内部名出现时标明所属头文件。
   \item 「演示」数字是教学用的微型库，\textbf{不是} ROUND 实测 KPI。
 \end{itemize}
 \end{mdframed}
@@ -495,7 +495,7 @@ for seg in C.segs from newest:    // 先 Run B，再 Run A
 \small
 \begin{tabular}{@{}llp{6.8cm}@{}}
 \toprule
-调用 & 大致位置（\texttt{fcs.h}） & 你要盯的不变量 \\
+调用 & 大致位置（\texttt{fcs\_store.h} 等） & 你要盯的不变量 \\
 \midrule
 \texttt{put}/\texttt{del} & \texttt{M07h} & 只动 MemTable（大值可先写溢出链） \\
 \texttt{get} & \texttt{M07e} \texttt{get\_at} & 先 mem 后段新$\to$旧；墓碑停 \\
@@ -595,7 +595,7 @@ s.polish();                     // 可选：对外服务前整理
 \begin{itemize}[leftmargin=1.4em]
   \item \texttt{common.h}：\texttt{RC}、\texttt{PAGE}、CRC/哈希。
   \item \texttt{blockdev.h}：设备读写抽象。
-  \item \texttt{layout.h}：更偏 XDB 叶页槽布局；FCS 数据页以 \texttt{fcs.h} 的数据页头为准，读格式章即可。
+  \item \texttt{layout.h}：更偏 XDB 叶页槽布局；FCS 数据页以 \texttt{fcs\_codec.h}/\texttt{fcs\_store.h} 的数据页头为准，读格式章即可。
 \end{itemize}
 
 % =============================================================================

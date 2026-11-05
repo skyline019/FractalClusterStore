@@ -1,12 +1,12 @@
-# 数据库内核全量评估（第 17 轮定稿 = 产品主树，滚动至 **2026-11-04**）
+# 数据库内核全量评估（第 17 轮定稿 = 产品主树，滚动至 **2026-11-05**）
 
-对象：`include/fcs.h`（FCS / XDB v3，**~8626 行**）+ `blockdev.h` / `layout.h` / `common.h`。  
+对象：FCS / XDB v3 — 公开 `#include "fcs.h"`（薄聚合）+ `fcs_codec/dir/sync/store.h`（坑 **169** 拆头；Store≈8.7k 行）+ `blockdev.h` / `layout.h` / `common.h`。  
 **公开标签：** [v0.2.0](RELEASE_NOTES_v0.2.0.md)（Soft 默认 Post）；前序 [v0.1.0](RELEASE_NOTES_v0.1.0.md)。  
-基线链：EVAL12 → R13–R15 → **ROUND16（P2a+P2b）** → **ROUND17** → **ROUND18** → **P2 Soft-on（坑 144）** → **SoftCons::Post 默认（坑 150/151）**。  
-peers：`backup/peers-r17/`；`backup/peers-soft/`（2026-10-21）；**现行产品 Soft+Post** `backup/peers-post/`（2026-11-04）；P2 消融 `backup/peers-p2/`。  
+基线链：EVAL12 → R13–R15 → **ROUND16–18** → **P2 Soft-on（144）** → **Post 默认（150/151）** → **读刀 158–166 / tip 163 / 全量评 2026-11-05** → **拆头 169**。  
+peers：历史 `peers-r17/` · `peers-soft/` · `peers-post/`；**现行 KPI** [`backup/eval-full/2026-11-05/`](../../backup/eval-full/2026-11-05/EVAL_FULL.md)。  
 分叉归档：本机「小预留 TRIM 关」见 `docs/00-entry/BATTLE.md`、`backup/r18/swept/docs-hist/`（**非产品默认**）。
 
-数字标注 **[实测]** / **[归档]** / **[推断]**。沙箱 2 核抖动常见；peers 单次 WSL。
+数字标注 **[实测]** / **[归档]** / **[推断]**。沙箱抖动常见；**peers 以 ×5 中位为准**。
 
 ---
 
@@ -15,16 +15,16 @@ peers：`backup/peers-r17/`；`backup/peers-soft/`（2026-10-21）；**现行产
 | 维度 | 结论 | 最大缺口 |
 |---|---|---|
 | **定位** | u64 键有序 KV 嵌入式内核：追加 run + 单元目录 + 分层归并 + **分片 TRIM**；不是 B+ / 不是 SQL | 键固定 u64；单进程 |
-| **正确性** | 全量 `make test` / `ci-smoke` 绿（g15–**g18**、c2–c6、soak1…）；PIT≤151 | 无小时 soak 标真拔电；无多进程锁 |
+| **正确性** | **2026-11-05**：`make test` + `soak-smoke` + `make asan`（含 TSan）**PASS**；拆头后门禁再绿（坑 169）；PIT≤169 | 无小时 soak 标真拔电；无多进程锁 |
 | **耐久** | 双槽 SB + 提交点 sync；页复用看 **`sb_synced_`**；`durable_vers()`；可选 `set_verify_reads` | 阶段二失败窗口变宽；`get` 默认不查数据 CRC |
-| **写** | Soft async：≪ SQLite / ≪ LMDB（insert **~0.05–0.06×**，peers-post） | Soft sync 与 SQL 同量级抖动 |
-| **读** | 点查强于 SQL、对 LMDB 持平；**Post+repay** 后 range **反超 SQL**、对 LMDB **~2.5×** | 未 repay 的 live Soft range vs LMDB **~13–15×** |
-| **空间** | Post+repay sync **2.50 MB** @50k（≈SQL、**0.47×** LMDB）；async **2.15 MB**；Soft A1 峰 ~1.65× | P2c 稀疏产物未做 |
+| **写** | Soft async insert **~0.07–0.10×** SQL/LMDB；sync ≈SQL / **≲LMDB** | Soft sync durable = phase2 I/O 地板 |
+| **读** | get ≪ SQL、≈LMDB；Post+repay 后 range ≪ SQL、对 LMDB **~1.2×** | 未 repay live Soft range vs LMDB 仍可达十几倍 |
+| **空间** | sync **2.50 MB** @50k（1.12× SQL、**0.47×** LMDB）；async **2.15 MB**；Soft A1 peak_x **1.84** | P2c 未开（dead/live 门） |
 | **延迟** | 提交 fsync **出锁**；读者 max 残余 **~3–4 ms** = 维护单元 | 锁内仍有 `flush_mem`；多写者不加速 |
 | **寿命** | seq/ver **u64** 盘格式；惰性升 v2 | P2c 仅留 op 号 |
-| **工程** | CONSTRAINTS + PIT + 消融门禁；单头 ~8.6k 行 | 拆头计划中（ENG_DEBT_SPLIT） |
+| **工程** | CONSTRAINTS + PIT + 消融门禁；头已拆（坑 169） | 长 soak / 真掉电仍开；见 ENG_DEBT_SPLIT |
 
-**一句话**：嵌入式有序 KV——**写路径 + 空间 + 点读**是强项；产品 Soft = **Post（写中记债）+ 读前 `soft_cons_repay`/`polish`**；相对 LMDB range 仍是「写换读」地板（~2.5× 单 run），勿默改读模型追平。
+**一句话**：嵌入式有序 KV——**写 + 空间 + 点读**强；产品 Soft = **Post + repay** + tip/读刀；对 LMDB 短窗 range ~**1.2×** 是非 mmap 地板（坑 167），勿默改读模型。卷宗：[`EVAL_FULL.md`](../../backup/eval-full/2026-11-05/EVAL_FULL.md)。
 
 ---
 
@@ -49,8 +49,8 @@ store ── cell 目录（键区间）── Seg(run, 页区间)
 
 | 层 | 覆盖 | 状态 |
 |---|---|---|
-| 回归 | g15–**g18**（护洞/整理态/碎片 A/并洞 B）+ 全套 | `backup/peers-soft/make_test.log` **MAKE_TEST_OK**（2026-10-21）；历史 `backup/r17/test2.log` |
-| 消毒 | ASan（含 g16/g17）；TSan g17 多写者 | `backup/r17/asan.log` |
+| 回归 | g15–**g18** + 全套 | **2026-11-05** `eval-full/.../make_test.log` **PASS**；历史 peers-soft/r17 |
+| 消毒 | ASan+UBSan+TSan（`setarch -R`） | **2026-11-05** `asan.log` **PASS**（~47 min，非卡死·坑 168） |
 | 格式 | h2：v2 golden + v1 只读→升级→重开 | golden 须 `FCS2`（根）/ `FCSB`（`v1/`） |
 | 掉电 | f3 / g6 / h3 VolDev | 绿 |
 | 模糊 | g5 / h1 | 绿 |
@@ -91,20 +91,21 @@ store ── cell 目录（键区间）── Seg(run, 页区间)
 | vs LMDB Soft sync | **0.88** | **0.66** | 1.52 | 11.4 | 3.20 / 5.54 MB |
 | vs LMDB Soft async+cons+shr | **0.07** | **0.06** | 0.75 | 2.06 | **2.25 / 5.54 MB** |
 
-#### 3.1c Soft + Post 默认 [实测 `backup/peers-post/`，2026-11-04 · 坑 151]
+#### 3.1c Soft + Post 默认 [实测全量评 2026-11-05 · 坑 151+158–166]
 
-产品 Soft：`configure_deploy` → 护洞 + P2 + **SoftCons::Post**；写后 **`soft_cons_repay`**（或 `polish`）。复现：`make peers-post` / `bash scripts/peers_post_ab.sh`。  
-表中 **Post** = 产品 Soft；**base** = 消融 `soft_cons=Off`（live 写换读）。
+产品 Soft：`configure_deploy` → 护洞 + P2 + **Post** + tip + 读刀；写后 **`soft_cons_repay`**。  
+复现：`bash scripts/eval_full.sh` / `R=5 bash scripts/peers_full_median.sh`。  
+表中比值为 **×5 轮比值中位**（推荐）；归档 peers-post（2026-11-04）仍见历史卷。
 
-| 配置 | insert | update | get | range | space FCS / 对端 |
+| 配置 | insert | update | get | range | space FCS |
 |---|---:|---:|---:|---:|---|
-| vs SQL Soft sync **Post** | 1.18 | **0.46** | **0.21** | **0.44** | **2.50 / 2.24 MB** |
-| vs SQL Soft async+cons+shr **Post** | **0.06** | **0.06** | **0.24** | **0.57** | **2.15 / 2.24 MB** |
-| vs LMDB Soft sync **Post** | **0.87** | **0.49** | **0.96** | 2.54 | **2.50 / 5.29 MB** |
-| vs LMDB Soft async+cons+shr **Post** | **0.05** | **0.05** | ~1.0 | ~2–3 | **2.15 / 5.29 MB** |
-| Soft sync live Off（未 repay）range÷LMDB | — | — | — | **~15×** | 3.05 / 5.29 |
+| vs SQL Soft sync **Post** | **0.96** | **0.63** | **0.24** | **0.26** | **2.50 MB**（1.12× SQL） |
+| vs SQL Soft async+group+cons+shr | **0.10** | **0.07** | **0.20** | **0.22** | **2.15 MB**（0.96× SQL） |
+| vs LMDB Soft sync **Post** | **0.95** | **0.59** | **0.97** | **1.18** | **2.50 MB**（**0.47×** LMDB） |
+| vs LMDB Soft async+group+cons+shr | **0.07** | **0.07** | **1.06** | **1.17** | **2.15 MB**（**0.41×** LMDB） |
+| Soft sync live Off（未 repay）range÷LMDB [归档] | — | — | — | **~15×** | 3.05 MB |
 
-**读法**：Post 写路径税≈0（相对 Off）；repay 后 sync range **反超 SQL**；对 LMDB ~2.5× = 坑 145 单 run 地板。Soft A1 写期峰 Post vs Off **+0.4%**（`VERDICT_POST_SOFT_ON.md`）。
+**读法**：repay 后 range **反超 SQL**；对 LMDB 从曾 ~2.5× 压到 **~1.2×**（读刀 158–166；短窗 emit≈1 地板见坑 167）。tip KEEP；dual Negate-keep。Soft A1 peak_x **1.84**（本全量评）。
 
 **部署整理 / 常驻整理态**：
 
@@ -181,7 +182,7 @@ s.set_soft_cons(Store::SoftCons::Off);  // 消融回 live 写换读
 | 5 | `get` 不查 CRC | 低~中 | 建议 `set_verify_reads` |
 | 6 | 多写者不加速 | 低 | 设计 |
 | 7 | 无 soak / 真掉电 / 多进程 | 覆盖 | 流程债 |
-| 8 | 单头 ~8.6k 行 | 工程 | ENG_DEBT_SPLIT 计划中 |
+| 8 | 单头 ~8.6k 行 | 工程 | **已拆**（坑 169 · ENG_DEBT_SPLIT 完成） |
 | — | 合并峰 ≈2×「格式不可避」 | ~~高~~ | **R16/R17 已打破叙事** |
 | — | 提交 fsync 挡读者 | ~~高~~ | **R17 已解** |
 | — | 作业 TRIM 丢键（坑 110） | ~~高~~ | **R16 挂链+TRIM 闭环** |
@@ -208,7 +209,7 @@ LittleFS：**暂缓**（非有序 KV）。
 
 1. **P2c / 稀疏产物**（可选）：再压峰勿指望并洞 B / cliff。  
 2. **组提交 / 双 memtable**（DISCUSS15）——卸锁内 `flush_mem`（须消融）。  
-3. 工程：长 soak、真掉电矩阵、`fcs.h` 拆头（行为零 diff）、默认仍关的 `verify_reads`。  
+3. 工程：长 soak、真掉电矩阵；`fcs.h` 拆头已完成（坑 169）；默认仍关的 `verify_reads`。  
 4. **不要**：为追 LMDB range 默改读模型；勿把 Eager 升 Soft 默认。
 
 ---
@@ -217,11 +218,13 @@ LittleFS：**暂缓**（非有序 KV）。
 
 ```sh
 cd embdb/x
-make test
-make ci-smoke
-make peers-post          # → backup/peers-post/PEERS_POST.md
-make soft-post-on        # Post 升默门禁 → VERDICT_POST_SOFT_ON.md
-# 历史：bash backup/peers-soft/run_peers_soft.sh · peers-r17/
+bash scripts/eval_full.sh          # test+soak+asan+peers×5+soft-a1 → backup/eval-full/<date>/
+# 或分项：
+make test && make soak-smoke && make asan
+R=5 bash scripts/peers_full_median.sh
+make soft-a1
+# 进度可见的 asan：bash scripts/asan_progress.sh
+# 历史：make peers-post · soft-post-on · peers-soft/ · peers-r17/
 ```
 
-历史：`backup/r18/swept/docs-hist/`；本文件是 **R16–R18 + P2 Soft-on + Soft Post 默认** 的滚动全量结论。
+历史：`backup/r18/swept/docs-hist/`；本文件是 **R16–R18 + Post + 读刀/tip + 2026-11-05 全量评** 的滚动结论。
