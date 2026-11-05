@@ -8,18 +8,19 @@ flush_tip = true             // 163 KEEP（bloom 跳首写；勿 tip.osz）
 range_open_fast = true       // 158 + 164b/165 reuse + 跳 may_have
 range_page_view = true       // 160
 range_pf_eager = false       // 161 翻页才预取
-range_oneseg_sel = true      // 164/165：仅 limit==0 全表直扫（oneseg_cur_）
-dual_mem = false             // 156 Negate-keep
+range_oneseg_sel = true      // 164/165/171：仅 limit==0；oneseg 内无 limit 截断枝
+dual_mem = false             // 156 Negate-keep（收敛期保留 API）
 // 166：Cursor::next 单 Cur 快路径（无旋钮；短窗走此路）
 ```
 
-## 坑 166
+## 坑 166 / 171
 
 | 刀 | 证据 | 判决 |
 |----|------|------|
 | Cursor 空 mem+单 Cur `next` | sync range/LMDB **1.09×** | **KEEP** |
-| 短窗 oneseg 再开 | median ~1.0× | **Negate**（维持 limit=0） |
+| 短窗 oneseg 再开 | median ~1.0× | **Negate**；171 删 oneseg `limit` 死枝 |
 | 去掉 oneseg 预扫 | 已吐行截断风险 | **勿删** |
+| dual_mem / space_accel / P1* | Soft 勿升；消融测仍用 | **保留 API**（171） |
 
 ## Peers 产品臂（全量评 2026-11-05 · ×5 比值中位）
 

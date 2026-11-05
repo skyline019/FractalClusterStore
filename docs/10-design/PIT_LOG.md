@@ -18,7 +18,7 @@
 ## 编号
 
 - 历史坑 1–112+ 见 DESIGN3 §12 / `fcs-pits`（本表从**工程债轨起**补登记缺口与新号）。
-- 下一可用号：**170**。
+- 下一可用号：**173**。
 
 ## 工程债轨登记
 
@@ -77,6 +77,9 @@
 | **167** | NOTE | 短窗地板：emit≈1；fences+seek load Negate | verified：peers 短窗 **emit_avg=1.0**；cache≥512 已满命中。`Cur::load` fences+首填 seek 配对 **1.29×** ⇒ **Negate 已回滚**。剩余=随机首页 touch + 壳（vs LMDB mmap）。勿再堆无消融胜的 load 微调 | `VERDICT_167.md` · `ablate_r167_paired.cpp` · `probe_rem167` |
 | **168** | NOTE | 全量评 asan「假死」观感 | verified：`make asan` 墙钟 ~47 min **未卡死**（循环编跑 + g13 ASan 单测 234 s）；`\| tail -1` 管道缓冲导致长时间无新行。TSan 仍需 `setarch -R`（坑 122）。全量 PASS：`backup/eval-full/2026-11-05/EVAL_FULL.md` | `scripts/eval_full.sh` · `asan_progress.sh` |
 | **169** | NOTE | 工程债完全拆头 | verified：机械切 `fcs.h`→`fcs_codec/dir/sync/store.h` + 薄聚合；**无逻辑改写**；`make bins` + `ci-smoke` + `make test` PASS；持久备份 `backup/eng-debt-split/`（含 `fcs.h.pre-split`，**保留**）。脚本 `scripts/split_fcs_header.py`。门禁见 `ENG_DEBT_SPLIT.md` | `make test` · `backup/eng-debt-split/` |
+| **170** | NOTE | 进入收敛运维 | verified 决议：优化弧 157–167 + 拆头 169 收口后冻结 Soft 面；禁止未退出前堆热路径刀/升 Negate-keep。允许正确性/文档/示例/工程债运维。食谱 `SOFT_RECIPE.md`；示例 `make soft-example`；章程 `CONVERGE_OPS.md` | `docs/30-discuss/CONVERGE_OPS.md` |
+| **171** | NOTE | 收敛删死码审计 | verified：① 短窗 oneseg — 删 `select_oneseg_` limit 死枝（入口本就 `limit==0`）；② 经典 tip.osz — 已无（163）；③ dual_mem / space_accel/P1* — Negate-keep+消融测，**保留 API**；④ fence-seek — 167 已回滚无残留。表见 `CONVERGE_OPS.md` | `make ci-smoke` · `make soft-example` |
+| **172** | NOTE | 收敛期小时 soak | verified：`FCS_SOAK_SEC=3600` Soft+`verify_reads`：ops=745228 commits=106694 verifies=372 runs=19 **PASS**（墙钟 ~56.6 min）。**不是**真拔电矩阵。日志 `backup/converge/soak_3600_20261105.log` | `make soak` · `ENG_DEBT_SOAK_CRC.md` |
 
 ## 新坑模板
 

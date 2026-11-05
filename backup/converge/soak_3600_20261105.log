@@ -1,0 +1,2 @@
+soak1 sec=3600 ops=745228 commits=106694 verifies=372 runs=19
+PASS

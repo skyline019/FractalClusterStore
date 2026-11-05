@@ -1355,9 +1355,10 @@ public:
     };
 
     // 坑 164/165：Post repay 后空 mem + 单段。直扫复用 oneseg_cur_（勿 Cur{} 清 PAGE）。
+    // 坑 166/171：仅全表（select 侧已闸 limit==0）；短窗 oneseg 消融 Negate ⇒ 无 limit 截断枝。
     // 返回 true=已处理；false=多段/池忙 ⇒ 调用方走 Cursor。
     template <class F>
-    bool select_oneseg_(u64 lo, u64 hi, F&& fn, u32 limit, u64 view) {
+    bool select_oneseg_(u64 lo, u64 hi, F&& fn, u64 view) {
         if (oneseg_busy_.exchange(true, std::memory_order_acquire)) return false;
         struct Guard {
             std::atomic<bool>& b;
@@ -1373,7 +1374,6 @@ public:
             if (c->segs.size() != 1) return false;
         }
         Cur& cur = oneseg_cur_;
-        u32 emitted = 0;
         for (; it != cells_.end() && it->first < hi; ++it) {
             Cell* c = it->second;
             const u64 clo = std::max(lo, c->lo), cend = std::min(hi, c->hi);
@@ -1415,7 +1415,6 @@ public:
                     v = cur.val();
                 }
                 if (!fn(h.key, v, l)) return true;
-                if (limit && ++emitted >= limit) return true;
                 if (!cur.advance(this, h.len)) break;
             }
         }
@@ -1428,9 +1427,9 @@ public:
         if (hi > IDX_BASE) hi = IDX_BASE;          // 默认只查用户键空间
         if (RC er = ensure_ready(); er != RC::OK) return er;
         const u64 vw = view ? view : open_vers();
-        // 坑 164/166：空 mem + limit==0 ⇒ 单段直扫（短窗 oneseg 仍 Negate ~1.0×）
+        // 坑 164/166/171：空 mem + limit==0 ⇒ 单段直扫；短窗（limit!=0）永不进 oneseg
         if (range_oneseg_sel_ && offset == 0 && limit == 0 && mem_.empty() && !imm_live_) {
-            if (select_oneseg_(lo, hi, fn, limit, vw)) return RC::OK;
+            if (select_oneseg_(lo, hi, fn, vw)) return RC::OK;
         }
         CursorRef ref(this);
         Cursor& cur = *ref;
@@ -5994,9 +5993,9 @@ private:
         for (u32 mi : mord) keys.push_back(src.at(mi).key);
 
         if (!dual_mem_ && flush_tip_) {
-            // 坑 159b/162/163：经典路径只用 bloom 跳过「真正首写」的 settle；更新一律 probe。
-            // 曾用 DualTip.osz 免 probe，但 TRIM/分片后 tip 易陈旧 ⇒ g16 账漂移（acct live 偏低）。
-            // dual_mem 仍走 tip（S9/S10）；此处不写 dual_tip_、不传 prev。
+            // 坑 159b/162/163/171：经典路径只用 bloom 跳过「真正首写」的 settle；更新一律 probe。
+            // 曾用 DualTip.osz 免 probe，TRIM/分片后 tip 陈旧 ⇒ g16 账漂移。经典**永不**传 prev。
+            // dual_mem 仍走 tip.osz（S9/S10 Negate-keep 臂）；此处不写 dual_tip_、不传 prev。
             std::vector<u64> sk;
             sk.reserve(keys.size());
             bool full = !flush_seen_.bits;   // 尚未建 bloom ⇒ 本批全 probe（等同冷启动）

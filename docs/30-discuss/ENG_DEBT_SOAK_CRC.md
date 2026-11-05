@@ -17,12 +17,13 @@
 |----|------|
 | 二进制 | `tests/soak1.cpp` |
 | 短门 | `make soak-smoke` → `FCS_SOAK_SEC=30`（可调） |
-| 长跑 | `FCS_SOAK_SEC=3600 make soak`（人工/夜间） |
+| 长跑 | `FCS_SOAK_SEC=3600 make soak`（人工/夜间 / 收敛运维） |
 | 内容 | 写混合 + 每 N 次 `verify` + 偶发 `scrub` + reopen |
 | **不是** | 真拔电矩阵（仍靠 f3/g6/h3） |
+| 收敛期日志 | `backup/converge/soak_3600_*.log`（坑 172） |
 
 ## 完成判据
 
 - `c2` 进入 `make test`  
 - `soak-smoke` 在 Makefile 可选目标；CONSTRAINTS 已写明  
-- PIT_LOG 120 FIXED；121 在短门稳定后可改为 FIXED（长时仍建议周期性跑）  
+- PIT_LOG 120 FIXED；121 短门 FIXED；长时见坑 **172** NOTE（仍不替代拔电）  

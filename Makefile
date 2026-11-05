@@ -30,8 +30,15 @@ BINS     := $(addprefix $(BIN)/,$(TESTS))
 #   -DXDB_CORRUPT_TRACE   CORRUPT 返回点定位
 #   -DXDB_COMMIT_CHECK    每次提交后全量校验（极慢）
 
-.PHONY: all test bins ci-smoke ci asan asan-new dbg clean soak-smoke soak harness-ab-space soft-a1 soft-a1-p1 soft-a1-bf soft-a1-bf-lat soft-a1-bf-ablate soft-a1-p2 soft-a1-p2-gate soft-a1-p2-tax soft-p2-on peers-p2 soft-post-on peers-post frag-trace
+.PHONY: all test bins ci-smoke ci asan asan-new dbg clean soak-smoke soak soft-example harness-ab-space soft-a1 soft-a1-p1 soft-a1-bf soft-a1-bf-lat soft-a1-bf-ablate soft-a1-p2 soft-a1-p2-gate soft-a1-p2-tax soft-p2-on peers-p2 soft-post-on peers-post frag-trace
 all: test
+
+# 坑 170：收敛期 Soft 食谱示例（不进 make test）
+soft-example: $(BIN)/soft_u64_log
+	$(BIN)/soft_u64_log
+
+$(BIN)/soft_u64_log: examples/soft_u64_log.cpp include/*.h | $(BIN)
+	$(CXX) $(CXXFLAGS) $(INC) $< -o $@
 
 # 仅编译全部测试二进制（CI compile 门）
 bins: $(BINS)

@@ -5,22 +5,33 @@
 embdb/x/
   include/     fcs.h（聚合）· fcs_codec/dir/sync/store.h
                common.h · blockdev.h · layout.h · store.h(v2)
+  examples/    soft_u64_log（make soft-example）
   tests/       回归 + golden/
   bench/       bench2--7；probe/
   docs/        00-entry / 10-design / 20-rounds / 30-discuss
     docs/latex/  本文档源 → build/main.pdf
   web/         fcs-anim / fcs-pits 源
-  backup/      peers-post · soft-a1 · eng-debt-split · 轮次快照
+  backup/      peers-post · eval-full · eng-debt-split · converge/
   CONSTRAINTS.md   质量契约（不可静默削弱）
-  AGENTS.md        Agent 入口
+  AGENTS.md        Agent 入口（收敛 ACTIVE）
 \end{verbatim}
 
 \subsection{质量门禁}
 \begin{itemize}[leftmargin=1.6em]
   \item \textbf{CONSTRAINTS.md}：Floor（compile/smoke/test/asan）+ Soft 默认不得退回 mode~0 / 关护洞 / 关 Post。
-  \item \textbf{PIT\_LOG.md}：新正确性坑先占号；收工登记 NOTE（坑 152--155：CI 假红、TSan maint、tsan\_g17、v0.2.0；\textbf{169 拆头}）。
+  \item \textbf{PIT\_LOG.md}：新正确性坑先占号；收工登记 NOTE（至 \textbf{172}：拆头 / 收敛 / 删死码 / 小时 soak）。
   \item Strict CI：main \textbf{不} \texttt{cancel-in-progress}（仅 PR 取消；坑 152）。
-  \item 本地：\texttt{make ci-smoke} / \texttt{make ci} / \texttt{make asan}；Soft peers：\texttt{make peers-post}。
+  \item 本地：\texttt{make ci-smoke} / \texttt{make ci} / \texttt{make asan}；示例 \texttt{make soft-example}；长 soak：\texttt{FCS\_SOAK\_SEC=3600 make soak}。
+\end{itemize}
+
+\subsection{收敛运维（坑 170--172 · ACTIVE）}
+章程：\texttt{docs/30-discuss/CONVERGE\_OPS.md}；食谱：\texttt{docs/00-entry/SOFT\_RECIPE.md}。
+\begin{itemize}[leftmargin=1.6em]
+  \item \textbf{冻结}：唯一产品入口 \texttt{configure\_deploy} + 读前 \texttt{soft\_cons\_repay}/\texttt{polish}。
+  \item \textbf{禁止}：未退出前新热路径刀、升 Negate-keep 为 Soft 默认、追 LMDB mmap range 地板。
+  \item \textbf{允许}：正确性修、文档/示例、工程债运维、有证据删死码。
+  \item 坑 171：短窗 oneseg \texttt{limit} 死枝已删；dual\_mem / space\_accel / P1* \textbf{保留消融 API}。
+  \item 坑 172：小时 soak Soft+\texttt{verify\_reads} PASS（\texttt{backup/converge/}）；\textbf{不是}真拔电矩阵。
 \end{itemize}
 
 \subsection{头文件布局（坑 169）}
@@ -38,9 +49,7 @@ D & \texttt{fcs\_store.h} & M07 Store 公开面 + 实现 \\
 \end{tabular}
 \end{center}
 依赖无环：\texttt{codec}$\,\leftarrow\,$\texttt{dir}/\texttt{sync}$\,\leftarrow\,$\texttt{store}。\\
-持久备份（\textbf{保留}）：\texttt{backup/eng-debt-split/}（含 \texttt{fcs.h.pre-split}）。\\
-计划与检查单：\texttt{docs/30-discuss/ENG\_DEBT\_SPLIT.md}。\\
-更早注释模块化还原：\texttt{backup/r18/pre-comment-modular/}。
+持久备份（\textbf{保留}）：\texttt{backup/eng-debt-split/}（含 \texttt{fcs.h.pre-split}）。
 
 \subsection{可视化}
 \begin{itemize}[leftmargin=1.6em]
@@ -51,8 +60,8 @@ D & \texttt{fcs\_store.h} & M07 Store 公开面 + 实现 \\
 
 \subsection{已知工程债}
 \begin{itemize}[leftmargin=1.6em]
-  \item \textbf{拆头已完成}（坑 169；\texttt{make test} 绿）。后续再切须行为零 diff。
-  \item 旋钮多：部署请走 \texttt{configure\_deploy}；读 SLA 走 \texttt{soft\_cons\_repay}/\texttt{polish}。
-  \item P2c（\texttt{M\_RUN\_HOLE}）仅占 op 号；\texttt{space\_accel} Soft 默认关。
-  \item 小时 soak / 真拔电矩阵未宣称覆盖。
+  \item 拆头已完成（169）；收敛 ACTIVE（170--172）。
+  \item 旋钮多：部署请走 \texttt{configure\_deploy}；读 SLA 走 repay/\texttt{polish}。
+  \item P2c 仅占 op 号；\texttt{space\_accel} Soft 默认关。
+  \item 小时 soak 已有一次 PASS 记录；\textbf{真拔电矩阵}仍未宣称覆盖（f3/g6/h3）。
 \end{itemize}

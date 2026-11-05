@@ -2,7 +2,7 @@
 
 对象：FCS / XDB v3 — 公开 `#include "fcs.h"`（薄聚合）+ `fcs_codec/dir/sync/store.h`（坑 **169** 拆头；Store≈8.7k 行）+ `blockdev.h` / `layout.h` / `common.h`。  
 **公开标签：** [v0.2.1](RELEASE_NOTES_v0.2.1.md)（拆头 + eval-full）；前序 [v0.2.0](RELEASE_NOTES_v0.2.0.md)（Soft 默认 Post）· [v0.1.0](RELEASE_NOTES_v0.1.0.md)。  
-基线链：EVAL12 → R13–R15 → **ROUND16–18** → **P2 Soft-on（144）** → **Post 默认（150/151）** → **读刀 158–166 / tip 163 / 全量评 2026-11-05** → **拆头 169**。  
+基线链：EVAL12 → R13–R15 → **ROUND16–18** → **P2 Soft-on（144）** → **Post 默认（150/151）** → **读刀 158–166 / tip 163 / 全量评 2026-11-05** → **拆头 169** → **收敛 170–172**。  
 peers：历史 `peers-r17/` · `peers-soft/` · `peers-post/`；**现行 KPI** [`backup/eval-full/2026-11-05/`](../../backup/eval-full/2026-11-05/EVAL_FULL.md)。  
 分叉归档：本机「小预留 TRIM 关」见 `docs/00-entry/BATTLE.md`、`backup/r18/swept/docs-hist/`（**非产品默认**）。
 
@@ -15,14 +15,14 @@ peers：历史 `peers-r17/` · `peers-soft/` · `peers-post/`；**现行 KPI** [
 | 维度 | 结论 | 最大缺口 |
 |---|---|---|
 | **定位** | u64 键有序 KV 嵌入式内核：追加 run + 单元目录 + 分层归并 + **分片 TRIM**；不是 B+ / 不是 SQL | 键固定 u64；单进程 |
-| **正确性** | **2026-11-05**：`make test` + `soak-smoke` + `make asan`（含 TSan）**PASS**；拆头后门禁再绿（坑 169）；PIT≤169 | 无小时 soak 标真拔电；无多进程锁 |
+| **正确性** | **2026-11-05**：`make test` + `soak-smoke` + `make asan` **PASS**；拆头再绿（169）；小时 soak Soft+CRC **PASS**（172，非拔电）；PIT≤172 | 无真拔电合同；无多进程锁 |
 | **耐久** | 双槽 SB + 提交点 sync；页复用看 **`sb_synced_`**；`durable_vers()`；可选 `set_verify_reads` | 阶段二失败窗口变宽；`get` 默认不查数据 CRC |
 | **写** | Soft async insert **~0.07–0.10×** SQL/LMDB；sync ≈SQL / **≲LMDB** | Soft sync durable = phase2 I/O 地板 |
 | **读** | get ≪ SQL、≈LMDB；Post+repay 后 range ≪ SQL、对 LMDB **~1.2×** | 未 repay live Soft range vs LMDB 仍可达十几倍 |
 | **空间** | sync **2.50 MB** @50k（1.12× SQL、**0.47×** LMDB）；async **2.15 MB**；Soft A1 peak_x **1.84** | P2c 未开（dead/live 门） |
 | **延迟** | 提交 fsync **出锁**；读者 max 残余 **~3–4 ms** = 维护单元 | 锁内仍有 `flush_mem`；多写者不加速 |
 | **寿命** | seq/ver **u64** 盘格式；惰性升 v2 | P2c 仅留 op 号 |
-| **工程** | CONSTRAINTS + PIT + 消融门禁；头已拆（坑 169） | 长 soak / 真掉电仍开；见 ENG_DEBT_SPLIT |
+| **工程** | 头已拆（169）；**收敛 ACTIVE（170）**；删死枝（171）；小时 soak 已记（172） | 真掉电仍开；勿再堆热路径刀；食谱 `SOFT_RECIPE` |
 
 **一句话**：嵌入式有序 KV——**写 + 空间 + 点读**强；产品 Soft = **Post + repay** + tip/读刀；对 LMDB 短窗 range ~**1.2×** 是非 mmap 地板（坑 167），勿默改读模型。卷宗：[`EVAL_FULL.md`](../../backup/eval-full/2026-11-05/EVAL_FULL.md)。
 

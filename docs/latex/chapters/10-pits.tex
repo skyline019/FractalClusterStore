@@ -321,6 +321,20 @@ TSan 下放宽 g17 sync-window 预算；asan 目标失败保留全文日志。
 \paragraph{验证}
 \texttt{make bins} / \texttt{ci-smoke} / \texttt{make test} PASS；检查单 \texttt{ENG\_DEBT\_SPLIT.md}。
 
+\subsection{坑 170--172：收敛运维（NOTE）}
+\paragraph{现象}
+读刀 157--167 与拆头收口后继续堆优化 = 密度下降。
+
+\paragraph{做法}
+\begin{itemize}[leftmargin=1.4em]
+  \item 170：\texttt{CONVERGE\_OPS} ACTIVE——冻结 Soft 面；食谱 \texttt{SOFT\_RECIPE}；\texttt{make soft-example}。
+  \item 171：删短窗 oneseg \texttt{limit} 死枝；dual\_mem / P1* 保留消融 API。
+  \item 172：\texttt{FCS\_SOAK\_SEC=3600} Soft+\texttt{verify\_reads} PASS（非真拔电）。
+\end{itemize}
+
+\paragraph{验证}
+\texttt{ci-smoke} / \texttt{soft-example}；\texttt{backup/converge/soak\_3600\_*.log}。
+
 % ---------- 小结 ----------
 \subsection{对照方法论（可迁移）}
 \begin{enumerate}[leftmargin=1.6em]

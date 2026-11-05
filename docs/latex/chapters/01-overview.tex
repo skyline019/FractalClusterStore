@@ -38,10 +38,10 @@ page & 页内记录 & 二分 / 线性 + 可选前缀压缩 \\
 \subsection{文档范围与冻结线}
 \begin{itemize}[leftmargin=1.6em]
   \item \textbf{代码}：\texttt{embdb/x/include/fcs.h}（聚合）+ \texttt{fcs\_\{codec,dir,sync,store\}.h}（坑 169）+ \texttt{common/blockdev/layout.h}。
-  \item \textbf{轮次链}：ROUND16（P2a+P2b）$\to$ ROUND17（fsync 出锁 / hole\_fit / 家族游标）$\to$ ROUND18（护洞 / 碎片 A / 整理态；并洞 B 默认关）$\to$ \textbf{P2 Soft-on（坑 144）} $\to$ \textbf{SoftCons::Post（坑 150/151）}。
-  \item \textbf{公开标签}：\texttt{v0.2.0}（\texttt{RELEASE\_NOTES\_v0.2.0.md}）；前序 \texttt{v0.1.0}。
-  \item \textbf{评估主文}：\texttt{docs/00-entry/EVAL17.md}；peers：\texttt{backup/peers-post/}；契约：\texttt{CONSTRAINTS.md}。
-  \item \textbf{非产品默认}：本机「小预留、TRIM 关」分叉已归档；\texttt{space\_accel} Soft 默认关。
+  \item \textbf{轮次链}：ROUND16--18 $\to$ P2 Soft-on（144）$\to$ SoftCons::Post（150/151）$\to$ 读刀 158--166 / 拆头 169 $\to$ \textbf{收敛 170--172}。
+  \item \textbf{公开标签}：\texttt{v0.2.1}；前序 \texttt{v0.2.0}/\texttt{v0.1.0}。
+  \item \textbf{评估主文}：\texttt{EVAL17.md}；peers：\texttt{backup/peers-post/}·\texttt{eval-full/}；契约：\texttt{CONSTRAINTS.md}；食谱：\texttt{SOFT\_RECIPE.md}。
+  \item \textbf{非产品默认}：「小预留 TRIM 关」分叉已归档；\texttt{space\_accel}/dual\_mem Soft 默认关。
 \end{itemize}
 
 \subsection{一页结论（摘自 EVAL17 · Soft=Post）}

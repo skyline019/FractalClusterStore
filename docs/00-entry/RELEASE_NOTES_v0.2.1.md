@@ -33,6 +33,10 @@ make ci-smoke   # smoke subset
 
 Entry: [`README.md`](../../README.md) · Eval: [`EVAL17.md`](EVAL17.md) · Full pack: [`EVAL_FULL.md`](../../backup/eval-full/2026-11-05/EVAL_FULL.md) · Split: [`ENG_DEBT_SPLIT.md`](../30-discuss/ENG_DEBT_SPLIT.md) · Prior: [v0.2.0](RELEASE_NOTES_v0.2.0.md)
 
+## Post-tag ops (same day · converge)
+
+After the v0.2.1 tag, the tree entered **converge/ops** (pits **170–172**): Soft surface frozen; short oneseg `limit` dead branch removed; hour soak Soft+`verify_reads` recorded PASS under `backup/converge/` (still **not** a power-loss contract). Recipe: `SOFT_RECIPE.md` · `make soft-example`.
+
 ## Known gaps
 
-Single-process; fixed `u64` keys; no hour-scale soak / true power-loss contract; `get` CRC still opt-in (`set_verify_reads`); short-window range vs LMDB remains a non-mmap floor (pits 145 / 167). Header split is **done** (pit 169).
+Single-process; fixed `u64` keys; no true power-loss contract; `get` CRC still opt-in (`set_verify_reads`); short-window range vs LMDB remains a non-mmap floor (pits 145 / 167). Header split **done** (169); hour soak **recorded** (172).

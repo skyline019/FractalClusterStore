@@ -8,8 +8,9 @@
   \item 掉电：\texttt{g6}/\texttt{h3}；模糊：\texttt{h1}/\texttt{g5}。
   \item 消毒：\texttt{make asan}（ASan/UBSan + TSan 子集 w1/g7/g11/g13/g14/g17）；WSL TSan 用 \texttt{setarch -R}（坑 122）。
 \end{itemize}
-缺口：无小时级 soak 标真拔电；无多进程文件锁；默认 \texttt{get} 不查数据 CRC。
-头文件拆分（坑 169）已完成，不再列作工程缺口；见第工程组织章。
+缺口：无真拔电合同；无多进程文件锁；默认 \texttt{get} 不查数据 CRC。
+头文件拆分（169）已完成；小时 soak Soft+CRC 已有一次 PASS（172），\textbf{仍不}替代拔电矩阵。
+现行为收敛运维（170--172）：勿再堆热路径刀；见工程组织章。
 
 \subsection{Peers（FCS / SQLite / LMDB）}
 \begin{itemize}[leftmargin=1.6em]

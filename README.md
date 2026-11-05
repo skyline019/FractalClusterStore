@@ -18,6 +18,7 @@ FractalClusterStore (**FCS**) is a single-process, embeddable ordered KV engine 
 | | |
 |:---|:---|
 | **Latest release** | [v0.2.1](https://github.com/skyline019/FractalClusterStore/releases/tag/v0.2.1) · [notes](docs/00-entry/RELEASE_NOTES_v0.2.1.md) ([v0.2.0](docs/00-entry/RELEASE_NOTES_v0.2.0.md) · [v0.1.0](docs/00-entry/RELEASE_NOTES_v0.1.0.md)) |
+| **Working mode** | **Converge/ops ACTIVE** (pits 170–172) — Soft surface frozen; see [`CONVERGE_OPS.md`](docs/30-discuss/CONVERGE_OPS.md) |
 | **CI** | Strict CI: Compile (`-Werror`) → Smoke → Full test → Sanitizers → **Strict CI OK** |
 | **License** | [MIT](LICENSE) |
 
@@ -74,6 +75,8 @@ u8 buf[64];
 u16 n = 0;
 s.get(42, buf, sizeof buf, &n);
 ```
+
+Full recipe: [`SOFT_RECIPE.md`](docs/00-entry/SOFT_RECIPE.md) · `make soft-example` · converge mode: [`CONVERGE_OPS.md`](docs/30-discuss/CONVERGE_OPS.md) (pit 170).
 
 | Item | Path |
 |:---|:---|

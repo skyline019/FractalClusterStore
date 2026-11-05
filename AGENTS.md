@@ -2,13 +2,21 @@
 
 产品路径：**FCS / XDB v3**；公开 `#include "fcs.h"`（聚合），实现 `include/fcs_{codec,dir,sync,store}.h`（坑 169）。
 
+## 工作模式（现行）
+
+**收敛运维 ACTIVE（坑 170）** — 读 [`docs/30-discuss/CONVERGE_OPS.md`](docs/30-discuss/CONVERGE_OPS.md) 与 [`docs/00-entry/SOFT_RECIPE.md`](docs/00-entry/SOFT_RECIPE.md)。
+
+- 默认只做：正确性修、文档/示例、工程债运维、有证据删死码
+- **不要**开新热路径优化弧 / 升 Negate-keep 默认 / 追 LMDB range 地板
+- 退出收敛须用户明示或 CONVERGE_OPS → EXITED + PIT NOTE
+
 ## 必读
 
 1. [`CONSTRAINTS.md`](CONSTRAINTS.md) — 质量契约（不可静默削弱）
-2. [`docs/00-entry/EVAL17.md`](docs/00-entry/EVAL17.md) — 优势/缺口/下一轮优先级；公开标签见 [`RELEASE_NOTES_v0.2.1.md`](docs/00-entry/RELEASE_NOTES_v0.2.1.md)
+2. [`docs/00-entry/EVAL17.md`](docs/00-entry/EVAL17.md) — 优势/缺口；标签 [`RELEASE_NOTES_v0.2.1.md`](docs/00-entry/RELEASE_NOTES_v0.2.1.md)
 3. [`docs/10-design/PIT_LOG.md`](docs/10-design/PIT_LOG.md) — 坑占号与闭环
 4. 工作区规则：`../../.cursor/rules/`（`fcs-*.mdc`）
-5. 工程技能：`../../.cursor/skills/fcs-*`
+5. 工程技能：`../../.cursor/skills/fcs-*`（含 `fcs-converge`）
 
 ## 默认行为
 
@@ -19,8 +27,8 @@
 - Soft / `configure_deploy` 是产品默认：**护洞 + P2 + SoftCons::Post**；勿退回 mode 0 / 关护洞 / 关 Post 当默认
 - 读 SLA：写后 `soft_cons_repay()` 或 `polish()`；消融用 `set_soft_cons(Off)`
 - Eager `soft_consolidate` / 写中 duty tidy：**勿**升 Soft 默认（坑 147）
-- 双 MemTable / flush 出锁（坑 156 · `DISCUSS_CONCUR_IMM`）：**可选、Soft 默认关**；S5 判决 **Negate-keep**（`VERDICT_DUAL_MEM`）；勿当空间 KPI；勿进 `configure_deploy` 默认
-- 拆头已完成（坑 169）；再切头 / P2c：先讨论稿，后薄切片、行为零 diff；热路径 peers：`make peers-post`
+- 双 MemTable / flush 出锁（坑 156）：**可选、Soft 默认关（Negate-keep）**；勿进 `configure_deploy`
+- 拆头已完成（坑 169）；再切头须行为零 diff；热路径 peers 仅在**退出收敛后**作为优化弧 KPI
 
 ## 非目标
 

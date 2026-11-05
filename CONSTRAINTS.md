@@ -2,6 +2,15 @@
 
 > 代理人与人类改代码前必读。削弱本文件中的数字或门禁 = 违约，须先改本文件并说明理由。
 
+## 收敛运维（ACTIVE · 坑 170）
+
+> 章程：`docs/30-discuss/CONVERGE_OPS.md` · 食谱：`docs/00-entry/SOFT_RECIPE.md`
+
+- **产品默认面冻结**：唯一推荐入口 `configure_deploy` + 读前 `soft_cons_repay`/`polish`。禁止未退出收敛就升 Negate-keep 臂进 Soft 默认。
+- **禁止新热路径刀**：无消融胜证据不得合入；坑 167 地板勿再堆 load/range 微调。
+- **允许**：正确性修、文档/示例、工程债运维（长 soak 记录等）、经确认的死码删除。
+- **退出**：须改 `CONVERGE_OPS.md` 状态为 EXITED + PIT NOTE，或用户显式开新优化弧。
+
 ## Floor（永远阻塞合并）
 
 | 检查 | 命令 / 判据 | 失败时 |
@@ -66,3 +75,6 @@
 - **坑 166**：`Cursor::next` 空 mem+单 Cur 快路径（无旋钮）。短窗 oneseg 再消融仍 Negate。peers ×5 中位 sync range/LMDB ~**1.31×**（`PEERS_FULL_MED.md`）
 - **坑 167**：短窗 emit≈1；`Cur::load` fences+seek **Negate**（已回滚）。range vs LMDB 剩余=随机首页/非 mmap 地板，勿堆无消融胜微调
 - **并发错峰 A** 双 MemTable / `flush_mem` 出锁（坑 156 · `DISCUSS_CONCUR_IMM.md` · `VERDICT_DUAL_MEM`）：**可选、Soft 默认关（Negate-keep）**；KPI=锁内延迟/读者 max，**勿**当空间峰胜者；**禁止**进 `configure_deploy` 默认
+- **坑 170**：收敛运维 ACTIVE — 冻结上表 Soft 面；食谱 `SOFT_RECIPE.md`；示例 `make soft-example`
+- **坑 171**：收敛删死码 — 短窗 oneseg limit 枝已删；dual_mem / space_accel / P1* **保留消融 API**（勿当 Soft 默认）
+- **坑 172**：收敛期 `FCS_SOAK_SEC=3600` Soft+CRC 读校验 **PASS**（`backup/converge/`）；仍非真拔电
