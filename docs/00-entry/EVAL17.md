@@ -1,7 +1,7 @@
 # 数据库内核全量评估（第 17 轮定稿 = 产品主树，滚动至 **2026-11-05**）
 
 对象：FCS / XDB v3 — 公开 `#include "fcs.h"`（薄聚合）+ `fcs_codec/dir/sync/store.h`（坑 **169** 拆头；Store≈8.7k 行）+ `blockdev.h` / `layout.h` / `common.h`。  
-**公开标签：** [v0.2.0](RELEASE_NOTES_v0.2.0.md)（Soft 默认 Post）；前序 [v0.1.0](RELEASE_NOTES_v0.1.0.md)。  
+**公开标签：** [v0.2.1](RELEASE_NOTES_v0.2.1.md)（拆头 + eval-full）；前序 [v0.2.0](RELEASE_NOTES_v0.2.0.md)（Soft 默认 Post）· [v0.1.0](RELEASE_NOTES_v0.1.0.md)。  
 基线链：EVAL12 → R13–R15 → **ROUND16–18** → **P2 Soft-on（144）** → **Post 默认（150/151）** → **读刀 158–166 / tip 163 / 全量评 2026-11-05** → **拆头 169**。  
 peers：历史 `peers-r17/` · `peers-soft/` · `peers-post/`；**现行 KPI** [`backup/eval-full/2026-11-05/`](../../backup/eval-full/2026-11-05/EVAL_FULL.md)。  
 分叉归档：本机「小预留 TRIM 关」见 `docs/00-entry/BATTLE.md`、`backup/r18/swept/docs-hist/`（**非产品默认**）。

@@ -2,7 +2,7 @@
 
 首个公开里程碑：**FCS / XDB v3** 产品主树（R17 定稿 + R18 Soft 整理态），Strict CI 四门全绿。
 
-> **现行发布：** [v0.2.0](RELEASE_NOTES_v0.2.0.md)（Soft 默认 Post · P2 Soft-on · peers-post · 2026-11-04）
+> **Current release:** [v0.2.1](RELEASE_NOTES_v0.2.1.md) · prior [v0.2.0](RELEASE_NOTES_v0.2.0.md) (Soft default Post · P2 Soft-on · peers-post)
 
 ## Highlights
 
@@ -24,4 +24,4 @@ make asan     # ASan + UBSan + TSan
 
 ## Known gaps
 
-单进程、键固定 u64；无小时 soak / 真拔电 / 多进程锁；合并峰与 LMDB range 读仍是「写换读」权衡（细节见 EVAL17）。后续产品滚动见 **v0.2.0**。
+Single-process; fixed `u64` keys; no hour soak / true power-loss / multi-process lock. Later product rolls: **v0.2.0** → **v0.2.1**.

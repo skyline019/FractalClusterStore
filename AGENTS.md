@@ -5,7 +5,7 @@
 ## 必读
 
 1. [`CONSTRAINTS.md`](CONSTRAINTS.md) — 质量契约（不可静默削弱）
-2. [`docs/00-entry/EVAL17.md`](docs/00-entry/EVAL17.md) — 优势/缺口/下一轮优先级
+2. [`docs/00-entry/EVAL17.md`](docs/00-entry/EVAL17.md) — 优势/缺口/下一轮优先级；公开标签见 [`RELEASE_NOTES_v0.2.1.md`](docs/00-entry/RELEASE_NOTES_v0.2.1.md)
 3. [`docs/10-design/PIT_LOG.md`](docs/10-design/PIT_LOG.md) — 坑占号与闭环
 4. 工作区规则：`../../.cursor/rules/`（`fcs-*.mdc`）
 5. 工程技能：`../../.cursor/skills/fcs-*`
